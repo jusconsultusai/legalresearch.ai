@@ -167,18 +167,6 @@ export default function DatabasePage() {
         </p>
       </div>
 
-      {/* Regular keyword search */}
-      <div className="relative max-w-2xl">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-tertiary" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search legal documents by title, number, or content..."
-          className="input pl-12 pr-4 py-3 text-base"
-        />
-      </div>
-
       {/* AI-Powered Research — side-by-side layout */}
       <div className="flex gap-5 items-start">
         {/* Left: AI Research Panel */}
