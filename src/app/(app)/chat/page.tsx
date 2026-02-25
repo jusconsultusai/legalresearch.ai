@@ -8,7 +8,7 @@ import {
   Send, Scale, ThumbsUp, ThumbsDown, MessageSquare, FileText, BookOpen,
   Clock, X, ArrowRight, Calendar, SortAsc, Loader2, AlertCircle,
   Search, Lightbulb, PenTool, BookOpenCheck, BarChart3, Brain,
-  Paperclip, ToggleLeft, ToggleRight, ChevronDown,
+  Paperclip, ToggleLeft, ToggleRight, Sparkles, Check, ChevronDown,
 } from "lucide-react";
 import { useChatManagement } from "@/stores";
 import DocumentAnalysisModal from "@/components/document/DocumentAnalysisModal";
