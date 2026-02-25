@@ -31,6 +31,7 @@ const marketingLinks = [
 export function MarketingNavbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user } = useAuth();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-border">
@@ -60,12 +61,25 @@ export function MarketingNavbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <Link href="/signin">
-              <Button variant="ghost" size="sm">Sign in</Button>
-            </Link>
-            <Link href="/signup">
-              <Button size="sm">Get Started Free</Button>
-            </Link>
+            {user ? (
+              <>
+                <Link href="/dashboard">
+                  <Button variant="ghost" size="sm">Dashboard</Button>
+                </Link>
+                <Link href="/upgrade">
+                  <Button size="sm">Upgrade</Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/signin">
+                  <Button variant="ghost" size="sm">Sign in</Button>
+                </Link>
+                <Link href="/signup">
+                  <Button size="sm">Get Started Free</Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Toggle */}
@@ -88,8 +102,17 @@ export function MarketingNavbar() {
               </Link>
             ))}
             <div className="flex flex-col gap-2 mt-4 px-4">
-              <Link href="/signin"><Button variant="secondary" className="w-full">Sign in</Button></Link>
-              <Link href="/signup"><Button className="w-full">Get Started Free</Button></Link>
+              {user ? (
+                <>
+                  <Link href="/dashboard" onClick={() => setMobileOpen(false)}><Button variant="secondary" className="w-full">Dashboard</Button></Link>
+                  <Link href="/upgrade" onClick={() => setMobileOpen(false)}><Button className="w-full">Upgrade</Button></Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/signin"><Button variant="secondary" className="w-full">Sign in</Button></Link>
+                  <Link href="/signup"><Button className="w-full">Get Started Free</Button></Link>
+                </>
+              )}
             </div>
           </div>
         )}

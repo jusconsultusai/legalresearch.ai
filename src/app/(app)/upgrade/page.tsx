@@ -43,7 +43,34 @@ const ENTERPRISE_FEATURES = [
 ];
 
 type PaymentMethod = "gcash" | "bank_transfer";
-type SelectedPlan = "proMonthly" | "proAnnual" | "teamMonthly" | "teamAnnual";
+type BillingPeriod = "monthly" | "quarterly" | "semiannual" | "annual";
+type SelectedPlan = "proMonthly" | "proQuarterly" | "proSemiannual" | "proAnnual" | "teamMonthly" | "teamQuarterly" | "teamSemiannual" | "teamAnnual";
+
+const BILLING_OPTIONS: { id: BillingPeriod; label: string; badge?: string }[] = [
+  { id: "monthly",    label: "Monthly" },
+  { id: "quarterly",  label: "Quarterly",  badge: "Save 20%" },
+  { id: "semiannual", label: "Semiannual", badge: "Save 20%" },
+  { id: "annual",     label: "Annual",     badge: "Save 30%" },
+];
+
+function getPlanId(tier: "pro" | "team", billing: BillingPeriod): SelectedPlan {
+  const map: Record<BillingPeriod, { pro: SelectedPlan; team: SelectedPlan }> = {
+    monthly:    { pro: "proMonthly",    team: "teamMonthly" },
+    quarterly:  { pro: "proQuarterly",  team: "teamQuarterly" },
+    semiannual: { pro: "proSemiannual", team: "teamSemiannual" },
+    annual:     { pro: "proAnnual",     team: "teamAnnual" },
+  };
+  return map[billing][tier];
+}
+
+function getPriceForPlan(tier: "pro" | "team", billing: BillingPeriod) {
+  const key = getPlanId(tier, billing);
+  const p = PRICING[key];
+  const perMonth = "amountPerMonth" in p ? p.amountPerMonth : p.amount;
+  const total = "totalAmount" in p ? p.totalAmount : p.amount;
+  const desc = "description" in p ? p.description : "Billed monthly";
+  return { perMonth, total, desc };
+}
 
 interface CheckoutData {
   success: boolean;
@@ -58,6 +85,7 @@ interface CheckoutData {
 }
 
 export default function UpgradePage() {
+  const [billing, setBilling] = useState<BillingPeriod>("annual");
   const [selectedPlan, setSelectedPlan] = useState<SelectedPlan>("proAnnual");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -65,6 +93,15 @@ export default function UpgradePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState<string | null>(null);
+
+  const openModal = (tier: "pro" | "team") => {
+    const planId = getPlanId(tier, billing);
+    setSelectedPlan(planId);
+    setPaymentMethod(null);
+    setCheckoutData(null);
+    setError("");
+    setShowPaymentModal(true);
+  };
 
   const handleUpgrade = async () => {
     if (!paymentMethod) {
@@ -116,7 +153,30 @@ export default function UpgradePage() {
         </p>
       </div>
 
-      {/* Plan Selection */}
+      {/* Billing Period Selector */}
+      <div className="flex items-center justify-center">
+        <div className="flex items-center bg-surface-secondary rounded-xl p-1 gap-1">
+          {BILLING_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => setBilling(opt.id)}
+              className={cn(
+                "relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                billing === opt.id
+                  ? "bg-white text-text-primary shadow-sm"
+                  : "text-text-secondary hover:text-text-primary"
+              )}
+            >
+              {opt.label}
+              {opt.badge && (
+                <span className="ml-1 text-[10px] font-bold text-green-700 bg-green-100 px-1.5 py-0.5 rounded-full">
+                  {opt.badge}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Free Plan */}
         <Card className="p-6">
@@ -154,11 +214,10 @@ export default function UpgradePage() {
           </div>
           <div className="mb-4">
             <div className="flex items-baseline gap-2 mb-1">
-              <span className="text-3xl font-bold text-text-primary">{PRICING.proAnnual.display}</span>
+              <span className="text-3xl font-bold text-text-primary">₱{getPriceForPlan("pro", billing).perMonth.toLocaleString()}</span>
               <span className="text-sm text-text-secondary">/mo</span>
             </div>
-            <p className="text-xs text-text-tertiary">billed annually</p>
-            <p className="text-xs font-medium text-primary-600 mt-1">OR {PRICING.proMonthly.display}/month</p>
+            <p className="text-xs text-text-tertiary">{getPriceForPlan("pro", billing).desc}</p>
           </div>
           <div className="space-y-2.5 mb-6">
             {PRO_FEATURES.map((f) => (
@@ -171,16 +230,10 @@ export default function UpgradePage() {
             ))}
           </div>
           <button
-            onClick={() => { setSelectedPlan("proAnnual"); setShowPaymentModal(true); }}
-            className="w-full py-2.5 rounded-xl text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors mb-2"
+            onClick={() => openModal("pro")}
+            className="w-full py-2.5 rounded-xl text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
           >
             Upgrade to Professional
-          </button>
-          <button
-            onClick={() => { setSelectedPlan("proMonthly"); setShowPaymentModal(true); }}
-            className="w-full py-2 rounded-xl text-xs font-medium border border-primary-300 text-primary-700 hover:bg-primary-50 transition-colors"
-          >
-            Choose Monthly
           </button>
         </Card>
 
@@ -192,11 +245,10 @@ export default function UpgradePage() {
           </div>
           <div className="mb-4">
             <div className="flex items-baseline gap-2 mb-1">
-              <span className="text-3xl font-bold text-text-primary">{PRICING.teamAnnual.display}</span>
+              <span className="text-3xl font-bold text-text-primary">₱{getPriceForPlan("team", billing).perMonth.toLocaleString()}</span>
               <span className="text-sm text-text-secondary">/mo</span>
             </div>
-            <p className="text-xs text-text-tertiary">billed annually</p>
-            <p className="text-xs font-medium text-primary-600 mt-1">OR {PRICING.teamMonthly.display}/month</p>
+            <p className="text-xs text-text-tertiary">{getPriceForPlan("team", billing).desc}</p>
           </div>
           <div className="space-y-2.5 mb-6">
             {TEAM_FEATURES.map((f) => (
@@ -209,16 +261,10 @@ export default function UpgradePage() {
             ))}
           </div>
           <button
-            onClick={() => { setSelectedPlan("teamAnnual"); setShowPaymentModal(true); }}
-            className="w-full py-2.5 rounded-xl text-sm font-medium bg-surface-tertiary text-text-primary hover:bg-surface-secondary transition-colors mb-2"
+            onClick={() => openModal("team")}
+            className="w-full py-2.5 rounded-xl text-sm font-medium bg-surface-tertiary text-text-primary hover:bg-surface-secondary transition-colors"
           >
             Upgrade to Team
-          </button>
-          <button
-            onClick={() => { setSelectedPlan("teamMonthly"); setShowPaymentModal(true); }}
-            className="w-full py-2 rounded-xl text-xs font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            Choose Monthly
           </button>
         </Card>
 
@@ -290,28 +336,47 @@ export default function UpgradePage() {
                   <div className="bg-gray-50 rounded-xl p-4 mb-6">
                     <p className="text-sm font-medium text-gray-900">
                       {selectedPlan === "proMonthly" && "Professional Monthly"}
+                      {selectedPlan === "proQuarterly" && "Professional Quarterly"}
+                      {selectedPlan === "proSemiannual" && "Professional Semiannual"}
                       {selectedPlan === "proAnnual" && "Professional Annual"}
                       {selectedPlan === "teamMonthly" && "Team Monthly"}
+                      {selectedPlan === "teamQuarterly" && "Team Quarterly"}
+                      {selectedPlan === "teamSemiannual" && "Team Semiannual"}
                       {selectedPlan === "teamAnnual" && "Team Annual"}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 mt-1">
                       {selectedPlan === "proMonthly" && PRICING.proMonthly.display}
+                      {selectedPlan === "proQuarterly" && PRICING.proQuarterly.displayTotal}
+                      {selectedPlan === "proSemiannual" && PRICING.proSemiannual.displayTotal}
                       {selectedPlan === "proAnnual" && PRICING.proAnnual.displayTotal}
                       {selectedPlan === "teamMonthly" && PRICING.teamMonthly.display}
+                      {selectedPlan === "teamQuarterly" && PRICING.teamQuarterly.displayTotal}
+                      {selectedPlan === "teamSemiannual" && PRICING.teamSemiannual.displayTotal}
                       {selectedPlan === "teamAnnual" && PRICING.teamAnnual.displayTotal}
                       <span className="text-sm font-normal text-gray-500 ml-1">
-                        {(selectedPlan === "proMonthly" || selectedPlan === "teamMonthly") ? "/month" : "/year"}
+                        {selectedPlan.includes("Monthly") ? "/month"
+                          : selectedPlan.includes("Quarterly") ? "/quarter"
+                          : selectedPlan.includes("Semiannual") ? "/6 months"
+                          : "/year"}
                       </span>
                     </p>
                     {selectedPlan === "proAnnual" && (
-                      <p className="text-xs text-green-600 mt-1">
-                        That&apos;s {PRICING.proAnnual.display}/month — save {PRICING.proAnnualSavings.display}/year!
-                      </p>
+                      <p className="text-xs text-green-600 mt-1">That&apos;s {PRICING.proAnnual.display}/month — save {PRICING.proAnnualSavings.display}/year!</p>
+                    )}
+                    {selectedPlan === "proQuarterly" && (
+                      <p className="text-xs text-green-600 mt-1">That&apos;s {PRICING.proQuarterly.display}/month — save {PRICING.proQuarterlySavings.display}!</p>
+                    )}
+                    {selectedPlan === "proSemiannual" && (
+                      <p className="text-xs text-green-600 mt-1">That&apos;s {PRICING.proSemiannual.display}/month — save {PRICING.proSemiannualSavings.display}!</p>
                     )}
                     {selectedPlan === "teamAnnual" && (
-                      <p className="text-xs text-green-600 mt-1">
-                        That&apos;s {PRICING.teamAnnual.display}/month — save {PRICING.teamAnnualSavings.display}/year!
-                      </p>
+                      <p className="text-xs text-green-600 mt-1">That&apos;s {PRICING.teamAnnual.display}/month — save {PRICING.teamAnnualSavings.display}/year!</p>
+                    )}
+                    {selectedPlan === "teamQuarterly" && (
+                      <p className="text-xs text-green-600 mt-1">That&apos;s {PRICING.teamQuarterly.display}/month — save {PRICING.teamQuarterlySavings.display}!</p>
+                    )}
+                    {selectedPlan === "teamSemiannual" && (
+                      <p className="text-xs text-green-600 mt-1">That&apos;s {PRICING.teamSemiannual.display}/month — save {PRICING.teamSemiannualSavings.display}!</p>
                     )}
                   </div>
 

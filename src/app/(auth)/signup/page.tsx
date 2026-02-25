@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, Input, RadioCard } from "@/components/ui";
+import { useAuthStore } from "@/stores";
 
 type Step = "account" | "profile" | "referral" | "role" | "firm";
 
@@ -36,9 +37,19 @@ const teamSizes = ["Solo", "2-3", "4-10", "10-20", "20-50"];
 
 export default function SignUpPage() {
   const router = useRouter();
+  const { user, isLoading } = useAuthStore();
   const [step, setStep] = useState<Step>("account");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Redirect already-authenticated users to dashboard
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, isLoading, router]);
+
+  if (!isLoading && user) return null;
 
   // Form data
   const [formData, setFormData] = useState({

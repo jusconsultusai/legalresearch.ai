@@ -6,6 +6,7 @@ import { Badge, Card } from "@/components/ui";
 import { Check, Shield, Clock, HelpCircle } from "lucide-react";
 import { PLANS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks";
 
 const FEATURES = {
   free: ["14 days free trial", "15 searches/14 days", "Basic AI Chat", "Legal Database access", "Standard response mode"],
@@ -34,6 +35,7 @@ function getBillingLabel(billing: BillingPeriod): string {
 
 export default function PricingPage() {
   const [billing, setBilling] = useState<BillingPeriod>("monthly");
+  const { user } = useAuth();
 
   const currentOption = BILLING_OPTIONS.find((o) => o.id === billing)!;
   const discount = currentOption.discount;
@@ -114,13 +116,28 @@ export default function PricingPage() {
                     </div>
                   ))}
                 </div>
+                {/* CTA Button */}
                 <Link
-                  href={key === "free" ? "/signup" : isEnterprise ? "/help" : "/signup?plan=" + key}
+                  href={
+                    key === "free"
+                      ? user ? "/dashboard" : "/signup"
+                      : isEnterprise
+                      ? "/help"
+                      : user
+                      ? "/upgrade"
+                      : `/signup?plan=${key}`
+                  }
                   className={`block w-full text-center py-2.5 rounded-xl text-sm font-medium transition-colors ${
                     isPopular ? "bg-primary-600 text-white hover:bg-primary-700" : "border border-border hover:bg-surface-secondary text-text-primary"
                   }`}
                 >
-                  {key === "free" ? "Get Started Free" : isEnterprise ? "Contact Sales" : `Get ${plan.label}`}
+                  {key === "free"
+                    ? user ? "Go to Dashboard" : "Get Started Free"
+                    : isEnterprise
+                    ? "Contact Sales"
+                    : user
+                    ? `Upgrade to ${plan.label}`
+                    : `Get ${plan.label}`}
                 </Link>
               </Card>
             );
