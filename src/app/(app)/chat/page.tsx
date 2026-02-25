@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo, memo } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   Send, Scale, ThumbsUp, ThumbsDown, MessageSquare, FileText, BookOpen,
@@ -80,15 +81,37 @@ const CONTEXT_VERSIONS: { id: ContextVersion; label: string; description: string
   { id: "simple",       label: "Simple English",                  description: "For non-lawyers, the general public, and individuals with limited legal knowledge" },
 ];
 
-const CAPABILITIES: { icon: typeof Search; label: string; description: string; bg: string; text: string }[] = [
-  { icon: PenTool,       label: "Legal Document Drafting",   description: "Quick-start drafting for any document type — letters, contracts, pleadings, and more. Linked to Document Builder.",                                           bg: "bg-purple-100 dark:bg-purple-900/30",  text: "text-purple-600 dark:text-purple-400"  },
-  { icon: FileText,      label: "Document Analysis",         description: "Comprehensive AI review that identifies risks, key clauses, and issues in any legal document you upload.",                                                   bg: "bg-blue-100 dark:bg-blue-900/30",      text: "text-blue-600 dark:text-blue-400"    },
-  { icon: BookOpen,      label: "Contextual Legal Research", description: "Vast knowledge database delivering tailored legal insights — identifying relevant case law and regulations instantly.",                                        bg: "bg-emerald-100 dark:bg-emerald-900/30",text: "text-emerald-600 dark:text-emerald-400"},
-  { icon: Lightbulb,     label: "Pinpoint Citations",        description: "AI-validated answers with pinpoint citations. Click any citation to verify the answer in the underlying primary document.",                                  bg: "bg-amber-100 dark:bg-amber-900/30",    text: "text-amber-600 dark:text-amber-400"  },
-  { icon: Sparkles,      label: "Live Contract Editing",     description: "Redlines, refined. Live contract editing with world-leading Legal AI. Leverage your precedent to review with finesse.",                                   bg: "bg-rose-100 dark:bg-rose-900/30",      text: "text-rose-600 dark:text-rose-400"    },
-  { icon: BookOpenCheck, label: "Precedent Library",         description: "Leverage every legal document you've ever negotiated or created. Precedents are easily uncovered and re-used through the library.",                         bg: "bg-indigo-100 dark:bg-indigo-900/30",  text: "text-indigo-600 dark:text-indigo-400" },
-  { icon: Scale,         label: "Authoritative Sources",     description: "Get answers to research questions using publicly available, authoritative Philippine legal sources.",                                                       bg: "bg-teal-100 dark:bg-teal-900/30",      text: "text-teal-600 dark:text-teal-400"    },
-  { icon: BarChart3,     label: "Trend & Pattern Analysis",  description: "Identify trends, spot patterns, and answer questions about related documents and contract families across your entire library.",                         bg: "bg-orange-100 dark:bg-orange-900/30",  text: "text-orange-600 dark:text-orange-400" },
+type CapabilityAction =
+  | { type: "mode"; mode: ChatMode; prompt?: string }
+  | { type: "upload" }
+  | { type: "navigate"; path: string }
+  | { type: "deep-research"; prompt?: string };
+
+const CAPABILITIES: { icon: typeof Search; label: string; description: string; bg: string; text: string; action: CapabilityAction }[] = [
+  { icon: PenTool,       label: "Legal Document Drafting",   description: "Quick-start drafting for any document type — letters, contracts, pleadings, and more. Linked to Document Builder.",
+    bg: "bg-purple-100 dark:bg-purple-900/30",  text: "text-purple-600 dark:text-purple-400",
+    action: { type: "mode", mode: "draft", prompt: "Draft: " } },
+  { icon: FileText,      label: "Document Analysis",         description: "Comprehensive AI review that identifies risks, key clauses, and issues in any legal document you upload.",
+    bg: "bg-blue-100 dark:bg-blue-900/30",      text: "text-blue-600 dark:text-blue-400",
+    action: { type: "upload" } },
+  { icon: BookOpen,      label: "Contextual Legal Research", description: "Vast knowledge database delivering tailored legal insights — identifying relevant case law and regulations instantly.",
+    bg: "bg-emerald-100 dark:bg-emerald-900/30",text: "text-emerald-600 dark:text-emerald-400",
+    action: { type: "mode", mode: "find", prompt: "Find: " } },
+  { icon: Lightbulb,     label: "Pinpoint Citations",        description: "AI-validated answers with pinpoint citations. Click any citation to verify the answer in the underlying primary document.",
+    bg: "bg-amber-100 dark:bg-amber-900/30",    text: "text-amber-600 dark:text-amber-400",
+    action: { type: "mode", mode: "find", prompt: "Find relevant cases and citations for: " } },
+  { icon: Sparkles,      label: "Live Contract Editing",     description: "Redlines, refined. Live contract editing with world-leading Legal AI. Leverage your precedent to review with finesse.",
+    bg: "bg-rose-100 dark:bg-rose-900/30",      text: "text-rose-600 dark:text-rose-400",
+    action: { type: "navigate", path: "/documents/new" } },
+  { icon: BookOpenCheck, label: "Precedent Library",         description: "Leverage every legal document you've ever negotiated or created. Precedents are easily uncovered and re-used through the library.",
+    bg: "bg-indigo-100 dark:bg-indigo-900/30",  text: "text-indigo-600 dark:text-indigo-400",
+    action: { type: "navigate", path: "/my-files" } },
+  { icon: Scale,         label: "Authoritative Sources",     description: "Get answers to research questions using publicly available, authoritative Philippine legal sources.",
+    bg: "bg-teal-100 dark:bg-teal-900/30",      text: "text-teal-600 dark:text-teal-400",
+    action: { type: "deep-research", prompt: "Find: " } },
+  { icon: BarChart3,     label: "Trend & Pattern Analysis",  description: "Identify trends, spot patterns, and answer questions about related documents and contract families across your entire library.",
+    bg: "bg-orange-100 dark:bg-orange-900/30",  text: "text-orange-600 dark:text-orange-400",
+    action: { type: "mode", mode: "analyze", prompt: "Analyze: " } },
 ];
 
 /* ---------- Helpers ---------- */
@@ -347,6 +370,7 @@ const ChatInput = memo(function ChatInput({
 /* ================================================================== */
 
 export default function ChatPage() {
+  const router = useRouter();
   const { activeChatId, triggerRefresh } = useChatManagement();
 
   const [currentChat, setCurrentChat] = useState<Chat | null>(null);
@@ -550,6 +574,29 @@ export default function ChatPage() {
     setTimeout(() => textareaRef.current?.focus(), 0);
   };
 
+  /* ── Capability card click handler ── */
+  const handleCapabilityClick = (action: CapabilityAction) => {
+    switch (action.type) {
+      case "mode":
+        setActiveMode(action.mode);
+        setInputValue(action.prompt || MODE_PREFIXES[action.mode]);
+        setTimeout(() => textareaRef.current?.focus(), 0);
+        break;
+      case "upload":
+        fileInputRef.current?.click();
+        break;
+      case "navigate":
+        router.push(action.path);
+        break;
+      case "deep-research":
+        setActiveMode("find");
+        setDeepThinkEnabled(true);
+        setInputValue(action.prompt || "Find: ");
+        setTimeout(() => textareaRef.current?.focus(), 0);
+        break;
+    }
+  };
+
   /* ── Props bundle passed to the external ChatInput component ── */
   const chatInputProps: Omit<ChatInputProps, "compact"> = {
     inputValue, setInputValue, sending, handleKeyDown, handleSend,
@@ -634,13 +681,21 @@ export default function ChatPage() {
                 <p className="text-xs text-text-tertiary text-center mb-6">AI-powered legal work — from research and drafting to analysis and citations</p>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {CAPABILITIES.map((cap) => (
-                    <div key={cap.label} className="flex flex-col gap-2 p-4 rounded-xl border border-border bg-surface hover:bg-surface-secondary transition-colors">
-                      <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", cap.bg)}>
+                    <button
+                      key={cap.label}
+                      onClick={() => handleCapabilityClick(cap.action)}
+                      className="flex flex-col gap-2 p-4 rounded-xl border border-border bg-surface hover:bg-surface-secondary hover:border-primary-300 hover:shadow-md transition-all text-left group cursor-pointer"
+                    >
+                      <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-110", cap.bg)}>
                         <cap.icon className={cn("w-4 h-4", cap.text)} />
                       </div>
-                      <p className="text-xs font-bold text-text-primary leading-snug">{cap.label}</p>
+                      <p className="text-xs font-bold text-text-primary leading-snug group-hover:text-primary-700 dark:group-hover:text-primary-400 transition-colors">{cap.label}</p>
                       <p className="text-[11px] text-text-tertiary leading-relaxed">{cap.description}</p>
-                    </div>
+                      <span className="text-[10px] font-semibold text-primary-600 dark:text-primary-400 flex items-center gap-1 mt-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                        {cap.action.type === "navigate" ? "Open" : cap.action.type === "upload" ? "Upload a file" : "Get started"}
+                        <ArrowRight className="w-3 h-3" />
+                      </span>
+                    </button>
                   ))}
                 </div>
               </div>
