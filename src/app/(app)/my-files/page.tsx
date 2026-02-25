@@ -22,6 +22,8 @@ import {
   Info,
   File,
   FileImage,
+  FileSpreadsheet,
+  Presentation,
   Wand2,
   Sparkles,
   Brain,
@@ -72,9 +74,27 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function getFileIcon(type: string) {
-  if (type.startsWith("image/")) return <FileImage className="w-5 h-5" />;
-  return <FileText className="w-5 h-5" />;
+function getFileIcon(type: string, size: "sm" | "lg" = "sm") {
+  const cls = size === "lg" ? "w-6 h-6" : "w-5 h-5";
+  if (type.startsWith("image/")) return <FileImage className={cls} />;
+  if (type === "application/pdf" || type.includes("pdf")) return <FileText className={cls} />;
+  if (type.includes("spreadsheet") || type.includes("excel") || type.includes("csv"))
+    return <FileSpreadsheet className={cls} />;
+  if (type.includes("presentation") || type.includes("powerpoint"))
+    return <Presentation className={cls} />;
+  return <File className={cls} />;
+}
+
+function getFileTypeBadge(type: string): string {
+  if (type.startsWith("image/")) return type.split("/")[1]?.toUpperCase() ?? "IMG";
+  if (type === "application/pdf") return "PDF";
+  if (type.includes("wordprocessingml") || type.includes("msword")) return "DOCX";
+  if (type.includes("spreadsheet") || type.includes("excel")) return "XLSX";
+  if (type.includes("presentation") || type.includes("powerpoint")) return "PPTX";
+  if (type === "text/plain") return "TXT";
+  if (type === "text/html") return "HTML";
+  const sub = type.split("/")[1];
+  return sub ? sub.slice(0, 4).toUpperCase() : "FILE";
 }
 
 export default function MyFilesPage() {
@@ -416,17 +436,25 @@ export default function MyFilesPage() {
           {filtered.map((file) => (
             <div
               key={file.id}
-              className="flex items-center gap-4 px-5 py-4 hover:bg-surface-secondary/50 transition-colors group"
+              className="flex items-center gap-4 px-5 py-3.5 hover:bg-surface-secondary/40 transition-colors"
             >
-              <div className="w-10 h-10 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center shrink-0">
-                {getFileIcon(file.type)}
+              {/* File icon + type badge */}
+              <div className="relative shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
+                  {getFileIcon(file.type)}
+                </div>
+                <span className="absolute -bottom-1 -right-1 text-[9px] font-bold px-1 py-0.5 rounded bg-slate-700 text-white leading-none">
+                  {getFileTypeBadge(file.type)}
+                </span>
               </div>
+
+              {/* File name + meta */}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-text-primary truncate">{file.name}</p>
-                <div className="flex items-center gap-3 mt-0.5 text-xs text-text-secondary">
+                <div className="flex items-center gap-3 mt-0.5 text-xs text-text-tertiary">
                   <span>{formatFileSize(file.size)}</span>
                   <span>·</span>
-                  <span className="capitalize">{file.category.replace("-", " ")}</span>
+                  <span className="capitalize">{file.category.replace(/-/g, " ")}</span>
                   <span>·</span>
                   <span className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
@@ -434,33 +462,45 @@ export default function MyFilesPage() {
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+
+              {/* Action buttons — always visible */}
+              <div className="flex items-center gap-1 shrink-0">
+                {/* Icon-only: Preview */}
                 <button
                   onClick={() => setPreviewFile(file)}
-                  className="p-2 rounded-lg hover:bg-surface-tertiary transition-colors"
+                  className="p-2 rounded-lg hover:bg-surface-tertiary text-text-secondary hover:text-text-primary transition-colors"
                   title="Preview"
                 >
-                  <Eye className="w-4 h-4 text-text-secondary" />
+                  <Eye className="w-4 h-4" />
                 </button>
+
+                {/* Icon-only: Download */}
                 <button
                   onClick={() => handleDownload(file)}
-                  className="p-2 rounded-lg hover:bg-surface-tertiary transition-colors"
+                  className="p-2 rounded-lg hover:bg-surface-tertiary text-text-secondary hover:text-text-primary transition-colors"
                   title="Download"
                 >
-                  <Download className="w-4 h-4 text-text-secondary" />
+                  <Download className="w-4 h-4" />
                 </button>
+
+                {/* Divider */}
+                <span className="w-px h-5 bg-border mx-1" />
+
+                {/* Labeled: AI Analyze */}
                 <button
                   onClick={() => openAIAnalysis(file)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 dark:text-purple-300 text-xs font-medium transition-colors border border-purple-200 dark:border-purple-700/30"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-medium transition-colors border border-purple-200"
                   title="AI Analyze"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   AI Analyze
                 </button>
+
+                {/* Labeled: Use in Builder */}
                 <button
                   onClick={() => handleUseInDocBuilder(file)}
                   disabled={builderLoading === file.id}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-700 text-xs font-medium transition-colors disabled:opacity-60"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-700 text-xs font-medium transition-colors border border-primary-200 disabled:opacity-60"
                   title="Open in Document Builder"
                 >
                   {builderLoading === file.id ? (
@@ -470,17 +510,22 @@ export default function MyFilesPage() {
                   )}
                   Use in Builder
                 </button>
+
+                {/* Divider */}
+                <span className="w-px h-5 bg-border mx-1" />
+
+                {/* Delete / confirm */}
                 {deleteConfirm === file.id ? (
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleDelete(file.id)}
-                      className="px-2 py-1 text-xs bg-red-600 text-white rounded-lg"
+                      className="px-2.5 py-1.5 text-xs bg-red-600 text-white rounded-lg font-medium"
                     >
-                      Delete
+                      Confirm
                     </button>
                     <button
                       onClick={() => setDeleteConfirm(null)}
-                      className="px-2 py-1 text-xs border border-border rounded-lg"
+                      className="px-2.5 py-1.5 text-xs border border-border rounded-lg text-text-secondary"
                     >
                       Cancel
                     </button>
@@ -488,10 +533,10 @@ export default function MyFilesPage() {
                 ) : (
                   <button
                     onClick={() => setDeleteConfirm(file.id)}
-                    className="p-2 rounded-lg hover:bg-red-50 transition-colors"
+                    className="p-2 rounded-lg hover:bg-red-50 text-text-tertiary hover:text-red-500 transition-colors"
                     title="Delete"
                   >
-                    <Trash2 className="w-4 h-4 text-red-500" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 )}
               </div>
@@ -503,41 +548,37 @@ export default function MyFilesPage() {
           {filtered.map((file) => (
             <div
               key={file.id}
-              className="bg-white rounded-xl border border-border p-4 hover:shadow-md transition-all group"
+              className="bg-white rounded-xl border border-border p-4 hover:shadow-md transition-all flex flex-col"
             >
-              <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center mb-3">
-                {getFileIcon(file.type)}
+              {/* Icon + type badge */}
+              <div className="relative w-fit mb-3">
+                <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center">
+                  {getFileIcon(file.type, "lg")}
+                </div>
+                <span className="absolute -bottom-1 -right-1 text-[9px] font-bold px-1 py-0.5 rounded bg-slate-700 text-white leading-none">
+                  {getFileTypeBadge(file.type)}
+                </span>
               </div>
-              <p className="text-sm font-medium text-text-primary truncate mb-1">{file.name}</p>
-              <p className="text-xs text-text-secondary mb-3">
-                {formatFileSize(file.size)} · <span className="capitalize">{file.category.replace("-", " ")}</span>
-              </p>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setPreviewFile(file)}
-                  className="p-1.5 rounded-lg hover:bg-surface-tertiary transition-colors"
-                  title="Preview"
-                >
-                  <Eye className="w-3.5 h-3.5 text-text-secondary" />
-                </button>
-                <button
-                  onClick={() => handleDownload(file)}
-                  className="p-1.5 rounded-lg hover:bg-surface-tertiary transition-colors"
-                  title="Download"
-                >
-                  <Download className="w-3.5 h-3.5 text-text-secondary" />
-                </button>
+
+              {/* Name + meta */}
+              <p className="text-sm font-medium text-text-primary truncate mb-0.5">{file.name}</p>
+              <p className="text-xs text-text-tertiary mb-1">{formatFileSize(file.size)}</p>
+              <p className="text-xs text-text-tertiary mb-3 capitalize">{file.category.replace(/-/g, " ")}</p>
+
+              {/* Primary actions */}
+              <div className="flex gap-1.5 mb-2">
                 <button
                   onClick={() => openAIAnalysis(file)}
-                  className="p-1.5 rounded-lg hover:bg-purple-50 text-purple-600 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-medium transition-colors border border-purple-200"
                   title="AI Analyze"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
+                  AI
                 </button>
                 <button
                   onClick={() => handleUseInDocBuilder(file)}
                   disabled={builderLoading === file.id}
-                  className="p-1.5 rounded-lg hover:bg-primary-50 text-primary-600 transition-colors ml-auto disabled:opacity-60"
+                  className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-700 text-xs font-medium transition-colors border border-primary-200 disabled:opacity-60"
                   title="Use in Document Builder"
                 >
                   {builderLoading === file.id ? (
@@ -545,14 +586,42 @@ export default function MyFilesPage() {
                   ) : (
                     <Wand2 className="w-3.5 h-3.5" />
                   )}
+                  Builder
+                </button>
+              </div>
+
+              {/* Secondary actions */}
+              <div className="flex items-center gap-1 pt-2 border-t border-border">
+                <button
+                  onClick={() => setPreviewFile(file)}
+                  className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg hover:bg-surface-tertiary text-text-secondary text-xs transition-colors"
+                  title="Preview"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  Preview
                 </button>
                 <button
-                  onClick={() => setDeleteConfirm(file.id)}
-                  className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"
-                  title="Delete"
+                  onClick={() => handleDownload(file)}
+                  className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg hover:bg-surface-tertiary text-text-secondary text-xs transition-colors"
+                  title="Download"
                 >
-                  <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                  <Download className="w-3.5 h-3.5" />
+                  Download
                 </button>
+                {deleteConfirm === file.id ? (
+                  <div className="flex gap-1">
+                    <button onClick={() => handleDelete(file.id)} className="px-2 py-1.5 text-xs bg-red-600 text-white rounded-lg font-medium">Del</button>
+                    <button onClick={() => setDeleteConfirm(null)} className="px-2 py-1.5 text-xs border border-border rounded-lg">✕</button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setDeleteConfirm(file.id)}
+                    className="p-1.5 rounded-lg hover:bg-red-50 text-text-tertiary hover:text-red-500 transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -648,18 +717,28 @@ export default function MyFilesPage() {
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-auto p-5">
+            <div className="flex-1 overflow-auto">
               {previewFile.type.startsWith("image/") ? (
-                <img src={previewFile.content} alt={previewFile.name} className="max-w-full rounded-lg" />
-              ) : previewFile.type === "text/plain" ? (
-                <pre className="text-sm text-text-secondary whitespace-pre-wrap font-mono bg-surface-secondary p-4 rounded-lg">
-                  {atob(previewFile.content.split(",")[1] || "")}
-                </pre>
+                <div className="p-5">
+                  <img src={previewFile.content} alt={previewFile.name} className="max-w-full rounded-lg" />
+                </div>
+              ) : previewFile.type === "application/pdf" || previewFile.type.includes("pdf") ? (
+                <iframe
+                  src={previewFile.content}
+                  className="w-full h-full min-h-[60vh]"
+                  title={previewFile.name}
+                />
+              ) : previewFile.type.startsWith("text/") ? (
+                <div className="p-5">
+                  <pre className="text-sm text-text-secondary whitespace-pre-wrap font-mono bg-surface-secondary p-4 rounded-lg">
+                    {(() => { try { return atob(previewFile.content.split(",")[1] || ""); } catch { return previewFile.content; } })()}
+                  </pre>
+                </div>
               ) : (
-                <div className="text-center py-12 text-text-secondary">
-                  <File className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">Preview not available for this file type.</p>
-                  <p className="text-xs mt-1">Click download to view the file.</p>
+                <div className="flex flex-col items-center justify-center py-16 text-text-secondary">
+                  <File className="w-12 h-12 mb-3 opacity-40" />
+                  <p className="text-sm font-medium">Preview not available</p>
+                  <p className="text-xs mt-1 text-text-tertiary">Use the download button to open this file.</p>
                 </div>
               )}
             </div>
