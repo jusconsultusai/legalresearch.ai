@@ -8,8 +8,7 @@ import {
   Send, Scale, ThumbsUp, ThumbsDown, MessageSquare, FileText, BookOpen,
   Clock, X, ArrowRight, Calendar, SortAsc, Loader2, AlertCircle,
   Search, Lightbulb, PenTool, BookOpenCheck, BarChart3, Brain,
-  Paperclip, ToggleLeft, ToggleRight, Sparkles, Check, ChevronDown,
-  ListChecks,
+  Paperclip, ToggleLeft, ToggleRight, ChevronDown,
 } from "lucide-react";
 import { useChatManagement } from "@/stores";
 import DocumentAnalysisModal from "@/components/document/DocumentAnalysisModal";
@@ -373,7 +372,7 @@ export default function ChatPage() {
   const [fileError, setFileError] = useState("");
   const [showDocAnalysis, setShowDocAnalysis] = useState(false);
 
-  const [deepSearchSteps, setDeepSearchSteps] = useState<DeepSearchStep[]>([]);
+
   const [lastDeepMeta, setLastDeepMeta] = useState<DeepSearchMeta | null>(null);
 
   const [selectedSource, setSelectedSource] = useState<RAGSource | null>(null);
@@ -394,21 +393,6 @@ export default function ChatPage() {
   useEffect(() => { if (activeChatId) loadChat(activeChatId); }, [activeChatId]); // eslint-disable-line
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  /* Auto-advance DeepSearch thinking steps while sending */
-  useEffect(() => {
-    if (!sending) return;
-    const STEP_LABELS: DeepSearchStep["type"][] = ["decompose", "search", "evaluate", "synthesize"];
-    const STEP_DELAYS = [800, 2200, 4000, 6500];
-    const timers = STEP_DELAYS.map((delay, i) =>
-      setTimeout(() => {
-        setDeepSearchSteps((prev) => {
-          if (prev.length <= i) return [...prev, { type: STEP_LABELS[i], label: "", detail: "", startedAt: Date.now() }];
-          return prev;
-        });
-      }, delay)
-    );
-    return () => timers.forEach(clearTimeout);
-  }, [sending]);
 
   const loadChat = async (chatId: string) => {
     try {
@@ -422,7 +406,6 @@ export default function ChatPage() {
     if (!msg || sending) return;
     setInputValue("");
     setSending(true);
-    setDeepSearchSteps([{ type: "decompose", label: "Analyzing your question…", detail: "", startedAt: Date.now() }]);
     setLastDeepMeta(null);
     const tempId = `temp-${Date.now()}`;
     setMessages((prev) => [...prev, { id: tempId, chatId: currentChat?.id || "", role: "user", content: msg, createdAt: new Date().toISOString() }]);
@@ -472,7 +455,6 @@ export default function ChatPage() {
       ]);
     } finally {
       setSending(false);
-      setDeepSearchSteps([]);
       textareaRef.current?.focus();
     }
   };
@@ -829,34 +811,12 @@ export default function ChatPage() {
                         <span className="text-xs font-bold text-text-primary">JusConsultus AI</span>
                         {deepThinkEnabled && <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium"><Brain className="w-2.5 h-2.5 animate-pulse" />Deep Think</span>}
                       </div>
-                      <div className={cn("border border-border rounded-2xl rounded-tl-md px-5 py-4 bg-surface shadow-sm",
-                        deepThinkEnabled && "border-purple-200 dark:border-purple-700/30 bg-linear-to-br from-purple-50/50 to-surface dark:from-purple-900/10")}>
-                        <div className="space-y-3">
-                          {[
-                            { icon: Brain, label: "Decomposing your query", detail: "Breaking question into targeted sub-queries…", color: "text-purple-500", bg: "bg-purple-100 dark:bg-purple-900/30" },
-                            { icon: Search, label: "Searching legal database", detail: "Scanning laws, jurisprudence & executive issuances…", color: "text-blue-500", bg: "bg-blue-100 dark:bg-blue-900/30" },
-                            { icon: ListChecks, label: "Evaluating sources", detail: "Ranking and filtering relevant documents…", color: "text-emerald-500", bg: "bg-emerald-100 dark:bg-emerald-900/30" },
-                            { icon: Sparkles, label: "Synthesizing answer", detail: "Generating comprehensive legal analysis…", color: "text-amber-500", bg: "bg-amber-100 dark:bg-amber-900/30" },
-                          ].map((step, i) => (
-                            <div key={step.label} className={cn("flex items-start gap-3 transition-opacity", i > deepSearchSteps.length - 1 ? "opacity-30" : "opacity-100")}>
-                              <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5", i < deepSearchSteps.length ? step.bg : "bg-surface-secondary")}>
-                                {i < deepSearchSteps.length
-                                  ? (i === deepSearchSteps.length - 1
-                                    ? <step.icon className={cn("w-3.5 h-3.5 animate-pulse", step.color)} />
-                                    : <Check className="w-3.5 h-3.5 text-emerald-500" />)
-                                  : <step.icon className="w-3.5 h-3.5 text-text-tertiary" />}
-                              </div>
-                              <div className="min-w-0">
-                                <p className={cn("text-xs font-semibold", i < deepSearchSteps.length ? "text-text-primary" : "text-text-tertiary")}>{step.label}</p>
-                                <p className={cn("text-[10px] leading-relaxed", i < deepSearchSteps.length ? "text-text-secondary" : "text-text-tertiary")}>{step.detail}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="mt-4 flex items-center gap-2">
-                          <Loader2 className={cn("w-3.5 h-3.5 animate-spin", deepThinkEnabled ? "text-purple-400" : "text-primary-400")} />
-                          <span className={cn("text-[10px]", deepThinkEnabled ? "text-purple-600 dark:text-purple-400" : "text-text-tertiary")}>
-                            {deepThinkEnabled ? "Deep thinking in progress…" : "Analyzing…"}
+                      <div className={cn("border border-border rounded-2xl rounded-tl-md px-4 py-3 bg-surface shadow-sm",
+                        deepThinkEnabled && "border-purple-200 dark:border-purple-700/30")}>
+                        <div className="flex items-center gap-2.5">
+                          <Loader2 className={cn("w-4 h-4 animate-spin shrink-0", deepThinkEnabled ? "text-purple-400" : "text-primary-400")} />
+                          <span className={cn("text-sm", deepThinkEnabled ? "text-purple-600 dark:text-purple-400" : "text-text-secondary")}>
+                            {deepThinkEnabled ? "Deep thinking…" : "Analyzing…"}
                           </span>
                         </div>
                       </div>
