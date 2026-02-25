@@ -1,0 +1,313 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  firstName     String?
+  lastName      String?
+  phone         String?
+  passwordHash  String
+  avatar        String?
+  role          String    @default("user") // user, admin, team_admin
+  purpose       String?   // legal_work, law_school, personal
+  userRole      String?   // solo_practitioner, partner, associate, etc.
+  firmName      String?
+  teamSize      String?
+  hoursPerWeek  Int?
+  heardFrom     String?
+  plan          String    @default("free") // free, pro, team, enterprise
+  billingCycle  String?   // monthly, annual
+  subscriptionStartDate DateTime?
+  subscriptionEndDate   DateTime?
+  paymentSetup  Boolean   @default(false)
+  searchesLeft  Int       @default(15)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  documents     Document[]
+  chats         Chat[]
+  bookmarks     Bookmark[]
+  organization  OrganizationMember[]
+  comments      Comment[]
+  files         UserFile[]
+  searches      SearchHistory[]
+  notifications Notification[]
+  activities    UserActivity[]
+  payments      Payment[]
+
+  @@map("users")
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members   OrganizationMember[]
+  documents Document[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           String       @default("member") // owner, admin, member
+  joinedAt       DateTime     @default(now())
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@map("organization_members")
+}
+
+model Document {
+  id             String   @id @default(cuid())
+  title          String   @default("Untitled Document")
+  content        String   @default("")
+  contentJson    String?  // Quill Delta JSON (legacy)
+  onlyofficeKey  String?  // ONLYOFFICE Document Server key for version tracking
+  docspaceFileId String?  // ONLYOFFICE DocSpace cloud file ID
+  type           String   @default("document") // document, pleading, motion, contract, etc.
+  templateId     String?
+  userId         String
+  organizationId String?
+  isPublic       Boolean  @default(false)
+  status         String   @default("draft") // draft, review, final
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  comments       Comment[]
+
+  @@map("documents")
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  content    String
+  documentId String
+  userId     String
+  parentId   String?
+  resolved   Boolean  @default(false)
+  position   String?  // JSON position in document
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  document   Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+model Chat {
+  id        String   @id @default(cuid())
+  title     String   @default("New Chat")
+  userId    String
+  mode      String   @default("standard_v2") // standard, standard_v2, concise, professional, educational, simple_english
+  sources   String   @default("law,jurisprudence") // comma-separated: law, jurisprudence, issuance
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  @@map("chats")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  chatId    String
+  role      String   // user, assistant, system
+  content   String
+  sources   String?  // JSON array of source references
+  createdAt DateTime @default(now())
+
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model Bookmark {
+  id         String   @id @default(cuid())
+  userId     String
+  documentRef String  // Reference to legal DB document ID
+  category   String   // law, jurisprudence, issuance
+  title      String
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("bookmarks")
+}
+
+model LegalDocument {
+  id          String   @id @default(cuid())
+  category    String   // supreme_court, laws, executive_issuances, references, treaties
+  subcategory String   // acts, batas_pambansa, etc.
+  title       String
+  number      String?
+  date        DateTime?
+  fullText    String?
+  summary     String?
+  digest      String?
+  doctrine    String?
+  facts       String?
+  embedding   String?  // JSON array of float embeddings
+  metadata    String?  // Additional JSON metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category, subcategory])
+  @@index([title])
+  @@map("legal_documents")
+}
+
+model CacheEntry {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  type      String   // query, embedding, llm
+  value     String   // JSON string
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([key, type])
+  @@map("cache_entries")
+}
+
+model Template {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String   // civil, criminal, administrative, commercial, labor
+  type        String   // complaint, motion, petition, contract, affidavit, etc.
+  content     String   // Quill Delta JSON template
+  variables   String?  // JSON array of template variables
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("templates")
+}
+
+// -------------------------------------------------------------------
+// My Files - stores user-uploaded files in the database
+// -------------------------------------------------------------------
+model UserFile {
+  id         String   @id @default(cuid())
+  userId     String
+  name       String
+  type       String   // MIME type
+  size       Int      // bytes
+  category   String   @default("general") // contracts, pleadings, research, etc.
+  content    String   // Base64-encoded file content or plain text
+  uploadedAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_files")
+}
+
+// -------------------------------------------------------------------
+// Search History - every AI/database query a user makes
+// -------------------------------------------------------------------
+model SearchHistory {
+  id         String   @id @default(cuid())
+  userId     String
+  query      String
+  category   String   @default("all") // law, jurisprudence, issuance, all
+  mode       String   @default("standard_v2")
+  results    Int      @default(0)   // number of results returned
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("search_history")
+}
+
+// -------------------------------------------------------------------
+// Notifications - real-time in-app notifications per user
+// -------------------------------------------------------------------
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  type      String   @default("info") // info, success, warning, error
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@map("notifications")
+}
+
+// -------------------------------------------------------------------
+// User Activity - audit log for analytics and session tracking
+// -------------------------------------------------------------------
+model UserActivity {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   // e.g. "document.create", "chat.send", "search.query"
+  metadata  String?  // JSON with extra context
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("user_activities")
+}
+
+
+// -------------------------------------------------------------------
+// Payment - records of manual GCash / Bank Transfer activations
+// -------------------------------------------------------------------
+model Payment {
+  id                    String    @id @default(cuid())
+  userId                String
+  reference             String    @unique
+  amount                Float
+  currency              String    @default("PHP")
+  planId                String    // e.g. "proMonthly", "proAnnual"
+  status                String    @default("verified")
+  subscriptionStartDate DateTime?
+  subscriptionEndDate   DateTime?
+  activatedBy           String?
+  activatedAt           DateTime?
+  providerPaymentId     String?
+  paymentMethod         String?   // gcash, bank_transfer
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([reference])
+  @@index([status])
+  @@map("payments")
+}
+

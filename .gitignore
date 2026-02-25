@@ -1,0 +1,8 @@
+.env*.local
+.env
+node_modules/
+.next/
+data/legal-database/
+client_secret_*.json
+prisma/*.db
+prisma/*.db-journal

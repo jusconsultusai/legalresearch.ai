@@ -1,0 +1,801 @@
+"use client";
+
+import { useState, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useLocalStorage } from "@/hooks";
+import { cn } from "@/lib/utils";
+import ProgressBar from "@/components/ui/ProgressBar";
+import {
+  FolderOpen,
+  Upload,
+  FileText,
+  Trash2,
+  Download,
+  Search,
+  Grid2X2,
+  List,
+  Eye,
+  AlertTriangle,
+  X,
+  Clock,
+  HardDrive,
+  Info,
+  File,
+  FileImage,
+  Wand2,
+  Sparkles,
+  Brain,
+  Loader2,
+  AlertCircle,
+  ListChecks,
+  FileSearch,
+  MessageCircle,
+  ChevronRight,
+} from "lucide-react";
+
+interface LocalFile {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  content: string;
+  category: string;
+  uploadedAt: string;
+  lastAccessed: string;
+}
+
+const FILE_CATEGORIES = [
+  { value: "all", label: "All Files" },
+  { value: "legal-forms", label: "Legal Forms" },
+  { value: "contracts", label: "Contracts" },
+  { value: "pleadings", label: "Pleadings" },
+  { value: "affidavits", label: "Affidavits" },
+  { value: "correspondence", label: "Correspondence" },
+  { value: "other", label: "Other" },
+];
+
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+}
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString("en-PH", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function getFileIcon(type: string) {
+  if (type.startsWith("image/")) return <FileImage className="w-5 h-5" />;
+  return <FileText className="w-5 h-5" />;
+}
+
+export default function MyFilesPage() {
+  const router = useRouter();
+  const [files, setFiles] = useLocalStorage<LocalFile[]>("jusconsultus-my-files", []);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [previewFile, setPreviewFile] = useState<LocalFile | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadCategory, setUploadCategory] = useState("other");
+  const [dragActive, setDragActive] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // AI Analysis state
+  const [aiFile, setAiFile] = useState<LocalFile | null>(null);
+  const [aiTab, setAiTab] = useState<"summary" | "legal-issues" | "extract" | "ask">("summary");
+  const [aiResult, setAiResult] = useState<string | Record<string, unknown> | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiQuestion, setAiQuestion] = useState("");
+  const [aiSources, setAiSources] = useState<{ title: string; number?: string; relevantText?: string; category: string }[]>([]);
+
+  const filtered = files.filter((f) => {
+    const matchesSearch =
+      !searchQuery || f.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = filterCategory === "all" || f.category === filterCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+  const MAX_STORAGE = 5 * 1024 * 1024; // 5 MB limit
+
+  const handleFileUpload = useCallback(
+    (fileList: FileList | null) => {
+      if (!fileList) return;
+      const newFiles: LocalFile[] = [];
+
+      Array.from(fileList).forEach((file) => {
+        if (totalSize + file.size > MAX_STORAGE) {
+          alert(`Storage limit exceeded. Max ${formatFileSize(MAX_STORAGE)} allowed.`);
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target?.result as string;
+          const newFile: LocalFile = {
+            id: `file-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+            name: file.name,
+            type: file.type || "application/octet-stream",
+            size: file.size,
+            content,
+            category: uploadCategory,
+            uploadedAt: new Date().toISOString(),
+            lastAccessed: new Date().toISOString(),
+          };
+          setFiles((prev) => [...prev, newFile]);
+        };
+        reader.readAsDataURL(file);
+      });
+      setShowUploadModal(false);
+    },
+    [totalSize, uploadCategory, setFiles]
+  );
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragActive(false);
+      handleFileUpload(e.dataTransfer.files);
+    },
+    [handleFileUpload]
+  );
+
+  const handleDelete = (id: string) => {
+    setFiles((prev) => prev.filter((f) => f.id !== id));
+    setDeleteConfirm(null);
+    if (previewFile?.id === id) setPreviewFile(null);
+  };
+
+  const handleDownload = (file: LocalFile) => {
+    const link = document.createElement("a");
+    link.href = file.content;
+    link.download = file.name;
+    link.click();
+    setFiles((prev) =>
+      prev.map((f) =>
+        f.id === file.id ? { ...f, lastAccessed: new Date().toISOString() } : f
+      )
+    );
+  };
+
+  const handleUseInDocBuilder = (file: LocalFile) => {
+    // Sync to DB for AI Chat context
+    syncFileToChat(file);
+    // Save file to localStorage for the Document Builder to pick up on load
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(
+        "jusconsultus-import-file",
+        JSON.stringify({ name: file.name, content: file.content, type: file.type })
+      );
+    }
+    router.push("/documents/new");
+  };
+
+  // Sync a single file to DB so AI Chat can reference it
+  const syncFileToChat = async (file: LocalFile) => {
+    try {
+      await fetch("/api/my-files/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          files: [{ id: file.id, name: file.name, type: file.type, size: file.size, category: file.category, content: file.content }],
+        }),
+      });
+    } catch { /* silent — sync is best-effort */ }
+  };
+
+  const openAIAnalysis = (file: LocalFile, tab: "summary" | "legal-issues" | "extract" | "ask" = "summary") => {
+    setAiFile(file);
+    setAiTab(tab);
+    setAiResult(null);
+    setAiSources([]);
+    setAiQuestion("");
+    // Sync file to DB so AI Chat can also reference it
+    syncFileToChat(file);
+    // Auto-run summary immediately
+    if (tab !== "ask") {
+      runAIAnalysis(file, tab);
+    }
+  };
+
+  const runAIAnalysis = async (file: LocalFile, action: string, question?: string) => {
+    setAiLoading(true);
+    setAiResult(null);
+    setAiSources([]);
+    try {
+      const res = await fetch("/api/ai/file-analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: file.content,
+          name: file.name,
+          mimeType: file.type,
+          action,
+          question,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAiResult(data.result);
+        if (data.sources) setAiSources(data.sources);
+      } else {
+        setAiResult("Analysis failed. Please try again.");
+      }
+    } catch {
+      setAiResult("Network error. Please check your connection.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto py-8 px-6 space-y-6" id="tour-myfiles">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-text-primary">My Files</h1>
+          <p className="text-sm text-text-secondary mt-1">
+            Your personal legal documents stored locally in your browser
+          </p>
+        </div>
+        <button
+          onClick={() => setShowUploadModal(true)}
+          className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors"
+        >
+          <Upload className="w-4 h-4" />
+          Upload Files
+        </button>
+      </div>
+
+      {/* Important Disclaimer */}
+      <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+        <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-medium text-amber-800">Local Storage Only</p>
+          <p className="text-xs text-amber-700 mt-0.5">
+            All files uploaded here are saved <strong>only in your browser&apos;s local storage</strong>.
+            They are <strong>not uploaded to JusConsultus servers</strong>. Clearing your browser
+            data will permanently delete these files. We recommend keeping backup copies of important documents.
+          </p>
+        </div>
+      </div>
+
+      {/* Storage Usage */}
+      <div className="flex items-center gap-4 bg-white rounded-xl border border-border p-4">
+        <HardDrive className="w-5 h-5 text-text-secondary" />
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-medium text-text-secondary">
+              Storage Used: {formatFileSize(totalSize)} of {formatFileSize(MAX_STORAGE)}
+            </span>
+            <span className="text-xs text-text-tertiary">{files.length} files</span>
+          </div>
+          <ProgressBar
+            value={Math.min((totalSize / MAX_STORAGE) * 100, 100)}
+            aria-label="Storage usage"
+            barClassName={totalSize / MAX_STORAGE > 0.8 ? "bg-red-500" : "bg-primary-600"}
+          />
+        </div>
+      </div>
+
+      {/* Search + Filters */}
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search files..."
+            className="input pl-9 pr-4 py-2 text-sm w-full"
+          />
+        </div>
+        <select
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+          className="input text-sm py-2 px-3"
+          title="Filter by category"
+        >
+          {FILE_CATEGORIES.map((c) => (
+            <option key={c.value} value={c.value}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+        <div className="flex border border-border rounded-lg overflow-hidden">
+          <button
+            onClick={() => setViewMode("list")}
+            className={cn(
+              "p-2 transition-colors",
+              viewMode === "list" ? "bg-primary-50 text-primary-600" : "hover:bg-surface-secondary text-text-secondary"
+            )}
+            title="List view"
+          >
+            <List className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setViewMode("grid")}
+            className={cn(
+              "p-2 transition-colors",
+              viewMode === "grid" ? "bg-primary-50 text-primary-600" : "hover:bg-surface-secondary text-text-secondary"
+            )}
+            title="Grid view"
+          >
+            <Grid2X2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* File List */}
+      {filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <FolderOpen className="w-16 h-16 text-text-tertiary mb-4 opacity-50" />
+          <h3 className="text-lg font-semibold text-text-primary mb-2">
+            {files.length === 0 ? "No files yet" : "No matching files"}
+          </h3>
+          <p className="text-sm text-text-secondary max-w-md mb-6">
+            {files.length === 0
+              ? "Upload your personal legal forms and documents. They'll be stored locally in your browser and can be reused in the Document Builder."
+              : "Try a different search term or category filter."}
+          </p>
+          {files.length === 0 && (
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors"
+            >
+              <Upload className="w-4 h-4" />
+              Upload Your First File
+            </button>
+          )}
+        </div>
+      ) : viewMode === "list" ? (
+        <div className="bg-white rounded-xl border border-border divide-y divide-border">
+          {filtered.map((file) => (
+            <div
+              key={file.id}
+              className="flex items-center gap-4 px-5 py-4 hover:bg-surface-secondary/50 transition-colors group"
+            >
+              <div className="w-10 h-10 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center shrink-0">
+                {getFileIcon(file.type)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-text-primary truncate">{file.name}</p>
+                <div className="flex items-center gap-3 mt-0.5 text-xs text-text-secondary">
+                  <span>{formatFileSize(file.size)}</span>
+                  <span>·</span>
+                  <span className="capitalize">{file.category.replace("-", " ")}</span>
+                  <span>·</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {formatDate(file.uploadedAt)}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => setPreviewFile(file)}
+                  className="p-2 rounded-lg hover:bg-surface-tertiary transition-colors"
+                  title="Preview"
+                >
+                  <Eye className="w-4 h-4 text-text-secondary" />
+                </button>
+                <button
+                  onClick={() => handleDownload(file)}
+                  className="p-2 rounded-lg hover:bg-surface-tertiary transition-colors"
+                  title="Download"
+                >
+                  <Download className="w-4 h-4 text-text-secondary" />
+                </button>
+                <button
+                  onClick={() => openAIAnalysis(file)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 dark:text-purple-300 text-xs font-medium transition-colors border border-purple-200 dark:border-purple-700/30"
+                  title="AI Analyze"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  AI Analyze
+                </button>
+                <button
+                  onClick={() => handleUseInDocBuilder(file)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-700 text-xs font-medium transition-colors"
+                  title="Open in Document Builder"
+                >
+                  <Wand2 className="w-3.5 h-3.5" />
+                  Use in Builder
+                </button>
+                {deleteConfirm === file.id ? (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleDelete(file.id)}
+                      className="px-2 py-1 text-xs bg-red-600 text-white rounded-lg"
+                    >
+                      Delete
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirm(null)}
+                      className="px-2 py-1 text-xs border border-border rounded-lg"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setDeleteConfirm(file.id)}
+                    className="p-2 rounded-lg hover:bg-red-50 transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filtered.map((file) => (
+            <div
+              key={file.id}
+              className="bg-white rounded-xl border border-border p-4 hover:shadow-md transition-all group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center mb-3">
+                {getFileIcon(file.type)}
+              </div>
+              <p className="text-sm font-medium text-text-primary truncate mb-1">{file.name}</p>
+              <p className="text-xs text-text-secondary mb-3">
+                {formatFileSize(file.size)} · <span className="capitalize">{file.category.replace("-", " ")}</span>
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPreviewFile(file)}
+                  className="p-1.5 rounded-lg hover:bg-surface-tertiary transition-colors"
+                  title="Preview"
+                >
+                  <Eye className="w-3.5 h-3.5 text-text-secondary" />
+                </button>
+                <button
+                  onClick={() => handleDownload(file)}
+                  className="p-1.5 rounded-lg hover:bg-surface-tertiary transition-colors"
+                  title="Download"
+                >
+                  <Download className="w-3.5 h-3.5 text-text-secondary" />
+                </button>
+                <button
+                  onClick={() => openAIAnalysis(file)}
+                  className="p-1.5 rounded-lg hover:bg-purple-50 text-purple-600 transition-colors"
+                  title="AI Analyze"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => handleUseInDocBuilder(file)}
+                  className="p-1.5 rounded-lg hover:bg-primary-50 text-primary-600 transition-colors ml-auto"
+                  title="Use in Document Builder"
+                >
+                  <Wand2 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setDeleteConfirm(file.id)}
+                  className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                  title="Delete"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4">
+            <div className="flex items-center justify-between p-5 border-b border-border">
+              <h3 className="font-semibold">Upload Files</h3>
+              <button onClick={() => setShowUploadModal(false)} className="p-2 hover:bg-surface-tertiary rounded-lg" title="Close">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">Category</label>
+                <select
+                  value={uploadCategory}
+                  onChange={(e) => setUploadCategory(e.target.value)}
+                  className="input w-full text-sm"
+                  title="File category"
+                >
+                  {FILE_CATEGORIES.filter((c) => c.value !== "all").map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div
+                onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+                onDragLeave={() => setDragActive(false)}
+                onDrop={handleDrop}
+                className={cn(
+                  "border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer",
+                  dragActive
+                    ? "border-primary-500 bg-primary-50"
+                    : "border-border hover:border-primary-300"
+                )}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="w-8 h-8 mx-auto mb-3 text-text-tertiary" />
+                <p className="text-sm font-medium text-text-primary">
+                  Drag & drop files here, or click to browse
+                </p>
+                <p className="text-xs text-text-secondary mt-1">
+                  Supports PDF, DOC, DOCX, TXT, and image files
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.webp"
+                  onChange={(e) => handleFileUpload(e.target.files)}
+                  className="hidden"
+                  title="Upload files"
+                />
+              </div>
+
+              <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                <p className="text-xs text-blue-700">
+                  Files are stored in your browser&apos;s local storage only. They are never uploaded
+                  to our servers. Storage is limited to approximately 5 MB.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {previewFile && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b border-border">
+              <div>
+                <h3 className="font-semibold text-sm">{previewFile.name}</h3>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  {formatFileSize(previewFile.size)} · Uploaded {formatDate(previewFile.uploadedAt)}
+                </p>
+              </div>
+              <div className="flex items-center gap-1">
+                <button onClick={() => handleDownload(previewFile)} className="p-2 hover:bg-surface-tertiary rounded-lg" title="Download">
+                  <Download className="w-4 h-4" />
+                </button>
+                <button onClick={() => setPreviewFile(null)} className="p-2 hover:bg-surface-tertiary rounded-lg" title="Close">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto p-5">
+              {previewFile.type.startsWith("image/") ? (
+                <img src={previewFile.content} alt={previewFile.name} className="max-w-full rounded-lg" />
+              ) : previewFile.type === "text/plain" ? (
+                <pre className="text-sm text-text-secondary whitespace-pre-wrap font-mono bg-surface-secondary p-4 rounded-lg">
+                  {atob(previewFile.content.split(",")[1] || "")}
+                </pre>
+              ) : (
+                <div className="text-center py-12 text-text-secondary">
+                  <File className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">Preview not available for this file type.</p>
+                  <p className="text-xs mt-1">Click download to view the file.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* AI Analysis Panel */}
+      {aiFile && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-surface rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center gap-3 p-5 border-b border-border shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 flex items-center justify-center">
+                <Sparkles className="w-4.5 h-4.5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-sm text-text-primary">AI Document Analysis</h3>
+                <p className="text-xs text-text-secondary truncate">{aiFile.name}</p>
+              </div>
+              <button onClick={() => setAiFile(null)} className="p-2 hover:bg-surface-tertiary rounded-lg" title="Close">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Analysis Tabs */}
+            <div className="flex items-center gap-1 px-5 pt-4 shrink-0">
+              {([
+                { id: "summary" as const,       icon: Brain,         label: "Summary" },
+                { id: "legal-issues" as const,  icon: AlertCircle,   label: "Legal Issues" },
+                { id: "extract" as const,        icon: ListChecks,    label: "Extract Data" },
+                { id: "ask" as const,            icon: MessageCircle, label: "Ask" },
+              ]).map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setAiTab(tab.id);
+                    setAiResult(null);
+                    setAiSources([]);
+                    if (tab.id !== "ask") runAIAnalysis(aiFile, tab.id);
+                  }}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                    aiTab === tab.id
+                      ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                      : "text-text-tertiary hover:bg-surface-secondary hover:text-text-primary"
+                  )}
+                >
+                  <tab.icon className="w-3.5 h-3.5" />
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Ask Question input */}
+            {aiTab === "ask" && (
+              <div className="px-5 pt-3 pb-1 shrink-0">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={aiQuestion}
+                    onChange={(e) => setAiQuestion(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && aiQuestion.trim()) runAIAnalysis(aiFile, "ask", aiQuestion); }}
+                    placeholder="Ask anything about this document…"
+                    className="input text-sm flex-1 py-2 px-3"
+                  />
+                  <button
+                    onClick={() => { if (aiQuestion.trim()) runAIAnalysis(aiFile, "ask", aiQuestion); }}
+                    disabled={!aiQuestion.trim() || aiLoading}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+                  >
+                    {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                    Ask
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Result area */}
+            <div className="flex-1 overflow-auto p-5 space-y-4">
+              {aiLoading && (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                    <Brain className="w-6 h-6 text-purple-500 animate-pulse" />
+                  </div>
+                  <p className="text-sm font-medium text-text-primary">Analyzing document…</p>
+                  <p className="text-xs text-text-secondary">JusConsultus AI is reviewing your file</p>
+                  <Loader2 className="w-4 h-4 animate-spin text-purple-400 mt-2" />
+                </div>
+              )}
+
+              {!aiLoading && !aiResult && aiTab !== "ask" && (
+                <div className="flex flex-col items-center justify-center py-12 gap-2 text-text-tertiary">
+                  <FileSearch className="w-10 h-10 opacity-40" />
+                  <p className="text-sm">Click a tab above to begin analysis</p>
+                </div>
+              )}
+
+              {!aiLoading && aiResult && (
+                <>
+                  {/* Text/Markdown result */}
+                  {typeof aiResult === "string" && (
+                    <div className="prose prose-sm max-w-none">
+                      <div className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap bg-surface-secondary dark:bg-surface-tertiary rounded-xl p-4 border border-border">
+                        {aiResult}
+                      </div>
+                    </div>
+                  )}
+
+                  {typeof aiResult === "object" && aiResult !== null && (() => {
+                    const r = aiResult as Record<string, unknown>;
+                    const parties = Array.isArray(r.parties) ? (r.parties as { name: string; role: string }[]) : [];
+                    const obligations = Array.isArray(r.obligations) ? (r.obligations as string[]) : [];
+                    const keywords = Array.isArray(r.keywords) ? (r.keywords as string[]) : [];
+                    return (
+                      <div className="space-y-4">
+                        {!!r.documentType && (
+                          <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-700/30">
+                            <p className="text-xs font-bold text-primary-700 dark:text-primary-300 mb-1">Document Type</p>
+                            <p className="text-sm text-text-primary">{String(r.documentType)}</p>
+                          </div>
+                        )}
+                        {parties.length > 0 && (
+                          <div>
+                            <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Parties</p>
+                            <div className="space-y-1.5">
+                              {parties.map((p, i) => (
+                                <div key={i} className="flex items-center gap-2 text-sm">
+                                  <span className="font-medium text-text-primary">{p.name}</span>
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-secondary text-text-secondary border border-border">{p.role}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {obligations.length > 0 && (
+                          <div>
+                            <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Obligations</p>
+                            <ul className="space-y-1">
+                              {obligations.map((ob, i) => (
+                                <li key={i} className="flex items-start gap-2 text-sm text-text-primary">
+                                  <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-primary-400 mt-2"></span>
+                                  {ob}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {keywords.length > 0 && (
+                          <div>
+                            <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Keywords</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {keywords.map((kw, i) => (
+                                <span key={i} className="px-2 py-0.5 rounded-full bg-surface-secondary text-xs text-text-secondary border border-border">{kw}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Legal sources cross-reference */}
+                  {aiSources.length > 0 && (
+                    <div className="border-t border-border pt-4">
+                      <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3">Related Philippine Laws & Cases</p>
+                      <div className="space-y-2">
+                        {aiSources.map((s, i) => (
+                          <div key={i} className="flex items-start gap-2 p-3 rounded-xl border border-border bg-surface-secondary">
+                            <span className="text-xs font-bold text-text-tertiary mt-0.5">{i + 1}</span>
+                            <div>
+                              <p className="text-xs font-semibold text-text-primary">{s.title}</p>
+                              {s.number && <p className="text-[10px] text-text-tertiary">{s.number}</p>}
+                              {s.relevantText && <p className="text-[10px] text-text-secondary mt-1 line-clamp-2">{s.relevantText}</p>}
+                              <span className={cn("inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium mt-1.5",
+                                s.category === "supreme_court" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300")}>
+                                {s.category === "supreme_court" ? "Jurisprudence" : "Law / Issuance"}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Footer disclaimer */}
+            <div className="px-5 pb-4 shrink-0 border-t border-border pt-3">
+              <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-700/30 rounded-lg px-3 py-2">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-relaxed">
+                  AI analysis is for informational purposes only and does not constitute legal advice. Consult a qualified attorney for legal matters.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
