@@ -18,7 +18,7 @@
 
 import { searchFilesystemLegalDB } from "./rag-filesystem";
 import { searchUserFiles } from "./document-loader";
-import { generateCompletion } from "./llm";
+import { generateCompletion, getDeepThinkModel } from "./llm";
 import { AICache } from "./cache";
 import type { RAGResult, RAGContext } from "./rag";
 
@@ -408,8 +408,11 @@ export async function deepSearch(
   }
   messages.push({ role: "user", content: query });
 
+  const deepThinkModel = getDeepThinkModel();
   const answer = await generateCompletion(messages, {
-    temperature: deepThink ? 0.4 : 0.3,
+    model: deepThink ? deepThinkModel : undefined,
+    // deepseek-reasoner requires temperature=1 (handled inside generateCompletion)
+    temperature: deepThink ? 1 : 0.3,
     maxTokens: deepThink ? 8192 : 4096,
   });
 

@@ -17,7 +17,23 @@ function getLLMConfig() {
   const apiKey = process.env.LLM_API_KEY || process.env.OPENAI_API_KEY;
   const baseUrl = process.env.LLM_BASE_URL || "https://api.openai.com";
   const defaultModel = process.env.LLM_MODEL || "gpt-4o-mini";
-  return { apiKey, baseUrl, defaultModel };
+  // For Deep Think mode — uses deepseek-reasoner when available
+  const deepThinkModel = process.env.LLM_DEEP_THINK_MODEL || "deepseek-reasoner";
+  return { apiKey, baseUrl, defaultModel, deepThinkModel };
+}
+
+/** Returns the model name to use for Deep Think mode. */
+export function getDeepThinkModel(): string {
+  return process.env.LLM_DEEP_THINK_MODEL || "deepseek-reasoner";
+}
+
+/**
+ * Strip <think>…</think> reasoning blocks from DeepSeek Reasoner output.
+ * The reasoning_content is already returned in a separate API field, so the
+ * content field should be clean — but this guards against edge cases.
+ */
+function stripThinkingBlocks(text: string): string {
+  return text.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
 }
 
 // Generate completion using LLM API (DeepSeek, OpenAI, or mock)
@@ -43,6 +59,9 @@ export async function generateCompletion(
 
   if (apiKey && apiKey !== "your-openai-api-key") {
     try {
+      // deepseek-reasoner does not support custom temperatures — must use 1
+      const effectiveTemperature = model.toLowerCase().includes("reasoner") ? 1 : temperature;
+
       const response = await fetch(`${baseUrl}/v1/chat/completions`, {
         method: "POST",
         headers: {
@@ -52,12 +71,13 @@ export async function generateCompletion(
         body: JSON.stringify({
           model,
           messages,
-          temperature,
+          temperature: effectiveTemperature,
           max_tokens: maxTokens,
         }),
       });
       const data = await response.json();
-      const content = data.choices[0]?.message?.content || "";
+      const rawContent = data.choices[0]?.message?.content || "";
+      const content = stripThinkingBlocks(rawContent);
 
       // Cache the response
       await AICache.setLLMResponse(cachePrompt, model, content);
@@ -86,6 +106,9 @@ export async function* generateStreamingCompletion(
 
   if (apiKey && apiKey !== "your-openai-api-key") {
     try {
+      // deepseek-reasoner does not support custom temperatures — must use 1
+      const effectiveTemperature = model.toLowerCase().includes("reasoner") ? 1 : temperature;
+
       const response = await fetch(`${baseUrl}/v1/chat/completions`, {
         method: "POST",
         headers: {
@@ -95,7 +118,7 @@ export async function* generateStreamingCompletion(
         body: JSON.stringify({
           model,
           messages,
-          temperature,
+          temperature: effectiveTemperature,
           max_tokens: maxTokens,
           stream: true,
         }),
@@ -117,8 +140,13 @@ export async function* generateStreamingCompletion(
             if (data === "[DONE]") return;
             try {
               const parsed = JSON.parse(data);
+              // deepseek-reasoner: skip reasoning_content deltas, only yield content
               const content = parsed.choices[0]?.delta?.content;
-              if (content) yield content;
+              if (content) {
+                // Strip any <think> blocks that might appear inline
+                const cleaned = stripThinkingBlocks(content);
+                if (cleaned) yield cleaned;
+              }
             } catch {
               // Skip invalid JSON
             }
