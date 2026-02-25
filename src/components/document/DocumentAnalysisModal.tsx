@@ -139,11 +139,9 @@ export default function DocumentAnalysisModal({
     (text: string, type: "success" | "error" | "info" = "info") => {
       if (showToast) {
         showToast(text, type);
-      } else {
-        // fallback — browser alert for standalone use
-        if (type === "error") console.error(text);
-        else console.info(text);
       }
+      // When no showToast is provided (Chat / My Files contexts), errors surface
+      // via the inline analysisError state — no console noise needed.
     },
     [showToast]
   );
@@ -245,6 +243,11 @@ export default function DocumentAnalysisModal({
       }
       const data = await res.json();
       if (data.success) {
+        // API signals the user needs to sign in — surface it as an inline error
+        if (data.requiresAuth) {
+          setAnalysisError("unauthorized");
+          return;
+        }
         setAnalysisResult(data.analysis);
         const text: string = data.extractedText || data.analysis?.extractedText || "";
         setExtractedText(text);

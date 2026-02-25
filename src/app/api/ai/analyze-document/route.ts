@@ -136,9 +136,68 @@ The JSON must match this TypeScript interface exactly:
   }
 }`;
 
+async function buildFallbackAnalysis(text: string, fileName: string): Promise<object> {
+  const words = text.trim().split(/\s+/);
+  const wordCount = words.length;
+  const ext = fileName.split(".").pop()?.toUpperCase() ?? "DOCUMENT";
+  // Simple heuristics for document type
+  const lower = text.toLowerCase();
+  const docType =
+    lower.includes("affidavit")      ? "Affidavit" :
+    lower.includes("complaint")      ? "Complaint" :
+    lower.includes("memorandum")     ? "Memorandum" :
+    lower.includes("contract")       ? "Contract" :
+    lower.includes("petition")       ? "Petition" :
+    lower.includes("motion")         ? "Motion" :
+    lower.includes("resolution")     ? "Resolution" :
+    ext === "PDF" || ext === "DOCX"  ? "Legal Document" : "Document";
+
+  return {
+    documentType: docType,
+    documentCategory: "Legal Document",
+    summary: `This ${docType.toLowerCase()} (${fileName}) contains approximately ${wordCount.toLocaleString()} words. ` +
+      `Connect an LLM API key via the LLM_API_KEY environment variable to enable full AI-powered analysis including ` +
+      `issue detection, jurisprudence matching, and improvement suggestions.`,
+    overallScore: 50,
+    issues: [
+      {
+        severity: "minor" as const,
+        category: "AI Analysis Unavailable",
+        description: "Full AI analysis requires a configured LLM API key. Text extraction succeeded — the document has been read.",
+        suggestion: "Set LLM_API_KEY in your environment variables to enable deep legal analysis.",
+      },
+    ],
+    improvements: [],
+    legalReferences: [],
+    jurisprudenceSuggestions: [],
+    readabilitySuggestions: {
+      targetAudience: "Legal professionals",
+      currentReadability: "Unable to assess without AI analysis",
+      suggestions: [],
+    },
+    keyTerms: words
+      .filter((w) => w.length > 6)
+      .slice(0, 15)
+      .map((w) => w.replace(/[^a-zA-Z]/g, ""))
+      .filter(Boolean),
+    aiSuggestions: [],
+    metadata: {
+      wordCount,
+      language: "Filipino / English",
+      dateDetected: "",
+    },
+  };
+}
+
 async function analyzeWithAI(text: string, fileName: string): Promise<object> {
   const wordCount = text.trim().split(/\s+/).length;
   const truncated = text.length > 12000 ? text.slice(0, 12000) + "\n\n[... document truncated for analysis ...]" : text;
+
+  // Check if an API key is actually configured
+  const apiKey = process.env.LLM_API_KEY || process.env.OPENAI_API_KEY;
+  if (!apiKey || apiKey === "your-openai-api-key") {
+    return buildFallbackAnalysis(text, fileName);
+  }
 
   const messages = [
     { role: "system" as const, content: SYSTEM_PROMPT },
@@ -148,24 +207,41 @@ async function analyzeWithAI(text: string, fileName: string): Promise<object> {
     },
   ];
 
-  const raw = await generateCompletion(messages, {
-    temperature: 0.2,
-    maxTokens: 4096,
-  });
+  let raw = "";
+  try {
+    raw = await generateCompletion(messages, { temperature: 0.2, maxTokens: 4096 });
+  } catch (err) {
+    console.error("[analyze-document] LLM call failed:", err);
+    return buildFallbackAnalysis(text, fileName);
+  }
 
   // Strip markdown code fences if model wraps the JSON
   const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
-  return JSON.parse(cleaned);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    // Model returned non-JSON (e.g. an explanation) — try to extract embedded JSON
+    const jsonMatch = cleaned.match(/\{[\s\S]+\}/);
+    if (jsonMatch) {
+      try { return JSON.parse(jsonMatch[0]); } catch { /* fall through */ }
+    }
+    console.warn("[analyze-document] JSON parse failed, using fallback. Raw snippet:", cleaned.slice(0, 200));
+    return buildFallbackAnalysis(text, fileName);
+  }
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────
+type ParsedFormData = {
+  file: File;
+  shouldExtract: boolean;
+  shouldAnalyze: boolean;
+};
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Auth is soft — authenticated users get full AI analysis; unauthenticated
+    // users still receive text extraction so the modal isn’t completely broken.
+    const user = await getCurrentUser().catch(() => null);
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
@@ -186,10 +262,25 @@ export async function POST(req: NextRequest) {
       ocrConfidence = conf;
     }
 
-    // 2 — AI analysis
+    // 2 — AI analysis (only for authenticated users)
     let analysis: object | null = null;
     if (shouldAnalyze && extractedText.trim()) {
-      analysis = await analyzeWithAI(extractedText, file.name);
+      if (!user) {
+        // Return a sign-in prompt as a lightweight analysis object
+        analysis = {
+          documentType: "Unknown",
+          documentCategory: "Legal Document",
+          summary: "Sign in to your JusConsultus account to unlock full AI document analysis.",
+          overallScore: 0,
+          issues: [{ severity: "minor", category: "Authentication Required", description: "Please sign in to analyze this document.", suggestion: "" }],
+          improvements: [], legalReferences: [], jurisprudenceSuggestions: [],
+          readabilitySuggestions: { targetAudience: "", currentReadability: "", suggestions: [] },
+          keyTerms: [], aiSuggestions: [],
+          metadata: { wordCount: extractedText.trim().split(/\s+/).length, language: "" },
+        };
+      } else {
+        analysis = await analyzeWithAI(extractedText, file.name);
+      }
       // Attach metadata that extraction knows
       (analysis as any).extractedText = extractedText;
       if (ocrConfidence !== undefined) {
@@ -203,6 +294,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      requiresAuth: !user,
       extractedText,
       analysis,
       fileName: file.name,
