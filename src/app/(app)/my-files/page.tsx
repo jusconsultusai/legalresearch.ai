@@ -98,6 +98,9 @@ export default function MyFilesPage() {
   const [aiQuestion, setAiQuestion] = useState("");
   const [aiSources, setAiSources] = useState<{ title: string; number?: string; relevantText?: string; category: string }[]>([]);
 
+  // "Use in Builder" loading state (tracks which file is being opened)
+  const [builderLoading, setBuilderLoading] = useState<string | null>(null);
+
   const filtered = files.filter((f) => {
     const matchesSearch =
       !searchQuery || f.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -168,17 +171,60 @@ export default function MyFilesPage() {
     );
   };
 
-  const handleUseInDocBuilder = (file: LocalFile) => {
-    // Sync to DB for AI Chat context
-    syncFileToChat(file);
-    // Save file to localStorage for the Document Builder to pick up on load
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(
-        "jusconsultus-import-file",
-        JSON.stringify({ name: file.name, content: file.content, type: file.type })
-      );
+  const handleUseInDocBuilder = async (file: LocalFile) => {
+    setBuilderLoading(file.id);
+    try {
+      // Sync to DB for AI Chat context (best-effort, don't await)
+      syncFileToChat(file);
+
+      // Build a title from the file name (strip extension)
+      const title = file.name.replace(/\.[^.]+$/, "") || file.name;
+
+      // Create a new document via the API
+      const res = await fetch("/api/documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, content: "", category: "general" }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.document?.id) {
+        alert("Failed to create document. Please try again.");
+        return;
+      }
+      const docId = data.document.id as string;
+
+      // Convert file content to HTML for the editor
+      let html = "";
+      if (file.type.startsWith("text/") || file.type === "application/json") {
+        try {
+          const decoded = atob(file.content.split(",")[1] || "");
+          html = decoded.startsWith("<")
+            ? decoded
+            : `<p>${decoded.replace(/\n\n+/g, "</p><p>").replace(/\n/g, "<br/>")}</p>`;
+        } catch {
+          html = `<p>Imported from: ${file.name}</p>`;
+        }
+      } else {
+        // For PDFs, DOCX, and other binary files insert a placeholder
+        html = `<h2>${title}</h2><p><em>File imported from My Files: ${file.name}</em></p><p>Edit this document to add your content.</p>`;
+      }
+
+      // Push the content to the document
+      if (html) {
+        await fetch("/api/onlyoffice/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ documentId: docId, html }),
+        }).catch(() => {/* non-critical */});
+      }
+
+      // Navigate directly to the document editor
+      router.push(`/documents/${docId}`);
+    } catch {
+      alert("Failed to open in Document Builder. Please try again.");
+    } finally {
+      setBuilderLoading(null);
     }
-    router.push("/documents/new");
   };
 
   // Sync a single file to DB so AI Chat can reference it
@@ -226,10 +272,17 @@ export default function MyFilesPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setAiResult(data.result);
+        setAiResult(data.result || "No result returned.");
         if (data.sources) setAiSources(data.sources);
+      } else if (res.status === 401) {
+        setAiResult("Please sign in to use AI analysis.");
       } else {
-        setAiResult("Analysis failed. Please try again.");
+        let errMsg = "Analysis failed. Please try again.";
+        try {
+          const errData = await res.json();
+          if (errData.error) errMsg = `Analysis error: ${errData.error}`;
+        } catch { /* ignore */ }
+        setAiResult(errMsg);
       }
     } catch {
       setAiResult("Network error. Please check your connection.");
@@ -406,10 +459,15 @@ export default function MyFilesPage() {
                 </button>
                 <button
                   onClick={() => handleUseInDocBuilder(file)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-700 text-xs font-medium transition-colors"
+                  disabled={builderLoading === file.id}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-700 text-xs font-medium transition-colors disabled:opacity-60"
                   title="Open in Document Builder"
                 >
-                  <Wand2 className="w-3.5 h-3.5" />
+                  {builderLoading === file.id ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-3.5 h-3.5" />
+                  )}
                   Use in Builder
                 </button>
                 {deleteConfirm === file.id ? (
@@ -478,10 +536,15 @@ export default function MyFilesPage() {
                 </button>
                 <button
                   onClick={() => handleUseInDocBuilder(file)}
-                  className="p-1.5 rounded-lg hover:bg-primary-50 text-primary-600 transition-colors ml-auto"
+                  disabled={builderLoading === file.id}
+                  className="p-1.5 rounded-lg hover:bg-primary-50 text-primary-600 transition-colors ml-auto disabled:opacity-60"
                   title="Use in Document Builder"
                 >
-                  <Wand2 className="w-3.5 h-3.5" />
+                  {builderLoading === file.id ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-3.5 h-3.5" />
+                  )}
                 </button>
                 <button
                   onClick={() => setDeleteConfirm(file.id)}

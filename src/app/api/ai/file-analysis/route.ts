@@ -5,6 +5,48 @@ import { deepSearch } from "@/lib/ai/deep-searcher";
 import { generateCompletion } from "@/lib/ai/llm";
 import { prisma } from "@/lib/db/prisma";
 
+// Dynamically import pdf-parse to avoid bundling issues
+async function extractPdfText(base64Data: string): Promise<string> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pdfParseModule = (await import("pdf-parse")) as any;
+    const pdfParse = pdfParseModule.default ?? pdfParseModule;
+    const buffer = Buffer.from(base64Data, "base64");
+    const data = await pdfParse(buffer);
+    return data.text || "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Extract text from a data-URL content string.
+ * Supports text, HTML, and PDF via pdf-parse.
+ */
+async function extractText(content: string, mimeType: string): Promise<string> {
+  if (!content) return "";
+
+  // Plain text (not a data URL)
+  if (!content.startsWith("data:")) {
+    return content;
+  }
+
+  // Parse the data URL
+  const base64Match = content.match(/^data:[^;]*;base64,(.+)$/);
+  if (!base64Match) return "";
+
+  const base64Data = base64Match[1];
+
+  // Use pdf-parse for PDFs
+  if (mimeType === "application/pdf" || mimeType.includes("pdf")) {
+    const pdfText = await extractPdfText(base64Data);
+    return pdfText;
+  }
+
+  // For everything else, fall through to the sync extractor
+  return extractTextFromContent(content, mimeType);
+}
+
 /**
  * POST /api/ai/file-analysis
  *
@@ -31,9 +73,20 @@ export async function POST(request: NextRequest) {
     let wordCount: number;
 
     if (content) {
-      // Inline content path (My Files localStorage)
-      fileText = extractTextFromContent(content, mimeType || "text/plain");
+      // Inline content path (My Files localStorage) — use async extractor (handles PDFs)
+      fileText = await extractText(content, mimeType || "text/plain");
       fileName = inlineName || "document";
+
+      // If we couldn't extract any text, return an informative message
+      if (!fileText || fileText.trim().length < 10) {
+        return NextResponse.json({
+          result: "This file type does not contain extractable text for AI analysis. " +
+                  "For PDFs, make sure the file contains selectable text (not a scanned image). " +
+                  "For images, text extraction (OCR) is not currently supported.",
+          wordCount: 0,
+        });
+      }
+
       wordCount = fileText.split(/\s+/).filter(Boolean).length;
     } else {
       // DB path (UserFile model)
@@ -80,25 +133,33 @@ Be concise but thorough. Use Philippine legal terminology where appropriate.`,
 
     if (action === "legal-issues") {
       // Cross-reference with legal database to find issues
-      const legalAnalysis = await deepSearch(
-        `Legal issues and compliance analysis for: ${excerpt.slice(0, 500)}`,
-        {
-          mode: "professional",
-          chatMode: "analyze",
-          sourceFilters: ["law", "jurisprudence"],
-          includeUserFiles: false,
-          maxSources: 10,
-        }
-      );
+      // deepSearch is best-effort — continue even if it fails
+      let legalSources: { title: string; number?: string; relevantText?: string; category: string }[] = [];
+      let sourcesContext = "";
+      try {
+        const legalAnalysis = await deepSearch(
+          `Legal issues and compliance analysis for: ${excerpt.slice(0, 500)}`,
+          {
+            mode: "professional",
+            chatMode: "analyze",
+            sourceFilters: ["law", "jurisprudence"],
+            includeUserFiles: false,
+            maxSources: 10,
+          }
+        );
+        legalSources = legalAnalysis.sources.slice(0, 6) as typeof legalSources;
+        sourcesContext = legalSources.length > 0
+          ? `\n\nLegal Sources Found:\n${legalSources.map((s, i) => `[${i + 1}] ${s.title}${s.number ? ` (${s.number})` : ""}\n${s.relevantText?.slice(0, 300) || ""}`).join("\n\n---\n\n")}`
+          : "";
+      } catch (err) {
+        console.error("deepSearch failed for legal-issues (proceeding without sources):", err);
+      }
 
       const issueAnalysis = await generateCompletion(
         [
           {
             role: "system",
-            content: `You are a Philippine legal compliance expert. Analyze the following document for legal issues, risks, and compliance concerns under Philippine law. Reference the provided legal sources.
-
-Legal Sources Found:
-${legalAnalysis.sources.slice(0, 6).map((s, i) => `[${i + 1}] ${s.title}${s.number ? ` (${s.number})` : ""}\n${s.relevantText?.slice(0, 300) || ""}`).join("\n\n---\n\n")}`,
+            content: `You are a Philippine legal compliance expert. Analyze the following document for legal issues, risks, and compliance concerns under Philippine law.${sourcesContext}`,
           },
           {
             role: "user",
@@ -110,7 +171,7 @@ ${legalAnalysis.sources.slice(0, 6).map((s, i) => `[${i + 1}] ${s.title}${s.numb
 
       return NextResponse.json({
         result: issueAnalysis,
-        sources: legalAnalysis.sources.slice(0, 6),
+        sources: legalSources,
         wordCount: wordCount,
       });
     }
