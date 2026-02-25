@@ -59,6 +59,7 @@ interface FileEntry {
   filename: string;
   relativePath: string; // relative to LEGAL_DB_ROOT
   excerpt?: string;
+  relevantText?: string; // search query that matched — used by UI for highlighting
 }
 
 /**
@@ -309,7 +310,7 @@ export async function GET(req: NextRequest) {
     };
   });
 
-  // Apply search
+  // Apply search — also store query as relevantText so UI can highlight it in the document viewer
   if (search) {
     const q = search.toLowerCase();
     files = files.filter(
@@ -318,6 +319,7 @@ export async function GET(req: NextRequest) {
         f.number.toLowerCase().includes(q) ||
         f.year.includes(q)
     );
+    files = files.map((f) => ({ ...f, relevantText: search }));
   }
 
   // Apply year filter for flat collections (year-subdir collections already filtered via collectFiles)

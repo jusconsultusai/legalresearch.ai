@@ -531,7 +531,12 @@ export default function ChatPage() {
     return sourceSortBy === "date" ? [...f].sort((a, b) => (b.date || "").localeCompare(a.date || "")) : [...f].sort((a, b) => b.score - a.score);
   }, [sourceFilterType, sourceSortBy]);
 
-  const serveUrl = useMemo(() => selectedSource?.relativePath ? `/api/legal-files/serve?path=${encodeURIComponent(selectedSource.relativePath)}` : "", [selectedSource]);
+  const serveUrl = useMemo(() => {
+    if (!selectedSource?.relativePath) return "";
+    const base = `/api/legal-files/serve?path=${encodeURIComponent(selectedSource.relativePath)}`;
+    const hl = selectedSource.relevantText?.trim();
+    return hl ? `${base}&highlight=${encodeURIComponent(hl)}` : base;
+  }, [selectedSource]);
 
   const hasMessages = messages.length > 0;
 
@@ -890,7 +895,7 @@ export default function ChatPage() {
             ))}
           </div>
           <div className="flex-1 overflow-hidden">
-            {sourceTab === "fulltext" && serveUrl && <iframe src={serveUrl} className="w-full h-full border-0" title={selectedSource.title} sandbox="allow-same-origin" />}
+            {sourceTab === "fulltext" && serveUrl && <iframe src={serveUrl} className="w-full h-full border-0" title={selectedSource.title} sandbox="allow-same-origin allow-scripts" />}
             {sourceTab === "summary" && (
               <div className="p-4 overflow-auto h-full">
                 {sourceSummaryLoading

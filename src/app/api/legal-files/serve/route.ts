@@ -84,10 +84,106 @@ const INJECTED_STYLE = `
 </style>
 `;
 
-/** Script injected for text selection → postMessage to parent */
+/** Script injected for text selection + highlight from ?highlight= URL param */
 const INJECTED_SCRIPT = `
 <script id="jusconsultus-select">
 (function() {
+  /* ── Highlight relevant passages from ?highlight= URL param ── */
+  (function highlightPassages() {
+    var params = new URLSearchParams(location.search);
+    var raw = params.get('highlight') || '';
+    if (!raw.trim()) return;
+    var STOP = new Set(['the','a','an','and','or','but','in','on','at','to','for','of','with','by','from','as','is','was','are','were','be','been','being','it','its','this','that','which','who','whom','how','when','where','what','why','not','no','have','has','had','do','does','did','will','shall','may','can','could','would','should','must','upon','any','all','each','every','such','under','over','after','before','between','through','without','within','their','they','them','these','those','also','into','about','more','than','then','there','here','so','if','even','only','both','just','its','his','her','our','your','said','been']);
+    var terms = raw.split(/[\s,;.!?()\/\[\]{}"+&*<>\\]+/)
+      .map(function(t){ return t.toLowerCase().replace(/[^a-z0-9]/g,''); })
+      .filter(function(t){ return t.length >= 4 && !STOP.has(t); })
+      .filter(function(t,i,a){ return a.indexOf(t)===i; })
+      .slice(0, 20);
+    if (terms.length === 0) return;
+    var escaped = terms.map(function(t){ return t; }); // terms are already stripped to [a-z0-9], no regex escaping needed
+    var pattern = new RegExp('('+escaped.join('|')+')', 'gi');
+    /* Walk text nodes, skip scripts/styles/existing marks */
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode: function(node){
+        var p = node.parentElement;
+        if (!p) return NodeFilter.FILTER_REJECT;
+        var tag = p.tagName.toUpperCase();
+        if (tag==='SCRIPT'||tag==='STYLE'||tag==='MARK'||tag==='NOSCRIPT'||tag==='TEXTAREA') return NodeFilter.FILTER_REJECT;
+        if (!node.nodeValue.trim()) return NodeFilter.FILTER_SKIP;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    var nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(function(tn){
+      if (!pattern.test(tn.nodeValue)) return;
+      pattern.lastIndex = 0;
+      var frag = document.createDocumentFragment();
+      var last = 0;
+      var text = tn.nodeValue;
+      var m;
+      while ((m = pattern.exec(text)) !== null) {
+        if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        var mk = document.createElement('mark');
+        mk.className = 'jus-hl';
+        mk.textContent = m[0];
+        frag.appendChild(mk);
+        last = m.index + m[0].length;
+      }
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      if (frag.childNodes.length > 0) tn.parentNode.replaceChild(frag, tn);
+    });
+    var marks = Array.from(document.querySelectorAll('mark.jus-hl'));
+    if (marks.length === 0) return;
+    /* Styles */
+    var s = document.createElement('style');
+    s.textContent = 'mark.jus-hl{background:#fef08a;color:#713f12;border-radius:3px;padding:1px 3px;font-style:normal;}mark.jus-hl.jus-current{background:#f97316;color:#fff;outline:2px solid #ea580c;border-radius:3px;}';
+    document.head.appendChild(s);
+    /* Badge */
+    var cur = 0;
+    marks[0].classList.add('jus-current');
+    setTimeout(function(){ marks[0].scrollIntoView({behavior:'smooth',block:'center'}); }, 300);
+    var badge = document.createElement('div');
+    badge.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:99999;background:#1e40af;color:#fff;border-radius:12px;padding:6px 10px;display:flex;align-items:center;gap:6px;font-family:Segoe UI,sans-serif;font-size:12px;font-weight:700;box-shadow:0 4px 24px rgba(0,0,0,0.35);user-select:none;';
+    var lbl = document.createElement('span');
+    lbl.id='jus-hl-lbl';
+    lbl.textContent = '🔍 1 / '+marks.length+' matches';
+    function goTo(idx){
+      marks[cur].classList.remove('jus-current');
+      cur = ((idx % marks.length) + marks.length) % marks.length;
+      marks[cur].classList.add('jus-current');
+      marks[cur].scrollIntoView({behavior:'smooth',block:'center'});
+      lbl.textContent = '🔍 '+(cur+1)+' / '+marks.length+' matches';
+    }
+    function mkBtn(txt, fn){
+      var b = document.createElement('button');
+      b.textContent = txt;
+      b.style.cssText = 'background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:6px;width:24px;height:24px;cursor:pointer;font-size:14px;line-height:1;padding:0;flex-shrink:0;';
+      b.onmouseenter=function(){this.style.background='rgba(255,255,255,0.35)';};
+      b.onmouseleave=function(){this.style.background='rgba(255,255,255,0.2)';};
+      b.onclick=fn;
+      return b;
+    }
+    var prev = mkBtn('↑', function(){ goTo(cur-1); });
+    var next = mkBtn('↓', function(){ goTo(cur+1); });
+    var close = mkBtn('✕', function(){ badge.remove(); marks.forEach(function(m){ var t=document.createTextNode(m.textContent); m.parentNode.replaceChild(t,m); }); });
+    badge.appendChild(lbl);
+    badge.appendChild(prev);
+    badge.appendChild(next);
+    badge.appendChild(close);
+    document.body.appendChild(badge);
+    /* Listen for postMessage highlight updates (e.g. chat panel changes source) */
+    window.addEventListener('message', function(ev){
+      if (!ev.data || ev.data.type !== 'jus-highlight') return;
+      badge.remove();
+      document.querySelectorAll('mark.jus-hl').forEach(function(m){
+        var t = document.createTextNode(m.textContent);
+        m.parentNode.replaceChild(t, m);
+      });
+    });
+  })();
+
+  /* ── Text selection popup ── */
   var popup = null;
   function removePopup() { if (popup && popup.parentNode) { popup.parentNode.removeChild(popup); popup = null; } }
   document.addEventListener('mouseup', function(e) {

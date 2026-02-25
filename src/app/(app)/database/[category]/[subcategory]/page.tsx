@@ -39,6 +39,7 @@ interface FileEntry {
   filename: string;
   relativePath: string;
   excerpt?: string;
+  relevantText?: string; // snippet from search for highlighting
 }
 
 interface Pagination {
@@ -259,7 +260,12 @@ export default function SubcategoryPage() {
   };
 
   const serveUrl = selectedFile
-    ? `/api/legal-files/serve?path=${encodeURIComponent(selectedFile.relativePath)}`
+    ? (() => {
+        const base = `/api/legal-files/serve?path=${encodeURIComponent(selectedFile.relativePath)}`;
+        // Use relevantText from RAG search, or fall back to the keywords typed in the search box
+        const hl = selectedFile.relevantText?.trim() || (searchQuery.trim() ? searchQuery.trim() : "");
+        return hl ? `${base}&highlight=${encodeURIComponent(hl)}` : base;
+      })()
     : "";
 
   return (
