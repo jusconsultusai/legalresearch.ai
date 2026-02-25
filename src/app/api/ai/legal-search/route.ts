@@ -52,8 +52,11 @@ export async function POST(request: NextRequest) {
         title: r.title,
         number: r.number,
         category: r.category,
+        subcategory: r.subcategory,
+        date: r.date,
         score: r.score,
         relevantText: r.relevantText,
+        relativePath: r.relativePath,
       }));
 
       // Synthesize a concise answer from the top results

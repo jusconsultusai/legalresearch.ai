@@ -749,12 +749,7 @@ export default function ChatPage() {
                                 </div>
                               </div>
                             )}
-                            <div className="mt-4 flex items-start gap-2 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-700/30 rounded-lg px-3 py-2">
-                              <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-                              <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-relaxed">
-                                AI-generated analysis for informational purposes only. Not legal advice. Consult a qualified attorney for legal matters.
-                              </p>
-                            </div>
+
                           </div>
                         )}
 
