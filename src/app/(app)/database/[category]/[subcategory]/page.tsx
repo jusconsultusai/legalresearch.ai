@@ -457,7 +457,7 @@ export default function SubcategoryPage() {
       {/* Content: List + Detail */}
       <div className="flex-1 flex overflow-hidden">
         {/* Document List */}
-        <div className={cn("overflow-auto border-r border-border", selectedFile ? "w-2/5" : "w-full")}>
+        <div className={cn("overflow-auto border-r border-border", selectedFile ? "w-1/2" : "w-full")}>
           {loading ? (
             <div className="p-4 space-y-3">
               {Array.from({ length: 10 }).map((_, i) => (
@@ -526,7 +526,7 @@ export default function SubcategoryPage() {
           <div className="flex-1 flex overflow-hidden animate-fade-in">
 
             {/* Left Panel: AI Summary + Metadata */}
-            <div className="w-80 shrink-0 flex flex-col overflow-hidden border-r border-border bg-white">
+            <div className="w-1/2 shrink-0 flex flex-col overflow-hidden border-r border-border bg-white">
 
               {/* Doc header */}
               <div className="px-4 py-3 border-b border-border bg-surface-secondary shrink-0">

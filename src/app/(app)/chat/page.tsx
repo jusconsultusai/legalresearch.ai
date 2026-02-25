@@ -569,7 +569,7 @@ export default function ChatPage() {
     <div className="h-full flex bg-surface">
 
       {/* ===================== MAIN AREA ===================== */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className={cn("flex flex-col min-w-0", selectedSource ? "w-1/2" : "flex-1")}>
 
         {!hasMessages ? (
           /* =========== EMPTY / LANDING STATE =========== */
@@ -876,7 +876,7 @@ export default function ChatPage() {
 
       {/* ===================== SOURCE DETAIL PANEL ===================== */}
       {selectedSource && (
-        <div className="w-105 flex flex-col border-l border-border bg-surface shrink-0 animate-fade-in">
+        <div className="w-1/2 flex flex-col border-l border-border bg-surface shrink-0 animate-fade-in">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
             <div className="min-w-0 flex-1">
               {selectedSource.number && <p className="text-[10px] text-primary-600 dark:text-primary-400 font-bold uppercase tracking-wide mb-0.5">{selectedSource.number}</p>}
