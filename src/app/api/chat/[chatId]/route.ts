@@ -39,16 +39,25 @@ export async function POST(
   // DeepSearch with conversation history
   const sourceFilters = chat.sources.split(",").map((s: string) => s.trim()).filter(Boolean);
 
-  const result = await deepSearch(message, {
-    mode: chat.mode,
-    sourceFilters: sourceFilters.length > 0 ? sourceFilters : undefined,
-    includeUserFiles: true,
-    userId: user.id,
-    chatMode,
-    deepThink,
-    history,
-    maxSources: deepThink ? 30 : 20,
-  });
+  let result;
+  try {
+    result = await deepSearch(message, {
+      mode: chat.mode,
+      sourceFilters: sourceFilters.length > 0 ? sourceFilters : undefined,
+      includeUserFiles: true,
+      userId: user.id,
+      chatMode,
+      deepThink,
+      history,
+      maxSources: deepThink ? 30 : 20,
+    });
+  } catch (err) {
+    console.error("DeepSearch error in POST /api/chat/[chatId]:", err);
+    return NextResponse.json(
+      { error: "An error occurred during the search. Please try again." },
+      { status: 500 }
+    );
+  }
 
   const assistantMessage = await prisma.message.create({
     data: {

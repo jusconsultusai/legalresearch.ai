@@ -55,15 +55,26 @@ export async function POST(request: NextRequest) {
   // DeepSearch Pipeline: decompose → retrieve → evaluate → synthesize
   const sourceFilters = sources.split(",").map((s: string) => s.trim()).filter(Boolean);
 
-  const result = await deepSearch(message, {
-    mode,
-    sourceFilters: sourceFilters.length > 0 ? sourceFilters : undefined,
-    includeUserFiles: true,
-    userId: user.id,
-    chatMode,
-    deepThink,
-    maxSources: deepThink ? 30 : 20,
-  });
+  let result;
+  try {
+    result = await deepSearch(message, {
+      mode,
+      sourceFilters: sourceFilters.length > 0 ? sourceFilters : undefined,
+      includeUserFiles: true,
+      userId: user.id,
+      chatMode,
+      deepThink,
+      maxSources: deepThink ? 30 : 20,
+    });
+  } catch (err) {
+    console.error("DeepSearch error in POST /api/chat:", err);
+    // Clean up the created chat so it doesn't appear as an empty session
+    await prisma.chat.delete({ where: { id: chat.id } }).catch(() => {});
+    return NextResponse.json(
+      { error: "An error occurred during the search. Please try again." },
+      { status: 500 }
+    );
+  }
 
   // Save assistant message with sources
   const assistantMessage = await prisma.message.create({
