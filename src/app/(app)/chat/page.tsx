@@ -9,9 +9,10 @@ import {
   Clock, X, ArrowRight, Calendar, SortAsc, Loader2, AlertCircle,
   Search, Lightbulb, PenTool, BookOpenCheck, BarChart3, Brain,
   Paperclip, ToggleLeft, ToggleRight, Sparkles, Check, ChevronDown,
-  ShieldAlert, ListChecks, Wand2, ExternalLink,
+  ListChecks,
 } from "lucide-react";
 import { useChatManagement } from "@/stores";
+import DocumentAnalysisModal from "@/components/document/DocumentAnalysisModal";
 
 /* ---------- Types ---------- */
 
@@ -44,14 +45,6 @@ interface Chat {
 type ChatMode = "find" | "explain" | "draft" | "digest" | "analyze";
 type ContextVersion = "standard_v2" | "standard" | "context_v1" | "concise" | "professional" | "educational" | "simple";
 type DigestFormat = "IRAC" | "standard";
-
-interface DocAnalysis {
-  summary: string;
-  issues: { severity: "high" | "medium" | "low"; title: string; detail: string }[];
-  suggestions: { title: string; detail: string }[];
-  citations: string[];
-  keyProvisions: string[];
-}
 
 /* ---------- Config ---------- */
 
@@ -221,10 +214,7 @@ interface ChatInputProps {
   activeMode: ChatMode;
   attachedFile: File | null;
   setAttachedFile: (f: File | null) => void;
-  docAnalysisLoading: boolean;
-  docAnalysis: DocAnalysis | null;
-  setDocAnalysis: (v: DocAnalysis | null) => void;
-  setShowDocAnalysis: (v: boolean) => void;
+  onOpenDocAnalysis: () => void;
   fileError: string;
   setFileError: (v: string) => void;
   contextVersion: ContextVersion;
@@ -242,8 +232,7 @@ interface ChatInputProps {
 
 const ChatInput = memo(function ChatInput({
   inputValue, setInputValue, sending, handleKeyDown, handleSend,
-  activeMode, attachedFile, setAttachedFile, docAnalysisLoading,
-  docAnalysis, setDocAnalysis, setShowDocAnalysis, fileError, setFileError,
+  activeMode, attachedFile, setAttachedFile, onOpenDocAnalysis, fileError, setFileError,
   contextVersion, setContextVersion, showContextDropdown, setShowContextDropdown,
   contextDropdownRef, deepThinkEnabled, setDeepThinkEnabled,
   fileInputRef, textareaRef, handleFileSelect, compact = false,
@@ -274,14 +263,11 @@ const ChatInput = memo(function ChatInput({
         <div className="mx-3 mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700/30">
           <Paperclip className="w-3.5 h-3.5 text-primary-500 shrink-0" />
           <span className="text-xs text-primary-700 dark:text-primary-300 flex-1 truncate">{attachedFile.name}</span>
-          {docAnalysisLoading && <Loader2 className="w-3.5 h-3.5 text-primary-400 animate-spin shrink-0" />}
-          {docAnalysis && !docAnalysisLoading && (
-            <button onClick={() => setShowDocAnalysis(true)}
-              className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary-100 dark:bg-primary-800/40 text-primary-700 dark:text-primary-300 text-[10px] font-semibold hover:bg-primary-200 transition-colors shrink-0">
-              <ListChecks className="w-3 h-3" /> View Analysis
-            </button>
-          )}
-          <button onClick={() => { setAttachedFile(null); setDocAnalysis(null); setShowDocAnalysis(false); setFileError(""); }}>
+          <button onClick={onOpenDocAnalysis}
+            className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-800/40 text-purple-700 dark:text-purple-300 text-[10px] font-semibold hover:bg-purple-200 transition-colors shrink-0">
+            <Sparkles className="w-3 h-3" /> Full Analysis
+          </button>
+          <button onClick={() => { setAttachedFile(null); setFileError(""); }}>
             <X className="w-3.5 h-3.5 text-primary-400 hover:text-primary-600" />
           </button>
         </div>
@@ -385,10 +371,7 @@ export default function ChatPage() {
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const [showContextDropdown, setShowContextDropdown] = useState(false);
   const [fileError, setFileError] = useState("");
-  const [docAnalysis, setDocAnalysis] = useState<DocAnalysis | null>(null);
-  const [docAnalysisLoading, setDocAnalysisLoading] = useState(false);
   const [showDocAnalysis, setShowDocAnalysis] = useState(false);
-  const [docAnalysisTab, setDocAnalysisTab] = useState<"summary" | "issues" | "suggestions" | "citations">("summary");
 
   const [deepSearchSteps, setDeepSearchSteps] = useState<DeepSearchStep[]>([]);
   const [lastDeepMeta, setLastDeepMeta] = useState<DeepSearchMeta | null>(null);
@@ -508,26 +491,7 @@ export default function ChatPage() {
     if (!ACCEPTED_MIME.includes(file.type) && !ACCEPTED_EXTS.includes(ext)) { setFileError("Unsupported file type. Please upload PDF, Word, RTF, HTML, TXT, or an image."); return; }
     if (file.size > MAX_FILE_SIZE) { setFileError("File exceeds the 10 MB limit."); return; }
     setAttachedFile(file);
-    analyzeDocument(file);
-  };
-
-  const analyzeDocument = async (file: File) => {
-    setDocAnalysisLoading(true);
-    setDocAnalysis(null);
     setShowDocAnalysis(true);
-    setDocAnalysisTab("summary");
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch("/api/chat/analyze-document", { method: "POST", body: form });
-      if (res.ok) {
-        setDocAnalysis((await res.json()).analysis);
-      } else {
-        setDocAnalysis({ summary: "Unable to analyze this document right now. You can still reference it in the chat.", issues: [], suggestions: [{ title: "Ask questions manually", detail: "Type your questions about this document in the chat." }], citations: [], keyProvisions: [] });
-      }
-    } catch {
-      setDocAnalysis({ summary: "Analysis failed due to a network error.", issues: [], suggestions: [{ title: "Retry later", detail: "Check your connection and try again." }], citations: [], keyProvisions: [] });
-    } finally { setDocAnalysisLoading(false); }
   };
 
   const openSourceDetail = (source: RAGSource) => { setSelectedSource(source); setSourceTab("fulltext"); setSourceSummary(""); };
@@ -600,8 +564,8 @@ export default function ChatPage() {
   /* ── Props bundle passed to the external ChatInput component ── */
   const chatInputProps: Omit<ChatInputProps, "compact"> = {
     inputValue, setInputValue, sending, handleKeyDown, handleSend,
-    activeMode, attachedFile, setAttachedFile, docAnalysisLoading,
-    docAnalysis, setDocAnalysis, setShowDocAnalysis, fileError, setFileError,
+    activeMode, attachedFile, setAttachedFile, onOpenDocAnalysis: () => setShowDocAnalysis(true),
+    fileError, setFileError,
     contextVersion, setContextVersion, showContextDropdown, setShowContextDropdown,
     contextDropdownRef, deepThinkEnabled, setDeepThinkEnabled,
     fileInputRef, textareaRef, handleFileSelect,
@@ -959,166 +923,16 @@ export default function ChatPage() {
     </div>
 
     {/* ===================== DOCUMENT ANALYSIS MODAL ===================== */}
-    {showDocAnalysis && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-        <div className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl bg-surface border border-border shadow-2xl">
-
-          {/* Modal header */}
-          <div className="flex items-start justify-between px-5 py-4 border-b border-border shrink-0">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center shrink-0">
-                <FileText className="w-4.5 h-4.5 text-primary-700 dark:text-primary-300" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs text-text-tertiary font-medium uppercase tracking-wide">Document Analysis</p>
-                <h2 className="text-sm font-bold text-text-primary truncate">{attachedFile?.name}</h2>
-                <p className="text-[10px] text-text-tertiary mt-0.5">
-                  {attachedFile ? (attachedFile.size / 1024 < 1024 ? `${(attachedFile.size / 1024).toFixed(1)} KB` : `${(attachedFile.size / (1024 * 1024)).toFixed(2)} MB`) : ""}
-                </p>
-              </div>
-            </div>
-            <button onClick={() => setShowDocAnalysis(false)} className="p-1.5 hover:bg-surface-tertiary rounded-lg text-text-tertiary shrink-0 ml-2">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex border-b border-border shrink-0 px-2">
-            {([
-              { id: "summary",     label: "Summary",     icon: FileText    },
-              { id: "issues",      label: "Issues",      icon: ShieldAlert  },
-              { id: "suggestions", label: "Suggestions", icon: Wand2        },
-              { id: "citations",   label: "Citations",   icon: BookOpen     },
-            ] as const).map((tab) => (
-              <button key={tab.id} onClick={() => setDocAnalysisTab(tab.id)}
-                className={cn("flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors border-b-2 -mb-px",
-                  docAnalysisTab === tab.id ? "border-primary-600 text-primary-700 dark:text-primary-400" : "border-transparent text-text-tertiary hover:text-text-primary")}>
-                <tab.icon className="w-3.5 h-3.5" />{tab.label}
-                {tab.id === "issues" && docAnalysis && docAnalysis.issues.length > 0 && (
-                  <span className={cn("ml-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold",
-                    docAnalysis.issues.some((i) => i.severity === "high") ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" : "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400")}>
-                    {docAnalysis.issues.length}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 overflow-auto p-5">
-            {docAnalysisLoading ? (
-              <div className="flex flex-col items-center justify-center py-16 gap-4">
-                <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-                <div className="text-center">
-                  <p className="text-sm font-semibold text-text-primary">Analyzing document...</p>
-                  <p className="text-xs text-text-tertiary mt-1">AI is reading and extracting legal insights</p>
-                </div>
-              </div>
-            ) : docAnalysis ? (
-              <>
-                {docAnalysisTab === "summary" && (
-                  <div className="space-y-4">
-                    <div className="p-4 rounded-xl bg-surface-secondary border border-border">
-                      <p className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                        <FileText className="w-3.5 h-3.5 text-primary-500" /> Document Overview
-                      </p>
-                      <p className="text-sm text-text-secondary leading-relaxed">{docAnalysis.summary}</p>
-                    </div>
-                    {docAnalysis.keyProvisions.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2">Key Provisions</p>
-                        <ul className="space-y-1.5">
-                          {docAnalysis.keyProvisions.map((p, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm text-text-secondary">
-                              <span className="w-5 h-5 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
-                              {p}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {docAnalysisTab === "issues" && (
-                  <div className="space-y-3">
-                    {docAnalysis.issues.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-10 gap-2 text-text-tertiary">
-                        <ListChecks className="w-8 h-8 text-emerald-400" />
-                        <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">No issues found</p>
-                        <p className="text-xs">The document appears to be in good order.</p>
-                      </div>
-                    ) : docAnalysis.issues.map((issue, i) => (
-                      <div key={i} className={cn("p-4 rounded-xl border",
-                        issue.severity === "high"   ? "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-700/30" :
-                        issue.severity === "medium" ? "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-700/30" :
-                                                      "bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-700/30")}>
-                        <div className="flex items-center gap-2 mb-1">
-                          <ShieldAlert className={cn("w-3.5 h-3.5 shrink-0",
-                            issue.severity === "high" ? "text-red-500" : issue.severity === "medium" ? "text-amber-500" : "text-blue-500")} />
-                          <p className="text-xs font-bold text-text-primary">{issue.title}</p>
-                          <span className={cn("ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full uppercase",
-                            issue.severity === "high"   ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" :
-                            issue.severity === "medium" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" :
-                                                          "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400")}>
-                            {issue.severity}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-text-secondary leading-relaxed">{issue.detail}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {docAnalysisTab === "suggestions" && (
-                  <div className="space-y-3">
-                    {docAnalysis.suggestions.map((s, i) => (
-                      <div key={i} className="flex gap-3 p-4 rounded-xl border border-border bg-surface-secondary">
-                        <div className="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center shrink-0">
-                          <Wand2 className="w-3 h-3 text-primary-600 dark:text-primary-400" />
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-text-primary mb-0.5">{s.title}</p>
-                          <p className="text-[11px] text-text-secondary leading-relaxed">{s.detail}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {docAnalysisTab === "citations" && (
-                  <div className="space-y-2">
-                    {docAnalysis.citations.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-10 gap-2 text-text-tertiary">
-                        <BookOpen className="w-8 h-8 opacity-30" />
-                        <p className="text-sm">No citations detected</p>
-                      </div>
-                    ) : docAnalysis.citations.map((c, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-surface-secondary text-xs text-text-secondary">
-                        <ExternalLink className="w-3.5 h-3.5 text-primary-500 shrink-0" />
-                        <span className="flex-1">{c}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            ) : null}
-          </div>
-
-          {/* Footer actions */}
-          <div className="flex items-center gap-3 px-5 py-3 border-t border-border shrink-0">
-            <button onClick={() => { setShowDocAnalysis(false); textareaRef.current?.focus(); }}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary-900 text-white text-xs font-semibold hover:bg-primary-800 transition-colors">
-              <Send className="w-3.5 h-3.5" /> Ask questions about this document
-            </button>
-            <button onClick={() => setShowDocAnalysis(false)}
-              className="px-4 py-2.5 rounded-xl border border-border text-xs text-text-secondary hover:bg-surface-secondary transition-colors">
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
+    <DocumentAnalysisModal
+      isOpen={showDocAnalysis}
+      onClose={() => setShowDocAnalysis(false)}
+      initialFile={attachedFile ?? undefined}
+      onInsertText={(text) => {
+        setShowDocAnalysis(false);
+        setInputValue(text.length > 300 ? text.substring(0, 300) + "…" : text);
+        setTimeout(() => textareaRef.current?.focus(), 0);
+      }}
+    />
     </>
   );
 }

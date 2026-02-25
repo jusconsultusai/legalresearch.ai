@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
   X,
   Upload,
@@ -119,6 +119,8 @@ export interface DocumentAnalysisModalProps {
   onInsertAnalysis?: (analysis: AnalysisResult) => void;
   /** Toast callback aligned with the editor page's built-in toast */
   showToast?: (text: string, type?: "success" | "error" | "info") => void;
+  /** Pre-load a file and auto-start analysis when the modal opens */
+  initialFile?: File;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -131,6 +133,7 @@ export default function DocumentAnalysisModal({
   onApplySuggestion,
   onInsertAnalysis,
   showToast,
+  initialFile,
 }: DocumentAnalysisModalProps) {
   const notify = useCallback(
     (text: string, type: "success" | "error" | "info" = "info") => {
@@ -159,6 +162,7 @@ export default function DocumentAnalysisModal({
   );
   const [suggestionFilter, setSuggestionFilter] = useState<SuggestionFilterType>("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleSection = (section: string) => {
@@ -194,6 +198,7 @@ export default function DocumentAnalysisModal({
       notify("File size must be less than 10 MB.", "error");
       return;
     }
+    setAnalysisError(null);
     setFile(selectedFile);
     if (selectedFile.type.startsWith("image/")) {
       const reader = new FileReader();
@@ -208,14 +213,28 @@ export default function DocumentAnalysisModal({
     if (e.target.files?.[0]) handleFileSelection(e.target.files[0]);
   };
 
+  // ── Auto-run when opened with an initialFile ────────────────────────────────
+  useEffect(() => {
+    if (isOpen && initialFile) {
+      setAnalysisResult(null);
+      setExtractedText("");
+      setActiveTab("upload");
+      handleFileSelection(initialFile);
+      // Use a micro-task so the file state is committed before starting analysis
+      setTimeout(() => analyzeDocument(initialFile), 0);
+    }
+  }, [isOpen]); // eslint-disable-line
+
   // ── Full AI analysis ────────────────────────────────────────────────────────
-  const analyzeDocument = async () => {
-    if (!file) return;
+  const analyzeDocument = async (fileOverride?: File) => {
+    const target = fileOverride || file;
+    if (!target) return;
     setIsAnalyzing(true);
+    setAnalysisError(null);
     setActiveTab("results");
     try {
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", target);
       fd.append("extractText", "true");
       fd.append("analyzeContent", "true");
 
@@ -246,6 +265,7 @@ export default function DocumentAnalysisModal({
         throw new Error(data.error || "Analysis failed");
       }
     } catch (err: any) {
+      setAnalysisError(err.message || "Analysis failed. Please try again.");
       notify(`Analysis failed: ${err.message}`, "error");
     } finally {
       setIsAnalyzing(false);
@@ -580,7 +600,7 @@ export default function DocumentAnalysisModal({
                       )}
                     </button>
                     <button
-                      onClick={analyzeDocument}
+                      onClick={() => analyzeDocument()}
                       disabled={isAnalyzing || isExtracting}
                       className="flex items-center gap-2 px-6 py-2.5 bg-linear-to-r from-cyan-600 to-blue-600 text-white rounded-xl text-sm font-medium hover:from-cyan-700 hover:to-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-500/25"
                     >
@@ -612,6 +632,30 @@ export default function DocumentAnalysisModal({
                   <p className="mt-4 text-sm text-text-secondary">Analyzing document with AI…</p>
                   <p className="text-xs text-text-tertiary">Extracting text, identifying issues, finding jurisprudence</p>
                   <p className="mt-2 text-xs text-amber-600 font-medium">This may take up to a minute</p>
+                </div>
+              ) : analysisError ? (
+                <div className="flex flex-col items-center justify-center py-14 gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                    <AlertCircle className="w-6 h-6 text-red-500" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-semibold text-text-primary mb-1">
+                      {analysisError.toLowerCase().includes("unauthorized") || analysisError.toLowerCase().includes("401")
+                        ? "Sign in required"
+                        : "Analysis failed"}
+                    </p>
+                    <p className="text-xs text-text-secondary max-w-xs">
+                      {analysisError.toLowerCase().includes("unauthorized") || analysisError.toLowerCase().includes("401")
+                        ? "Please sign in to your JusConsultus account to use AI document analysis."
+                        : analysisError}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { setAnalysisError(null); setActiveTab("upload"); }}
+                    className="px-4 py-2 rounded-xl bg-primary-600 text-white text-xs font-semibold hover:bg-primary-700 transition-colors"
+                  >
+                    Try again
+                  </button>
                 </div>
               ) : analysisResult ? (
                 <>

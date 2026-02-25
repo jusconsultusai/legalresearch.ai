@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLocalStorage } from "@/hooks";
 import { cn } from "@/lib/utils";
 import ProgressBar from "@/components/ui/ProgressBar";
+import DocumentAnalysisModal from "@/components/document/DocumentAnalysisModal";
 import {
   FolderOpen,
   Upload,
@@ -20,19 +21,13 @@ import {
   Clock,
   HardDrive,
   Info,
-  File,
+  File as FileIcon,
   FileImage,
   FileSpreadsheet,
   Presentation,
   Wand2,
   Sparkles,
-  Brain,
   Loader2,
-  AlertCircle,
-  ListChecks,
-  FileSearch,
-  MessageCircle,
-  ChevronRight,
 } from "lucide-react";
 
 interface LocalFile {
@@ -82,7 +77,7 @@ function getFileIcon(type: string, size: "sm" | "lg" = "sm") {
     return <FileSpreadsheet className={cls} />;
   if (type.includes("presentation") || type.includes("powerpoint"))
     return <Presentation className={cls} />;
-  return <File className={cls} />;
+  return <FileIcon className={cls} />;
 }
 
 function getFileTypeBadge(type: string): string {
@@ -110,13 +105,9 @@ export default function MyFilesPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // AI Analysis state
-  const [aiFile, setAiFile] = useState<LocalFile | null>(null);
-  const [aiTab, setAiTab] = useState<"summary" | "legal-issues" | "extract" | "ask">("summary");
-  const [aiResult, setAiResult] = useState<string | Record<string, unknown> | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiQuestion, setAiQuestion] = useState("");
-  const [aiSources, setAiSources] = useState<{ title: string; number?: string; relevantText?: string; category: string }[]>([]);
+  // AI Analysis state — powered by DocumentAnalysisModal
+  const [showDocAnalysisModal, setShowDocAnalysisModal] = useState(false);
+  const [docAnalysisFile, setDocAnalysisFile] = useState<File | null>(null);
 
   // "Use in Builder" loading state (tracks which file is being opened)
   const [builderLoading, setBuilderLoading] = useState<string | null>(null);
@@ -260,54 +251,21 @@ export default function MyFilesPage() {
     } catch { /* silent — sync is best-effort */ }
   };
 
-  const openAIAnalysis = (file: LocalFile, tab: "summary" | "legal-issues" | "extract" | "ask" = "summary") => {
-    setAiFile(file);
-    setAiTab(tab);
-    setAiResult(null);
-    setAiSources([]);
-    setAiQuestion("");
-    // Sync file to DB so AI Chat can also reference it
-    syncFileToChat(file);
-    // Auto-run summary immediately
-    if (tab !== "ask") {
-      runAIAnalysis(file, tab);
-    }
+  // Convert a locally-stored LocalFile (data URL) to a browser File object
+  const localFileToFile = async (lf: LocalFile): Promise<File> => {
+    const res = await fetch(lf.content);
+    const blob = await res.blob();
+    return new File([blob], lf.name, { type: lf.type || "application/octet-stream" });
   };
 
-  const runAIAnalysis = async (file: LocalFile, action: string, question?: string) => {
-    setAiLoading(true);
-    setAiResult(null);
-    setAiSources([]);
+  const openAIAnalysis = async (file: LocalFile) => {
+    syncFileToChat(file);
     try {
-      const res = await fetch("/api/ai/file-analysis", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: file.content,
-          name: file.name,
-          mimeType: file.type,
-          action,
-          question,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAiResult(data.result || "No result returned.");
-        if (data.sources) setAiSources(data.sources);
-      } else if (res.status === 401) {
-        setAiResult("Please sign in to use AI analysis.");
-      } else {
-        let errMsg = "Analysis failed. Please try again.";
-        try {
-          const errData = await res.json();
-          if (errData.error) errMsg = `Analysis error: ${errData.error}`;
-        } catch { /* ignore */ }
-        setAiResult(errMsg);
-      }
+      const browserFile = await localFileToFile(file);
+      setDocAnalysisFile(browserFile);
+      setShowDocAnalysisModal(true);
     } catch {
-      setAiResult("Network error. Please check your connection.");
-    } finally {
-      setAiLoading(false);
+      alert("Failed to prepare file for analysis. Please try again.");
     }
   };
 
@@ -736,7 +694,7 @@ export default function MyFilesPage() {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-16 text-text-secondary">
-                  <File className="w-12 h-12 mb-3 opacity-40" />
+                  <FileIcon className="w-12 h-12 mb-3 opacity-40" />
                   <p className="text-sm font-medium">Preview not available</p>
                   <p className="text-xs mt-1 text-text-tertiary">Use the download button to open this file.</p>
                 </div>
@@ -745,199 +703,12 @@ export default function MyFilesPage() {
           </div>
         </div>
       )}
-      {/* AI Analysis Panel */}
-      {aiFile && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-surface rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col">
-            {/* Header */}
-            <div className="flex items-center gap-3 p-5 border-b border-border shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 flex items-center justify-center">
-                <Sparkles className="w-4.5 h-4.5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-sm text-text-primary">AI Document Analysis</h3>
-                <p className="text-xs text-text-secondary truncate">{aiFile.name}</p>
-              </div>
-              <button onClick={() => setAiFile(null)} className="p-2 hover:bg-surface-tertiary rounded-lg" title="Close">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Analysis Tabs */}
-            <div className="flex items-center gap-1 px-5 pt-4 shrink-0">
-              {([
-                { id: "summary" as const,       icon: Brain,         label: "Summary" },
-                { id: "legal-issues" as const,  icon: AlertCircle,   label: "Legal Issues" },
-                { id: "extract" as const,        icon: ListChecks,    label: "Extract Data" },
-                { id: "ask" as const,            icon: MessageCircle, label: "Ask" },
-              ]).map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    setAiTab(tab.id);
-                    setAiResult(null);
-                    setAiSources([]);
-                    if (tab.id !== "ask") runAIAnalysis(aiFile, tab.id);
-                  }}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                    aiTab === tab.id
-                      ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
-                      : "text-text-tertiary hover:bg-surface-secondary hover:text-text-primary"
-                  )}
-                >
-                  <tab.icon className="w-3.5 h-3.5" />
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Ask Question input */}
-            {aiTab === "ask" && (
-              <div className="px-5 pt-3 pb-1 shrink-0">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={aiQuestion}
-                    onChange={(e) => setAiQuestion(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter" && aiQuestion.trim()) runAIAnalysis(aiFile, "ask", aiQuestion); }}
-                    placeholder="Ask anything about this document…"
-                    className="input text-sm flex-1 py-2 px-3"
-                  />
-                  <button
-                    onClick={() => { if (aiQuestion.trim()) runAIAnalysis(aiFile, "ask", aiQuestion); }}
-                    disabled={!aiQuestion.trim() || aiLoading}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors flex items-center gap-2"
-                  >
-                    {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                    Ask
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Result area */}
-            <div className="flex-1 overflow-auto p-5 space-y-4">
-              {aiLoading && (
-                <div className="flex flex-col items-center justify-center py-16 gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                    <Brain className="w-6 h-6 text-purple-500 animate-pulse" />
-                  </div>
-                  <p className="text-sm font-medium text-text-primary">Analyzing document…</p>
-                  <p className="text-xs text-text-secondary">JusConsultus AI is reviewing your file</p>
-                  <Loader2 className="w-4 h-4 animate-spin text-purple-400 mt-2" />
-                </div>
-              )}
-
-              {!aiLoading && !aiResult && aiTab !== "ask" && (
-                <div className="flex flex-col items-center justify-center py-12 gap-2 text-text-tertiary">
-                  <FileSearch className="w-10 h-10 opacity-40" />
-                  <p className="text-sm">Click a tab above to begin analysis</p>
-                </div>
-              )}
-
-              {!aiLoading && aiResult && (
-                <>
-                  {/* Text/Markdown result */}
-                  {typeof aiResult === "string" && (
-                    <div className="prose prose-sm max-w-none">
-                      <div className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap bg-surface-secondary dark:bg-surface-tertiary rounded-xl p-4 border border-border">
-                        {aiResult}
-                      </div>
-                    </div>
-                  )}
-
-                  {typeof aiResult === "object" && aiResult !== null && (() => {
-                    const r = aiResult as Record<string, unknown>;
-                    const parties = Array.isArray(r.parties) ? (r.parties as { name: string; role: string }[]) : [];
-                    const obligations = Array.isArray(r.obligations) ? (r.obligations as string[]) : [];
-                    const keywords = Array.isArray(r.keywords) ? (r.keywords as string[]) : [];
-                    return (
-                      <div className="space-y-4">
-                        {!!r.documentType && (
-                          <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-200 dark:border-primary-700/30">
-                            <p className="text-xs font-bold text-primary-700 dark:text-primary-300 mb-1">Document Type</p>
-                            <p className="text-sm text-text-primary">{String(r.documentType)}</p>
-                          </div>
-                        )}
-                        {parties.length > 0 && (
-                          <div>
-                            <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Parties</p>
-                            <div className="space-y-1.5">
-                              {parties.map((p, i) => (
-                                <div key={i} className="flex items-center gap-2 text-sm">
-                                  <span className="font-medium text-text-primary">{p.name}</span>
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-secondary text-text-secondary border border-border">{p.role}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {obligations.length > 0 && (
-                          <div>
-                            <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Obligations</p>
-                            <ul className="space-y-1">
-                              {obligations.map((ob, i) => (
-                                <li key={i} className="flex items-start gap-2 text-sm text-text-primary">
-                                  <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-primary-400 mt-2"></span>
-                                  {ob}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        {keywords.length > 0 && (
-                          <div>
-                            <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Keywords</p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {keywords.map((kw, i) => (
-                                <span key={i} className="px-2 py-0.5 rounded-full bg-surface-secondary text-xs text-text-secondary border border-border">{kw}</span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                  {/* Legal sources cross-reference */}
-                  {aiSources.length > 0 && (
-                    <div className="border-t border-border pt-4">
-                      <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3">Related Philippine Laws & Cases</p>
-                      <div className="space-y-2">
-                        {aiSources.map((s, i) => (
-                          <div key={i} className="flex items-start gap-2 p-3 rounded-xl border border-border bg-surface-secondary">
-                            <span className="text-xs font-bold text-text-tertiary mt-0.5">{i + 1}</span>
-                            <div>
-                              <p className="text-xs font-semibold text-text-primary">{s.title}</p>
-                              {s.number && <p className="text-[10px] text-text-tertiary">{s.number}</p>}
-                              {s.relevantText && <p className="text-[10px] text-text-secondary mt-1 line-clamp-2">{s.relevantText}</p>}
-                              <span className={cn("inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium mt-1.5",
-                                s.category === "supreme_court" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300")}>
-                                {s.category === "supreme_court" ? "Jurisprudence" : "Law / Issuance"}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Footer disclaimer */}
-            <div className="px-5 pb-4 shrink-0 border-t border-border pt-3">
-              <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-700/30 rounded-lg px-3 py-2">
-                <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-                <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-relaxed">
-                  AI analysis is for informational purposes only and does not constitute legal advice. Consult a qualified attorney for legal matters.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Document Analysis Modal */}
+      <DocumentAnalysisModal
+        isOpen={showDocAnalysisModal}
+        onClose={() => { setShowDocAnalysisModal(false); setDocAnalysisFile(null); }}
+        initialFile={docAnalysisFile ?? undefined}
+      />
     </div>
   );
 }
