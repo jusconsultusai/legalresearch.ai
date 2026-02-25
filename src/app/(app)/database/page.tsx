@@ -50,6 +50,8 @@ import {
   Loader2,
   X,
   Calendar,
+  ExternalLink,
+  Eye,
   type LucideProps,
 } from "lucide-react";
 
@@ -223,51 +225,120 @@ export default function DatabasePage() {
                     {aiResult.answer}
                   </div>
                   {aiResult.sources && aiResult.sources.length > 0 && (
-                    <div>
-                      <p className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider mb-2">Sources Found ({aiResult.sources.length})</p>
+                    <div className="space-y-3">
+                      <p className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Sources Found ({aiResult.sources.length})</p>
+
+                      {/* Source badges — always visible */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {aiResult.sources.map((s, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setSelectedAISource(selectedAISource?.title === s.title ? null : s)}
+                            className={cn(
+                              "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition-all cursor-pointer",
+                              selectedAISource?.title === s.title
+                                ? "border-purple-500 bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200 dark:border-purple-400 shadow-sm ring-1 ring-purple-300 dark:ring-purple-600"
+                                : "border-purple-200 dark:border-purple-700/40 bg-white dark:bg-surface text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 hover:shadow-sm"
+                            )}
+                            title={`${s.title}${s.number ? ` — ${s.number}` : ""}${s.date ? ` (${s.date})` : ""}\nClick to view document with highlights`}
+                          >
+                            <span className="w-4 h-4 rounded-full bg-purple-200 dark:bg-purple-700 text-purple-700 dark:text-purple-200 flex items-center justify-center text-[9px] font-bold shrink-0">
+                              {i + 1}
+                            </span>
+                            <span className="truncate max-w-50">{s.title}</span>
+                            {s.number && <span className="text-purple-400 dark:text-purple-500 hidden sm:inline">· {s.number}</span>}
+                            <Eye className="w-3 h-3 shrink-0 opacity-60" />
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Detailed source list */}
                       <div className="space-y-1.5">
                         {aiResult.sources.map((s, i) => (
                           <button
                             key={i}
                             onClick={() => setSelectedAISource(selectedAISource?.title === s.title ? null : s)}
                             className={cn(
-                              "w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg border transition-all",
+                              "w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg border transition-all group/src",
                               selectedAISource?.title === s.title
-                                ? "border-purple-400 bg-purple-50 dark:bg-purple-900/20"
+                                ? "border-purple-400 bg-purple-50 dark:bg-purple-900/20 shadow-sm"
                                 : "border-border hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/10"
                             )}
                           >
                             <span className="text-xs font-bold text-purple-500 w-4 shrink-0">{i + 1}</span>
                             <div className="min-w-0 flex-1">
-                              <p className="text-xs font-semibold text-text-primary truncate">{s.title}</p>
+                              <p className="text-xs font-semibold text-text-primary truncate group-hover/src:text-purple-700 dark:group-hover/src:text-purple-300 transition-colors">{s.title}</p>
                               <div className="flex items-center gap-2 mt-0.5">
                                 {s.number && <span className="text-[10px] text-text-tertiary">{s.number}</span>}
                                 {s.date && <span className="flex items-center gap-0.5 text-[10px] text-text-tertiary"><Calendar className="w-2.5 h-2.5" />{s.date}</span>}
                               </div>
+                              {s.relevantText && (
+                                <p className="text-[10px] text-purple-600/70 dark:text-purple-400/60 mt-1 line-clamp-1 italic">&ldquo;{s.relevantText}&rdquo;</p>
+                              )}
                             </div>
-                            <span className={cn(
-                              "shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium",
-                              s.category === "supreme_court"
-                                ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                                : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
-                            )}>
-                              {s.category === "supreme_court" ? "Jurisprudence" : "Law"}
-                            </span>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className={cn(
+                                "inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium",
+                                s.category === "supreme_court"
+                                  ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                                  : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                              )}>
+                                {s.category === "supreme_court" ? "Jurisprudence" : "Law"}
+                              </span>
+                              <ExternalLink className="w-3.5 h-3.5 text-purple-400 opacity-0 group-hover/src:opacity-100 transition-opacity" />
+                            </div>
                           </button>
                         ))}
                       </div>
+
+                      {/* Document viewer panel */}
                       {selectedAISource?.relativePath && (
-                        <div className="mt-3 rounded-xl border border-purple-200 dark:border-purple-700/40 overflow-hidden">
-                          <div className="flex items-center justify-between px-3 py-2 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-700/40">
-                            <p className="text-[11px] font-semibold text-purple-900 dark:text-purple-200 truncate">{selectedAISource.title}</p>
-                            <button onClick={() => setSelectedAISource(null)} className="ml-2 p-0.5 rounded text-purple-500 hover:text-purple-700 shrink-0"><X className="w-3.5 h-3.5" /></button>
+                        <div className="mt-3 rounded-xl border-2 border-purple-300 dark:border-purple-600/60 overflow-hidden shadow-lg">
+                          <div className="flex items-center justify-between px-4 py-2.5 bg-purple-100 dark:bg-purple-900/30 border-b border-purple-200 dark:border-purple-700/40">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Eye className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0" />
+                              <p className="text-xs font-bold text-purple-900 dark:text-purple-200 truncate">{selectedAISource.title}</p>
+                              {selectedAISource.number && <span className="text-[10px] text-purple-600 dark:text-purple-400 shrink-0">({selectedAISource.number})</span>}
+                            </div>
+                            <button
+                              onClick={() => setSelectedAISource(null)}
+                              className="ml-3 flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-200 dark:bg-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-300 dark:hover:bg-purple-700 transition-colors shrink-0 text-[11px] font-medium"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              Close
+                            </button>
                           </div>
+                          {selectedAISource.relevantText && (
+                            <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-purple-200 dark:border-purple-700/40 flex items-center gap-2">
+                              <Search className="w-3 h-3 text-amber-600 shrink-0" />
+                              <p className="text-[10px] text-amber-700 dark:text-amber-400">Highlighted: <span className="font-semibold">&ldquo;{selectedAISource.relevantText}&rdquo;</span></p>
+                            </div>
+                          )}
                           <iframe
                             src={`/api/legal-files/serve?path=${encodeURIComponent(selectedAISource.relativePath)}${selectedAISource.relevantText ? `&highlight=${encodeURIComponent(selectedAISource.relevantText)}` : ""}`}
                             className="w-full h-120 border-0"
                             title={selectedAISource.title}
                             sandbox="allow-same-origin allow-scripts"
                           />
+                        </div>
+                      )}
+
+                      {/* Message when source has no viewable document */}
+                      {selectedAISource && !selectedAISource.relativePath && (
+                        <div className="mt-3 rounded-xl border border-amber-200 dark:border-amber-700/40 bg-amber-50 dark:bg-amber-900/20 p-4 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                            <p className="text-xs text-amber-700 dark:text-amber-300">
+                              <span className="font-semibold">{selectedAISource.title}</span> — Document not available for inline viewing.
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => setSelectedAISource(null)}
+                            className="ml-3 flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-200 dark:bg-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-300 dark:hover:bg-amber-700 transition-colors shrink-0 text-[11px] font-medium"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            Close
+                          </button>
                         </div>
                       )}
                     </div>
