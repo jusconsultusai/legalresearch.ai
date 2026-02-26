@@ -135,7 +135,7 @@ async function iterativeRetrieval(
   const legalSearches = subQueries.map((sq) =>
     searchFilesystemLegalDB(sq, {
       sourceFilters: options.sourceFilters,
-      limit: Math.ceil((options.maxSources || 20) / subQueries.length) + 3,
+      limit: Math.ceil((options.maxSources || 15) / subQueries.length) + 3,
     })
   );
 
@@ -326,8 +326,8 @@ export async function deepSearch(
   options: DeepSearchOptions = {}
 ): Promise<DeepSearchResult> {
   const {
-    maxSources = 20,
-    maxSubQueries = 4,
+    maxSources = 15,
+    maxSubQueries = 3,
     deepThink = false,
     history,
     chatMode,
@@ -413,7 +413,7 @@ export async function deepSearch(
     model: deepThink ? deepThinkModel : undefined,
     // deepseek-reasoner requires temperature=1 (handled inside generateCompletion)
     temperature: deepThink ? 1 : 0.3,
-    maxTokens: deepThink ? 8192 : 4096,
+    maxTokens: deepThink ? 8192 : 2048,
   });
 
   synthStep.completedAt = Date.now();

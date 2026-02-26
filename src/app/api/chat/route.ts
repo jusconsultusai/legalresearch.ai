@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       chatMode,
       deepThink,
-      maxSources: deepThink ? 30 : 20,
+      maxSources: deepThink ? 30 : 15,
     });
   } catch (err) {
     console.error("DeepSearch error in POST /api/chat:", err);
