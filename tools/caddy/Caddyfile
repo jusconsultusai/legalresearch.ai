@@ -1,0 +1,34 @@
+# Caddy reverse proxy for JusConsultus AI
+# Automatic HTTPS via Let's Encrypt for jusconsultus.online
+
+jusconsultus.online, www.jusconsultus.online {
+	# Reverse proxy to Next.js production server
+	reverse_proxy localhost:3000
+
+	# Encode responses with gzip/zstd
+	encode gzip zstd
+
+	# Security headers
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# Remove server header
+		-Server
+	}
+
+	# Logging
+	log {
+		output file d:\JusConsultus.AI\logs\caddy-access.log {
+			roll_size 50mb
+			roll_keep 3
+		}
+	}
+}
+
+# DuckDNS subdomain (secondary)
+jusconsultusai.duckdns.org {
+	reverse_proxy localhost:3000
+	encode gzip zstd
+}

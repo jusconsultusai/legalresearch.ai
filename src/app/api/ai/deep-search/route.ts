@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { deepSearch, quickSearch } from "@/lib/ai/deep-searcher";
+import { hybridSearch, buildUnifiedPrompt } from "@/lib/ai/unified-search";
+import { generateCompletion } from "@/lib/ai/llm";
 import { prisma } from "@/lib/db/prisma";
 
 /**
@@ -40,15 +41,36 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await deepSearch(query, {
+    // Unified Search with strategy based on deepThink
+    const strategy = deepThink ? "agentic" : "research";
+    const searchResult = await hybridSearch(query, {
       mode,
       sourceFilters: sourceFilters.length > 0 ? sourceFilters : undefined,
-      includeUserFiles,
-      userId: user.id,
-      chatMode,
-      deepThink,
-      maxSources: deepThink ? 30 : 20,
+      maxResults: deepThink ? 30 : 20,
+      strategy,
     });
+
+    // Synthesize answer
+    let answer: string;
+    if (searchResult.agenticAnswer) {
+      answer = searchResult.agenticAnswer;
+    } else {
+      const prompt = buildUnifiedPrompt(searchResult, mode);
+      answer = await generateCompletion(
+        [
+          { role: "system", content: prompt },
+          { role: "user", content: query },
+        ],
+        { temperature: 0.3, maxTokens: 4096 }
+      );
+    }
+
+    const result = {
+      answer,
+      sources: searchResult.results,
+      subQueries: searchResult.subQueries || [],
+      totalSourcesScanned: searchResult.results.length,
+    };
 
     // Decrement search count
     await prisma.user.update({
@@ -70,7 +92,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       answer: result.answer,
       sources: result.sources,
-      steps: result.steps,
       subQueries: result.subQueries,
       totalSourcesScanned: result.totalSourcesScanned,
       searchesLeft: user.searchesLeft - 1,
@@ -105,14 +126,15 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const context = await quickSearch(q, {
+    const searchResult = await hybridSearch(q, {
       sourceFilters: sources ? sources.split(",") : undefined,
-      limit: Math.min(limit, 50),
+      maxResults: Math.min(limit, 50),
+      strategy: "quick",
     });
 
     return NextResponse.json({
-      results: context.results,
-      totalResults: context.totalResults,
+      results: searchResult.results,
+      totalResults: searchResult.results.length,
     });
   } catch (error) {
     console.error("Quick search error:", error);

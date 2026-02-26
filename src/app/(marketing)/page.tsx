@@ -286,12 +286,7 @@ export default async function HomePage() {
                 {databaseCategories.map((cat, i) => (
                   <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-border">
                     <div className="w-10 h-10 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
-                      {/* Hide specific icons on the marketing/about page only */}
-                      {!["Supreme Court", "Treaties"].includes(cat.label) ? (
-                        <cat.Icon className="w-5 h-5" />
-                      ) : (
-                        <span className="w-5 h-5" />
-                      )}
+                      <cat.Icon className="w-5 h-5" />
                     </div>
                     <div>
                       <p className="text-sm font-medium">{cat.label}</p>

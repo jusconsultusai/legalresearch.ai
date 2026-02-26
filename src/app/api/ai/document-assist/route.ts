@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { deepSearch } from "@/lib/ai/deep-searcher";
+import { hybridSearch, buildUnifiedPrompt } from "@/lib/ai/unified-search";
 import { generateCompletion } from "@/lib/ai/llm";
 
 /**
@@ -39,24 +39,26 @@ export async function POST(request: NextRequest) {
       : "";
 
     if (action === "draft" || action === "improve") {
-      // Use DeepSearch to find relevant law, then generate document content
-      const result = await deepSearch(instruction, {
+      // Use hybrid search to find relevant law, then generate document content
+      const searchResult = await hybridSearch(instruction, {
         mode: "professional",
-        chatMode: "draft",
         sourceFilters: sourceFilters.length > 0 ? sourceFilters : ["law", "jurisprudence"],
-        includeUserFiles: true,
-        userId: user.id,
-        maxSources: 12,
+        maxResults: 12,
+        strategy: "research",
       });
 
-      // Generate formatted document text from the search result
+      const sourcesText = searchResult.results
+        .slice(0, 8)
+        .map((s, i) => `[${i + 1}] ${s.title}${s.number ? ` (${s.number})` : ""}${s.date ? ` — ${s.date}` : ""}\n${s.relevantText?.slice(0, 400) || ""}`)
+        .join("\n\n---\n\n");
+
       const draftPrompt = `You are an expert Philippine legal document drafter.
 
 ${action === "draft" ? "Draft" : "Improve"} the following for a ${documentType}:
 ${instruction}${docContextStr}
 
 Use the following legal sources as basis:
-${result.sources.slice(0, 8).map((s, i) => `[${i + 1}] ${s.title}${s.number ? ` (${s.number})` : ""}${s.date ? ` — ${s.date}` : ""}\n${s.relevantText?.slice(0, 400) || ""}`).join("\n\n---\n\n")}
+${sourcesText}
 
 Rules:
 - Use formal Philippine legal language
@@ -76,26 +78,27 @@ Rules:
 
       return NextResponse.json({
         content: draftContent,
-        sources: result.sources.slice(0, 8),
-        subQueries: result.subQueries,
+        sources: searchResult.results.slice(0, 8),
+        subQueries: searchResult.subQueries || [],
       });
     }
 
     if (action === "research") {
       // Find relevant laws and cases for a legal argument
-      const result = await deepSearch(instruction, {
+      const searchResult = await hybridSearch(instruction, {
         mode: "professional",
-        chatMode: "find",
         sourceFilters: sourceFilters.length > 0 ? sourceFilters : ["law", "jurisprudence"],
-        includeUserFiles: false,
-        maxSources: 15,
+        maxResults: 15,
+        strategy: "research",
       });
 
+      const answer = searchResult.agenticAnswer || "Research sources found (see sources below).";
+
       return NextResponse.json({
-        answer: result.answer,
-        sources: result.sources,
-        subQueries: result.subQueries,
-        totalSourcesScanned: result.totalSourcesScanned,
+        answer,
+        sources: searchResult.results,
+        subQueries: searchResult.subQueries || [],
+        totalSourcesScanned: searchResult.results.length,
       });
     }
 
@@ -117,18 +120,19 @@ Rules:
 
     if (action === "citation") {
       // Find proper citations
-      const result = await deepSearch(`Find Philippine law and jurisprudence for: ${instruction}`, {
+      const searchResult = await hybridSearch(`Find Philippine law and jurisprudence for: ${instruction}`, {
         mode: "professional",
-        chatMode: "find",
         sourceFilters: ["law", "jurisprudence"],
-        includeUserFiles: false,
-        maxSources: 10,
+        maxResults: 10,
+        strategy: "exact",
       });
 
+      const answer = searchResult.agenticAnswer || "Citations found (see sources below).";
+
       return NextResponse.json({
-        sources: result.sources,
-        answer: result.answer,
-        subQueries: result.subQueries,
+        sources: searchResult.results,
+        answer,
+        subQueries: searchResult.subQueries || [],
       });
     }
 

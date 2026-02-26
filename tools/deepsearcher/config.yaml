@@ -1,0 +1,23 @@
+llm:
+  provider: DeepSeek
+  config:
+    model: deepseek-chat
+    api_key: ${DEEPSEEK_API_KEY}
+    base_url: https://api.deepseek.com
+
+embedding:
+  provider: OpenAIEmbedding
+  config:
+    model: text-embedding-3-small
+    api_key: ${DEEPSEEK_API_KEY}
+    base_url: https://api.deepseek.com
+
+vector_db:
+  provider: Milvus
+  config:
+    uri: http://localhost:19530
+    token: ""
+
+file_loader:
+  provider: TextLoader
+  config: {}

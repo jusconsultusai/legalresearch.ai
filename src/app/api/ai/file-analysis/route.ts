@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { analyzeUserFile, extractTextFromContent } from "@/lib/ai/document-loader";
-import { deepSearch } from "@/lib/ai/deep-searcher";
+import { hybridSearch } from "@/lib/ai/unified-search";
 import { generateCompletion } from "@/lib/ai/llm";
 import { prisma } from "@/lib/db/prisma";
 
@@ -133,26 +133,25 @@ Be concise but thorough. Use Philippine legal terminology where appropriate.`,
 
     if (action === "legal-issues") {
       // Cross-reference with legal database to find issues
-      // deepSearch is best-effort — continue even if it fails
+      // hybridSearch is best-effort — continue even if it fails
       let legalSources: { title: string; number?: string; relevantText?: string; category: string }[] = [];
       let sourcesContext = "";
       try {
-        const legalAnalysis = await deepSearch(
+        const searchResult = await hybridSearch(
           `Legal issues and compliance analysis for: ${excerpt.slice(0, 500)}`,
           {
             mode: "professional",
-            chatMode: "analyze",
             sourceFilters: ["law", "jurisprudence"],
-            includeUserFiles: false,
-            maxSources: 10,
+            maxResults: 10,
+            strategy: "research",
           }
         );
-        legalSources = legalAnalysis.sources.slice(0, 6) as typeof legalSources;
+        legalSources = searchResult.results.slice(0, 6) as typeof legalSources;
         sourcesContext = legalSources.length > 0
           ? `\n\nLegal Sources Found:\n${legalSources.map((s, i) => `[${i + 1}] ${s.title}${s.number ? ` (${s.number})` : ""}\n${s.relevantText?.slice(0, 300) || ""}`).join("\n\n---\n\n")}`
           : "";
       } catch (err) {
-        console.error("deepSearch failed for legal-issues (proceeding without sources):", err);
+        console.error("hybridSearch failed for legal-issues (proceeding without sources):", err);
       }
 
       const issueAnalysis = await generateCompletion(

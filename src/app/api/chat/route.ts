@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
-import { deepSearch } from "@/lib/ai/deep-searcher";
+import { hybridSearch, buildUnifiedPrompt, type UnifiedSearchResult } from "@/lib/ai/unified-search";
+import { generateCompletion } from "@/lib/ai/llm";
 
 // GET - List chats for current user
 export async function GET() {
@@ -52,23 +53,44 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  // DeepSearch Pipeline: decompose → retrieve → evaluate → synthesize
+  // Unified Search: KAG + DeepSearcher + FilesystemRAG
   const sourceFilters = sources.split(",").map((s: string) => s.trim()).filter(Boolean);
 
-  let result;
+  let answer: string;
+  let searchedSources: UnifiedSearchResult["results"] = [];
+  let subQueriesOut: string[] = [];
+  let totalScanned = 0;
+
   try {
-    result = await deepSearch(message, {
+    const strategy = deepThink ? "agentic" : "auto";
+    const searchResult = await hybridSearch(message, {
       mode,
       sourceFilters: sourceFilters.length > 0 ? sourceFilters : undefined,
-      includeUserFiles: true,
-      userId: user.id,
-      chatMode,
-      deepThink,
-      maxSources: deepThink ? 30 : 15,
+      maxResults: deepThink ? 30 : 15,
+      strategy,
+      enableKAG: true,
+      enableDeepSearcher: true,
+      enableFilesystem: true,
     });
+
+    if (searchResult.agenticAnswer) {
+      answer = searchResult.agenticAnswer;
+    } else {
+      const prompt = buildUnifiedPrompt(searchResult, mode);
+      answer = await generateCompletion(
+        [
+          { role: "system", content: prompt },
+          { role: "user", content: message },
+        ],
+        { temperature: 0.3, maxTokens: deepThink ? 8192 : 4096 }
+      );
+    }
+
+    searchedSources  = searchResult.results;
+    subQueriesOut    = searchResult.subQueries || [];
+    totalScanned     = searchResult.results.length;
   } catch (err) {
-    console.error("DeepSearch error in POST /api/chat:", err);
-    // Clean up the created chat so it doesn't appear as an empty session
+    console.error("Unified Search error in POST /api/chat:", err);
     await prisma.chat.delete({ where: { id: chat.id } }).catch(() => {});
     return NextResponse.json(
       { error: "An error occurred during the search. Please try again." },
@@ -81,8 +103,8 @@ export async function POST(request: NextRequest) {
     data: {
       chatId: chat.id,
       role: "assistant",
-      content: result.answer,
-      sources: JSON.stringify(result.sources.slice(0, 20)),
+      content: answer,
+      sources: JSON.stringify(searchedSources.slice(0, 20)),
     },
   });
 
@@ -99,16 +121,15 @@ export async function POST(request: NextRequest) {
         { id: "user-msg", chatId: chat.id, role: "user", content: message, createdAt: new Date().toISOString() },
         {
           ...assistantMessage,
-          sources: result.sources.slice(0, 20),
+          sources: searchedSources.slice(0, 20),
           createdAt: assistantMessage.createdAt.toISOString(),
         },
       ],
     },
     searchesLeft: user.searchesLeft - 1,
     deepSearchMeta: {
-      subQueries: result.subQueries,
-      steps: result.steps,
-      totalSourcesScanned: result.totalSourcesScanned,
+      subQueries:          subQueriesOut,
+      totalSourcesScanned: totalScanned,
     },
   });
 }

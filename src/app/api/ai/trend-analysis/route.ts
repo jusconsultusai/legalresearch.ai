@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { generateCompletion } from "@/lib/ai/llm";
-import { searchFilesystemLegalDB } from "@/lib/ai/rag-filesystem";
+import { hybridSearch } from "@/lib/ai/unified-search";
 import { AICache } from "@/lib/ai/cache";
 
 /**
@@ -129,11 +129,12 @@ export async function POST(request: NextRequest) {
 
   // ── 7. Parallel legal DB lookups ──
   const [trendResults, recentResults] = await Promise.all([
-    searchFilesystemLegalDB(legalQuery, { limit: 8 }),
-    searchFilesystemLegalDB(focusQuery || "latest Supreme Court 2024 2025", {
+    hybridSearch(legalQuery, { maxResults: 8, strategy: "quick" }).then(r => ({ query: legalQuery, results: r.results, totalResults: r.results.length })),
+    hybridSearch(focusQuery || "latest Supreme Court 2024 2025", {
       sourceFilters: ["jurisprudence", "law"],
-      limit: 6,
-    }),
+      maxResults: 6,
+      strategy: "quick",
+    }).then(r => ({ query: focusQuery || "latest Supreme Court 2024 2025", results: r.results, totalResults: r.results.length })),
   ]);
 
   // ── 8. Build LLM prompt ──

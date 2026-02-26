@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { deepSearch, quickSearch } from "@/lib/ai/deep-searcher";
+import { hybridSearch, buildUnifiedPrompt } from "@/lib/ai/unified-search";
 import { generateCompletion } from "@/lib/ai/llm";
 
 /**
@@ -24,69 +24,45 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    if (deep) {
-      // Full DeepSearch with LLM synthesis
-      const result = await deepSearch(query, {
-        mode,
-        sourceFilters: sourceFilters.length > 0 ? sourceFilters : undefined,
-        includeUserFiles: true,
-        userId: user.id,
-        maxSources: 15,
-      });
+    const strategy = deep ? "agentic" : "quick";
+    const searchResult = await hybridSearch(query, {
+      mode,
+      sourceFilters: sourceFilters.length > 0 ? sourceFilters : undefined,
+      maxResults: deep ? 15 : 10,
+      strategy,
+    });
 
-      return NextResponse.json({
-        answer: result.answer,
-        sources: result.sources,
-        subQueries: result.subQueries,
-        totalSourcesScanned: result.totalSourcesScanned,
-      });
+    let answer: string;
+    if (searchResult.agenticAnswer) {
+      answer = searchResult.agenticAnswer;
     } else {
-      // Quick search with lightweight LLM synthesis
-      const context = await quickSearch(query, {
-        sourceFilters: sourceFilters.length > 0 ? sourceFilters : undefined,
-        limit: 15,
-      });
-
-      // Build sources in the same shape as deepSearch
-      const sources = context.results.map((r) => ({
-        title: r.title,
-        number: r.number,
-        category: r.category,
-        subcategory: r.subcategory,
-        date: r.date,
-        score: r.score,
-        relevantText: r.relevantText,
-        relativePath: r.relativePath,
-      }));
-
-      // Synthesize a concise answer from the top results
-      let answer = "No relevant legal documents found for your query.";
-      if (sources.length > 0) {
-        const snippets = sources
-          .slice(0, 6)
-          .map((s, i) => `[${i + 1}] ${s.title}${s.number ? ` (${s.number})` : ""}: ${s.relevantText?.slice(0, 300)}`)
-          .join("\n\n");
-        answer = await generateCompletion(
-          [
-            {
-              role: "system",
-              content: `You are a Philippine legal research assistant. Based on the retrieved legal documents, provide a concise and accurate answer to the user's query. Reference specific laws, cases, or provisions by name. Be direct and legally precise. Format your answer in clear paragraphs.`,
-            },
-            {
-              role: "user",
-              content: `Query: ${query}\n\nRetrieved Documents:\n${snippets}`,
-            },
-          ],
-          { temperature: 0.3, maxTokens: 1200 }
-        );
-      }
-
-      return NextResponse.json({
-        answer,
-        sources,
-        totalSourcesScanned: context.totalResults,
-      });
+      const prompt = buildUnifiedPrompt(searchResult, mode);
+      answer = await generateCompletion(
+        [
+          { role: "system", content: prompt },
+          { role: "user", content: query },
+        ],
+        { temperature: 0.3, maxTokens: 2048 }
+      );
     }
+
+    const sources = searchResult.results.map((r) => ({
+      title: r.title,
+      number: r.number,
+      category: r.category,
+      subcategory: r.subcategory,
+      date: r.date,
+      score: r.score,
+      relevantText: r.relevantText,
+      relativePath: r.relativePath,
+    }));
+
+    return NextResponse.json({
+      answer,
+      sources,
+      subQueries: searchResult.subQueries || [],
+      totalSourcesScanned: searchResult.results.length,
+    });
   } catch (error) {
     console.error("Legal search error:", error);
     return NextResponse.json({ error: "Search failed" }, { status: 500 });

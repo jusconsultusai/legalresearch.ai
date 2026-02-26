@@ -3,3 +3,27 @@
 node_modules/
 .next/
 data/legal-database/
+
+# Python venv & caches
+tools/deepsearcher/.venv/
+tools/deepsearcher/__pycache__/
+tools/deepsearcher/*.pyc
+tools/deepsearcher/chroma_db/
+
+# Caddy binary (downloaded separately)
+tools/caddy/*.exe
+tools/caddy/*.zip
+tools/caddy/extracted/
+
+# ngrok
+tools/ngrok/
+
+# pm2 logs & runtime
+logs/
+*.log
+
+# Misc
+1.3.3
+tsconfig.tsbuildinfo
+prisma/dev.db
+prisma/*.db
