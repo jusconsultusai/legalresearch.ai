@@ -660,7 +660,7 @@ export default function ChatPage() {
 
                 {/* Hero */}
                 <div className="text-center mb-8">
-                  <h1 className="text-2xl md:text-3xl font-bold text-text-primary mb-2">Ask and it will be given to you — <span className="text-primary-700 dark:text-primary-400 whitespace-nowrap">Ask&nbsp;JusConsultus</span></h1>
+                  <h1 className="text-2xl md:text-3xl font-bold text-text-primary mb-2 whitespace-nowrap">Ask and it will be given to you — <span className="text-primary-700 dark:text-primary-400">Ask&nbsp;JusConsultus</span></h1>
                 </div>
 
                 {/* Main search box */}
