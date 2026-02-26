@@ -1147,7 +1147,49 @@ export default function DocumentEditorPage() {
         onClose={() => setShowAnalysisModal(false)}
         showToast={showToast}
         onInsertText={async (text) => {
-          await pushContentAndReload(`<p>${text.replace(/\n\n+/g, "</p><p>").replace(/\n/g, "<br/>")}</p>`);
+          const html = `<p>${text.replace(/\n\n+/g, "</p><p>").replace(/\n/g, "<br/>")}</p>`;
+          await pushContentAndReload(html);
+          showToast("Original document inserted into editor", "success");
+        }}
+        onInsertEdited={async (editedText) => {
+          const html = `<p>${editedText.replace(/\n\n+/g, "</p><p>").replace(/\n/g, "<br/>")}</p>`;
+          await pushContentAndReload(html);
+          showToast("Edited document (with accepted suggestions) inserted into editor", "success");
+        }}
+        onApplySuggestion={async (suggestion) => {
+          try {
+            const latest = await fetchLatestContent();
+            if (!suggestion.original || !suggestion.suggested) {
+              showToast("This suggestion has no text replacement", "error");
+              return;
+            }
+            // Try replacing in HTML; fall back to plain-text-level replace
+            let updated = latest.replace(suggestion.original, suggestion.suggested);
+            if (updated === latest) {
+              showToast("Could not locate that exact text in the document — try copying manually", "error");
+              return;
+            }
+            await pushContentAndReload(updated);
+            showToast("Suggestion applied to document", "success");
+          } catch {
+            showToast("Failed to apply suggestion", "error");
+          }
+        }}
+        onInsertAnalysis={async (analysis) => {
+          const summary = [
+            `<h2>Document Analysis Report</h2>`,
+            `<p><strong>Type:</strong> ${analysis.documentType} — ${analysis.documentCategory}</p>`,
+            `<p><strong>Quality Score:</strong> ${analysis.overallScore}/100</p>`,
+            `<h3>Summary</h3><p>${analysis.summary}</p>`,
+            analysis.issues?.length ? `<h3>Issues (${analysis.issues.length})</h3>` +
+              analysis.issues.map(i => `<p>• <strong>[${i.severity.toUpperCase()}] ${i.category}:</strong> ${i.description}${i.suggestion ? ` — ${i.suggestion}` : ""}</p>`).join("") : "",
+            analysis.improvements?.length ? `<h3>Improvement Recommendations</h3>` +
+              analysis.improvements.map(imp => `<p>• <strong>${imp.area}:</strong> ${imp.recommendation}</p>`).join("") : "",
+            analysis.aiSuggestions?.length ? `<h3>AI Text Suggestions (${analysis.aiSuggestions.length})</h3>` +
+              analysis.aiSuggestions.map(s => `<p>• <strong>[${s.type}]</strong> Replace: <em>"${s.original}"</em> → <em>"${s.suggested}"</em> (${s.reason})</p>`).join("") : "",
+          ].filter(Boolean).join("\n");
+          await pushContentAndReload(summary);
+          showToast("Analysis report inserted into editor", "success");
         }}
       />
 

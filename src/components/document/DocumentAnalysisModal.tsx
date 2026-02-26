@@ -25,6 +25,8 @@ import {
   Info,
   RefreshCw,
   Check,
+  Zap,
+  FileEdit,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -117,6 +119,8 @@ export interface DocumentAnalysisModalProps {
   onAutoPopulateSuggestions?: (suggestions: AISuggestion[]) => void;
   onApplySuggestion?: (suggestion: AISuggestion) => void;
   onInsertAnalysis?: (analysis: AnalysisResult) => void;
+  /** Send the edited document (with accepted AI suggestions applied) to the editor */
+  onInsertEdited?: (editedText: string) => void;
   /** Called immediately when analysis finishes successfully — use for post-analysis side-effects like redirects */
   onAnalysisComplete?: (analysis: AnalysisResult, extractedText: string) => void;
   /** Toast callback aligned with the editor page's built-in toast */
@@ -134,6 +138,7 @@ export default function DocumentAnalysisModal({
   onAutoPopulateSuggestions,
   onApplySuggestion,
   onInsertAnalysis,
+  onInsertEdited,
   onAnalysisComplete,
   showToast,
   initialFile,
@@ -164,7 +169,15 @@ export default function DocumentAnalysisModal({
   const [suggestionFilter, setSuggestionFilter] = useState<SuggestionFilterType>("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [acceptedSuggestionIds, setAcceptedSuggestionIds] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-accept all suggestions when a new analysis result arrives
+  useEffect(() => {
+    if (analysisResult?.aiSuggestions?.length) {
+      setAcceptedSuggestionIds(new Set(analysisResult.aiSuggestions.map((s) => s.id)));
+    }
+  }, [analysisResult]);
 
   const toggleSection = (section: string) => {
     setExpandedSections((prev) => {
@@ -411,7 +424,50 @@ export default function DocumentAnalysisModal({
     setExtractedText("");
     setActiveTab("upload");
     setSuggestionFilter("all");
+    setAcceptedSuggestionIds(new Set());
   };
+
+  // ── Suggestion acceptance helpers ───────────────────────────────────────────
+  const toggleSuggestionAcceptance = (id: string) => {
+    setAcceptedSuggestionIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const acceptAllVisible = () => {
+    setAcceptedSuggestionIds((prev) => {
+      const next = new Set(prev);
+      getFilteredSuggestions().forEach((s) => next.add(s.id));
+      return next;
+    });
+  };
+
+  const rejectAllVisible = () => {
+    setAcceptedSuggestionIds((prev) => {
+      const next = new Set(prev);
+      getFilteredSuggestions().forEach((s) => next.delete(s.id));
+      return next;
+    });
+  };
+
+  /** Build a version of extractedText with all accepted suggestions applied */
+  const buildEditedText = (): string => {
+    let doc = extractedText;
+    if (!doc) return "";
+    const allSuggestions = analysisResult?.aiSuggestions ?? [];
+    const accepted = allSuggestions.filter(
+      (s) => acceptedSuggestionIds.has(s.id) && s.original && s.suggested
+    );
+    for (const s of accepted) {
+      doc = doc.replace(s.original, s.suggested);
+    }
+    return doc;
+  };
+
+  const acceptedCount = getFilteredSuggestions().filter((s) => acceptedSuggestionIds.has(s.id)).length;
 
   const handleApplySuggestion = (s: AISuggestion) => {
     if (onApplySuggestion) {
@@ -751,70 +807,125 @@ export default function DocumentAnalysisModal({
                   {/* AI Suggestions */}
                   {(analysisResult.aiSuggestions?.length ?? 0) > 0 && (
                     <div className="bg-white rounded-xl border border-border">
-                      <div className="flex items-center justify-between gap-3 p-4 border-b border-border">
-                        <button onClick={() => toggleSection("aiSuggestions")} className="flex items-center gap-2">
-                          <Lightbulb className="w-4 h-4 text-green-600" />
-                          <span className="text-sm font-semibold text-text-primary">
-                            AI Suggestions ({getFilteredSuggestions().length})
-                          </span>
-                          {expandedSections.has("aiSuggestions") ? <ChevronUp className="w-4 h-4 text-text-tertiary" /> : <ChevronDown className="w-4 h-4 text-text-tertiary" />}
-                        </button>
-                        <div className="flex items-center gap-2">
-                          <select
-                            value={suggestionFilter}
-                            onChange={(e) => setSuggestionFilter(e.target.value as SuggestionFilterType)}
-                            className="text-xs px-3 py-1.5 bg-white border border-border rounded-lg text-text-secondary"
-                          >
-                            <option value="all">All</option>
-                            <option value="grammar">Grammar & Style</option>
-                            <option value="legal">Legal Review</option>
-                            <option value="clarity">Clarity</option>
-                          </select>
-                          <button
-                            onClick={refreshSuggestions}
-                            disabled={isRefreshing}
-                            className="px-3 py-1.5 text-xs bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors flex items-center gap-1.5"
-                          >
-                            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
-                            Refresh
+                      <div className="flex flex-col gap-2 p-4 border-b border-border">
+                        <div className="flex items-center justify-between gap-3">
+                          <button onClick={() => toggleSection("aiSuggestions")} className="flex items-center gap-2">
+                            <Lightbulb className="w-4 h-4 text-green-600" />
+                            <span className="text-sm font-semibold text-text-primary">
+                              AI Suggestions ({getFilteredSuggestions().length})
+                            </span>
+                            {expandedSections.has("aiSuggestions") ? <ChevronUp className="w-4 h-4 text-text-tertiary" /> : <ChevronDown className="w-4 h-4 text-text-tertiary" />}
                           </button>
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={suggestionFilter}
+                              onChange={(e) => setSuggestionFilter(e.target.value as SuggestionFilterType)}
+                              className="text-xs px-3 py-1.5 bg-white border border-border rounded-lg text-text-secondary"
+                            >
+                              <option value="all">All</option>
+                              <option value="grammar">Grammar & Style</option>
+                              <option value="legal">Legal Review</option>
+                              <option value="clarity">Clarity</option>
+                            </select>
+                            <button
+                              onClick={refreshSuggestions}
+                              disabled={isRefreshing}
+                              className="px-3 py-1.5 text-xs bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+                            >
+                              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+                              Refresh
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-text-tertiary">
+                            <span className="font-semibold text-green-700">{acceptedCount}</span> of {getFilteredSuggestions().length} accepted for editor export
+                          </span>
+                          <div className="flex gap-2">
+                            <button onClick={acceptAllVisible} className="px-2.5 py-1 rounded-lg border border-green-300 text-green-700 bg-green-50 hover:bg-green-100 transition-colors font-medium">Accept All</button>
+                            <button onClick={rejectAllVisible} className="px-2.5 py-1 rounded-lg border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors font-medium">Reject All</button>
+                          </div>
                         </div>
                       </div>
                       {expandedSections.has("aiSuggestions") && (
                         <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
-                          {getFilteredSuggestions().map((s) => (
-                            <div key={s.id} className="bg-linear-to-r from-green-50 to-emerald-50 rounded-xl p-4">
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex gap-2 flex-wrap">
+                          {getFilteredSuggestions().map((s) => {
+                            const accepted = acceptedSuggestionIds.has(s.id);
+                            return (
+                              <div
+                                key={s.id}
+                                className={`rounded-xl p-4 border-2 transition-colors ${accepted ? "bg-green-50 border-green-300" : "bg-surface-secondary border-border opacity-60"}`}
+                              >
+                                {/* Type + severity badges + accept toggle */}
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <div className="flex gap-1.5 flex-wrap">
                                     <span className={`text-xs px-2 py-0.5 rounded-full ${getSeverityColor(s.severity)}`}>{s.type}</span>
                                     <span className={`text-xs px-2 py-0.5 rounded-full ${getSeverityColor(s.severity)}`}>{s.severity}</span>
                                   </div>
-                                  <p className="text-xs text-text-secondary mt-2"><strong>Reason:</strong> {s.reason}</p>
-                                  {s.original && s.suggested && (
-                                    <div className="mt-3 grid grid-cols-2 gap-2">
-                                      <div className="p-2 bg-white/60 rounded text-xs">
+                                  <button
+                                    onClick={() => toggleSuggestionAcceptance(s.id)}
+                                    title={accepted ? "Click to reject this suggestion" : "Click to accept this suggestion"}
+                                    className={`shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                                      accepted
+                                        ? "bg-green-600 text-white border-green-600 hover:bg-green-700"
+                                        : "bg-white text-text-secondary border-border hover:border-green-400 hover:text-green-600"
+                                    }`}
+                                  >
+                                    {accepted ? <><Check className="w-3 h-3" /> Accepted</> : <><X className="w-3 h-3" /> Rejected</>}
+                                  </button>
+                                </div>
+
+                                <p className="text-xs text-text-secondary"><strong>Reason:</strong> {s.reason}</p>
+
+                                {s.original && s.suggested && (
+                                  <div className="mt-3 space-y-2">
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div className="p-2 bg-white rounded border border-red-200 text-xs relative">
                                         <span className="text-red-600 font-medium">Original:</span>
                                         <p className="mt-1 wrap-break-word">{s.original}</p>
+                                        <button
+                                          onClick={() => copyToClipboard(s.original, `orig-${s.id}`)}
+                                          className="absolute top-1.5 right-1.5 p-1 rounded hover:bg-red-50 text-text-tertiary hover:text-red-600 transition-colors"
+                                          title="Copy original text"
+                                        >
+                                          {copiedId === `orig-${s.id}` ? <CheckCheck className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                                        </button>
                                       </div>
-                                      <div className="p-2 bg-green-100/60 rounded text-xs">
+                                      <div className="p-2 bg-white rounded border border-green-300 text-xs relative">
                                         <span className="text-green-600 font-medium">Suggested:</span>
                                         <p className="mt-1 wrap-break-word">{s.suggested}</p>
+                                        <button
+                                          onClick={() => copyToClipboard(s.suggested, `sugg-${s.id}`)}
+                                          className="absolute top-1.5 right-1.5 p-1 rounded hover:bg-green-50 text-text-tertiary hover:text-green-600 transition-colors"
+                                          title="Copy suggested text"
+                                        >
+                                          {copiedId === `sugg-${s.id}` ? <CheckCheck className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                                        </button>
                                       </div>
                                     </div>
-                                  )}
-                                </div>
-                                {onApplySuggestion && s.original && s.suggested && (
-                                  <button
-                                    onClick={() => handleApplySuggestion(s)}
-                                    className="px-3 py-1.5 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shrink-0"
-                                  >
-                                    Apply
-                                  </button>
+                                    {/* Action buttons row */}
+                                    <div className="flex gap-2 justify-end">
+                                      {onApplySuggestion && (
+                                        <button
+                                          onClick={() => handleApplySuggestion(s)}
+                                          title="Replace this exact text in the editor right now"
+                                          className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-1"
+                                        >
+                                          <Zap className="w-3 h-3" /> Apply to Editor
+                                        </button>
+                                      )}
+                                      <button
+                                        onClick={() => copyToClipboard(s.suggested, `copy-full-${s.id}`)}
+                                        className="px-3 py-1.5 text-xs border border-border text-text-secondary rounded-lg hover:bg-white transition-colors flex items-center gap-1"
+                                      >
+                                        {copiedId === `copy-full-${s.id}` ? <><CheckCheck className="w-3 h-3 text-green-500" /> Copied!</> : <><Copy className="w-3 h-3" /> Copy Suggestion</>}
+                                      </button>
+                                    </div>
+                                  </div>
                                 )}
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                           {getFilteredSuggestions().length === 0 && (
                             <p className="text-xs text-center text-text-tertiary py-4">No {suggestionFilter !== "all" ? suggestionFilter : ""} suggestions.</p>
                           )}
@@ -959,13 +1070,28 @@ export default function DocumentAnalysisModal({
             >
               Close
             </button>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap justify-end">
               {extractedText && onInsertText && (
                 <button
-                  onClick={insertTextToEditor}
+                  onClick={() => { onInsertText(extractedText); onClose(); }}
+                  title="Insert the original extracted text into the editor without any AI changes"
                   className="flex items-center gap-1.5 px-4 py-2 text-xs bg-surface-tertiary text-text-primary rounded-xl font-medium hover:bg-white transition-all border border-border"
                 >
-                  <FileText className="w-3.5 h-3.5" /> Insert Text Only
+                  <FileText className="w-3.5 h-3.5" /> Export Original
+                </button>
+              )}
+              {extractedText && (onInsertEdited || onInsertText) && (analysisResult?.aiSuggestions?.length ?? 0) > 0 && (
+                <button
+                  onClick={() => {
+                    const edited = buildEditedText();
+                    if (onInsertEdited) onInsertEdited(edited);
+                    else if (onInsertText) onInsertText(edited);
+                    onClose();
+                  }}
+                  title={`Insert the document with ${acceptedCount} accepted suggestion${acceptedCount !== 1 ? "s" : ""} applied`}
+                  className="flex items-center gap-1.5 px-4 py-2 text-xs bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-all shadow-md"
+                >
+                  <FileEdit className="w-3.5 h-3.5" /> Export Edited ({acceptedCount} accepted)
                 </button>
               )}
               {analysisResult && onInsertAnalysis && (
