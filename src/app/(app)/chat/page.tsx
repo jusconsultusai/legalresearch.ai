@@ -114,12 +114,12 @@ function renderLegalContent(raw: string): string {
   /* ── Safety: escape user-visible HTML ── */
   let h = raw.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-  /* ── Bottom Line callout (before other processing to avoid stripping **) ── */
+  /* ── Legal Context callout (before other processing to avoid stripping **) ── */
   h = h.replace(
-    /\*\*Bottom[- ]?[Ll]ine[:\s]*\*\*\s*([^\n]+)/g,
+    /\*\*Legal\s+Context[:\s]*\*\*\s*([^\n]+)/g,
     '<div class="flex items-start gap-3 my-4 p-4 rounded-xl bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700/40">' +
       '<span class="shrink-0 mt-0.5 text-lg">⚖️</span>' +
-      '<div><p class="text-xs font-bold text-primary-700 dark:text-primary-300 uppercase tracking-wide mb-1">Bottom Line</p>' +
+      '<div><p class="text-xs font-bold text-primary-700 dark:text-primary-300 uppercase tracking-wide mb-1">Legal Context</p>' +
       '<p class="text-sm text-text-primary leading-relaxed font-medium">$1</p></div></div>'
   );
 

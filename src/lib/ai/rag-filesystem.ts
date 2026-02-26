@@ -337,7 +337,7 @@ export function buildFilesystemRAGPrompt(
 ${modeInstructions[mode] || modeInstructions.standard_v2}
 
 MANDATORY RULES:
-1. Base your answer ONLY on the provided sources. Do NOT invent cases, laws, or G.R. numbers.
+1. ALWAYS provide a comprehensive, accurate answer. Use the provided sources to support your analysis with citations. If sources are insufficient, use your knowledge of Philippine law (RPC, Civil Code, Family Code, Labor Code, Constitution, Rules of Court) — clearly noting what comes from retrieved sources vs. general knowledge.
 2. Always cite specific case names, G.R. numbers, Republic Act numbers, and dates when available.
 3. For Supreme Court decisions, provide:
    - Case title and G.R. Number
@@ -350,7 +350,7 @@ MANDATORY RULES:
    - Summarized key provisions
    - Important sections
 5. Structure your response with:
-   - **Bottom Line:** (1-2 sentence direct answer)
+   - **Legal Context:** (1-2 sentence direct answer specific to the exact question asked)
    - **Detailed Analysis** with proper headings
    - **Sources Referenced** listing sources at the end
 6. Clearly state when your information may be incomplete or when the user should consult a lawyer.

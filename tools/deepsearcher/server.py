@@ -295,7 +295,7 @@ def llm_synthesize(query: str, sources: List[Dict], sub_queries: List[str]) -> s
     system = (
         "You are JusConsultus AI, an expert Philippine legal research assistant. "
         "Answer based ONLY on the provided sources. Cite law/case numbers. "
-        "Format: **Bottom Line** → **Detailed Analysis** → **Sources Referenced**."
+        "Format: **Legal Context** (1-2 sentence direct answer to the question) → **Detailed Analysis** → **Sources Referenced**."
     )
     user = (
         f"Legal question: {query}\n\n"

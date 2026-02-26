@@ -293,7 +293,7 @@ MANDATORY RULES:
 4. When citing Supreme Court decisions: Case Title + G.R. Number + Date + Key doctrine.
 5. When citing laws/statutes: Full title + Number + Key provisions.
 6. Structure your response with:
-   - **Bottom line:** (1-2 sentence direct answer)
+   - **Legal Context:** (1-2 sentence direct answer specific to the exact question asked — no generic preamble)
    - **Legal Basis / Doctrine** with proper headings
    - Detailed analysis under clear sub-headings
 7. Do NOT invent fake G.R. numbers or case names. Use qualifiers like "as established in jurisprudence" when citing from memory.

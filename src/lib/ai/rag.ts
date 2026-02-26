@@ -232,12 +232,12 @@ export function buildRAGPrompt(
 ${modeInstructions[mode] || modeInstructions.standard_v2}
 
 IMPORTANT RULES:
-- Only reference and cite sources from the provided context
+- ALWAYS provide a complete, accurate answer. Cite sources from the provided context when available. When sources are insufficient, use your knowledge of Philippine law clearly distinguishing retrieved sources from general knowledge.
 - Always cite specific case names, G.R. numbers, and dates when available
 - Clearly indicate when information might be incomplete
 - Focus on Philippine law and jurisdiction
 - Structure responses with clear headings and sections
-- Include "Bottom line:" summary at the start for quick reference
+- Start with **Legal Context:** — 1-2 sentence direct answer specific to the question asked
 
 SOURCES FROM LEGAL DATABASE:
 ${sourcesText || "No specific sources found for this query. Provide general legal principles from Philippine law."}

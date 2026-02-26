@@ -208,7 +208,7 @@ function generateMockResponse(query: string): string {
   if (queryLower.includes("malicious mischief")) {
     return `## Legal Explanation
 
-**Bottom line:** Key Supreme Court cases on **Malicious Mischief (RPC Arts. 327-329)** repeatedly focus on (a) **deliberate damage**, (b) **property of another**, (c) **not arson/other destruction crimes**, and (d) **ill motive / "merely for the sake of causing damage."**
+**Legal Context:** Malicious Mischief under {{law: Revised Penal Code, Arts. 327-329}} requires (a) deliberate damage, (b) to property of another, (c) not falling under arson or other destruction crimes, and (d) committed merely for the sake of causing damage (ill motive).
 
 ### Legal Basis / Core Statutory Provisions
 
@@ -240,33 +240,29 @@ For **special cases** (Art. 328), penalties depend on the amount of damage:
 
   return `## Legal Analysis
 
-**Bottom line:** Based on Philippine law and jurisprudence, here is the analysis of your query: "${query.slice(0, 100)}..."
+**Legal Context:** Under Philippine law, your query on "${query.slice(0, 80)}" is governed by applicable statutes and Supreme Court jurisprudence that define the rights, obligations, and remedies available to the parties involved.
 
 ### Applicable Legal Framework
 
-The Philippine legal system, based on civil law traditions, addresses this matter through several key provisions and established jurisprudence from the Supreme Court.
+The governing legal provisions and established case law provide clear guidance on this matter:
 
-### Key Provisions
+1. Identify the specific statute or provision directly applicable to your situation
+2. Review controlling Supreme Court decisions that interpret and apply the law
+3. Consider any implementing rules or administrative regulations in force
 
-1. Relevant constitutional provisions and statutory law apply to this matter
-2. Supreme Court decisions have established precedents guiding interpretation
-3. Administrative regulations may provide additional guidance
+### Analysis
 
-### Jurisprudential Guidelines
+- The applicable law defines the specific rights and duties at issue
+- Jurisprudence from the Supreme Court has settled the controlling doctrine
+- Procedural rules govern how the matter is properly raised and resolved
 
-Philippine courts have consistently held that:
-- The Constitution serves as the supreme law balancing rights and obligations
-- Statutory interpretation follows established canons of construction
-- Due process and equal protection remain fundamental guarantees
+### Practical Guidance
 
-### Recommendation
+1. Gather all relevant documents and facts before proceeding
+2. Determine the proper forum (court, agency, or administrative body)
+3. Consult a licensed Philippine attorney for advice specific to your facts
 
-For a comprehensive analysis, I recommend:
-1. Reviewing specific statutes applicable to your situation
-2. Examining recent Supreme Court decisions on the matter
-3. Consulting with a licensed Philippine attorney for case-specific advice
-
-*This analysis is provided for informational purposes based on the legal database. Please verify with current legal sources and consult a licensed attorney for specific legal advice.*`;
+*This is a general analysis based on Philippine law. Consult a licensed attorney for advice specific to your situation.*`;
 }
 
 // Document analysis prompt engineering

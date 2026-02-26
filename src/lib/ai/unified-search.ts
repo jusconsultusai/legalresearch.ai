@@ -416,7 +416,13 @@ ${agenticAnswer}
 SUPPORTING SOURCES:
 ${sourcesSection || "No specific documents were retrieved. Supplement with your comprehensive knowledge of Philippine law."}
 
-Your task: Refine and improve the synthesis above. Verify facts against the sources, add specific citations, and improve clarity. If the synthesis contains errors or gaps, correct them using your knowledge of Philippine law. Always provide a complete, helpful answer — never refuse to answer or say the information is unavailable. Provide your answer in structured Philippine legal writing format with explicit citations.
+Your task: Refine and improve the synthesis above into a polished, accurate legal analysis. Verify facts against the sources, add specific citations, and eliminate vague or filler language. Structure your response as:
+- **Legal Context:** (1-2 sentence direct answer specific to the exact question asked — no generic preamble)
+- **Legal Basis / Doctrine** with clear headings
+- **Detailed Analysis** citing G.R. numbers, statute articles, and provisions
+- **Sources Referenced**
+
+Always provide a complete, specific answer. Never refuse or say information is unavailable. Use {{law: FULL TITLE}} and {{case: CASE TITLE (Year)}} citation format.
 `;
   }
 
