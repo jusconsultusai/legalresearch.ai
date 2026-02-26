@@ -27,3 +27,5 @@ logs/
 tsconfig.tsbuildinfo
 prisma/dev.db
 prisma/*.db
+
+client_secret_*.json
