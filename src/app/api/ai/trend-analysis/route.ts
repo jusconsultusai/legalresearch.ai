@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const focusQuery: string = (body.query || "").trim();
 
+  try {
   // Cache key scoped to user so each user sees their own library analysis
   const cacheKey = `trends:${user.id}:${focusQuery.slice(0, 60)}`;
   const cached = await AICache.getRAGContext(focusQuery || "trends", cacheKey);
@@ -276,4 +277,11 @@ ${focusQuery ? `USER'S SPECIFIC FOCUS QUESTION: "${focusQuery}"\n` : ""}Anchor y
   );
 
   return NextResponse.json(responsePayload);
+  } catch (error) {
+    console.error("Trend analysis error:", error);
+    return NextResponse.json(
+      { error: "Trend analysis failed. Please try again." },
+      { status: 500 }
+    );
+  }
 }

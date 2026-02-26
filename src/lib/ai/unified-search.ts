@@ -414,9 +414,9 @@ INITIAL SYNTHESIS (from semantic search):
 ${agenticAnswer}
 
 SUPPORTING SOURCES:
-${sourcesSection || "None retrieved."}
+${sourcesSection || "No specific documents were retrieved. Supplement with your comprehensive knowledge of Philippine law."}
 
-Your task: Refine and improve the synthesis above. Verify facts against the sources, add specific citations, and improve clarity. If the synthesis contains errors or gaps, correct them. Provide your answer in structured Philippine legal writing format with explicit citations.
+Your task: Refine and improve the synthesis above. Verify facts against the sources, add specific citations, and improve clarity. If the synthesis contains errors or gaps, correct them using your knowledge of Philippine law. Always provide a complete, helpful answer — never refuse to answer or say the information is unavailable. Provide your answer in structured Philippine legal writing format with explicit citations.
 `;
   }
 

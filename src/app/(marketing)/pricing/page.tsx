@@ -46,7 +46,7 @@ export default function PricingPage() {
         <div className="text-center mb-16">
           <Badge variant="accent" className="mb-3">Pricing</Badge>
           <h1 className="text-4xl font-bold text-text-primary mb-4">Simple, Transparent Pricing</h1>
-          <p className="text-text-secondary max-w-xl mx-auto">
+          <p className="text-text-secondary max-w-xl mx-auto text-center">
             Start free and scale as your legal practice grows. No hidden fees.
           </p>
 

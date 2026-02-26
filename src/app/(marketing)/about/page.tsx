@@ -66,7 +66,7 @@ export default async function AboutPage() {
         {/* CTA */}
         <div className="text-center bg-linear-to-r from-primary-50 to-accent-50 rounded-2xl p-10">
           <h2 className="text-2xl font-bold mb-3">Ready to transform your legal research?</h2>
-          <p className="text-text-secondary mb-6">Start for free. No credit card required.</p>
+          <p className="text-text-secondary mb-6 text-center">Start for free. No credit card required.</p>
           {user ? (
             <Link href="/chat" className="inline-flex items-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-700 transition-colors">
               Go to App <ArrowRight className="w-4 h-4" />

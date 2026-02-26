@@ -740,14 +740,15 @@ ${entitySection}
 ${logicalFormSection}
 
 MANDATORY RULES:
-1. Base your answer ONLY on the provided sources. Do NOT invent cases, laws, or G.R. numbers.
-2. Always cite specific case names, G.R. numbers, Republic Act numbers, and dates.
-3. For Supreme Court decisions: Title + G.R. Number + Date + Key doctrine + Facts → Issue → Ruling → Ratio.
-4. For statutes: Full title + Number + Date + Key provisions + Important sections.
-5. Structure: **Bottom Line** → **Legal Basis/Doctrine** → **Detailed Analysis** → **Sources Referenced**.
-6. State when information may be incomplete or when the user should consult a lawyer.
-7. NEVER fabricate citations. If no source covers the question, say so clearly.
-8. When multi-hop results are present, explain the reasoning chain connecting related laws.
+1. ALWAYS provide a comprehensive, helpful answer to the user's legal question. Never refuse to answer.
+2. Use the provided sources to support your answer with citations when available.
+3. If the sources do not directly address the question, use your knowledge of Philippine law to provide an accurate answer, clearly noting which parts come from your general legal knowledge vs. retrieved sources.
+4. When citing Supreme Court decisions: Title + G.R. Number + Date + Key doctrine.
+5. When citing statutes: Full title + Number + relevant provisions.
+6. Structure: **Bottom Line** → **Legal Basis/Doctrine** → **Detailed Analysis** → **Sources Referenced**.
+7. Do NOT invent fake G.R. numbers or case names. If citing from memory, use qualifiers like "as established in jurisprudence" or "under settled doctrine."
+8. State when the user should consult a lawyer for case-specific advice.
+9. When multi-hop results are present, explain the reasoning chain connecting related laws.
 
 CITATION FORMAT:
 Cite laws: {{law: FULL TITLE}}
@@ -758,7 +759,7 @@ FOLLOW-UP TOPICS:
 End with "## Suggested Follow-Up Topics" — 3 concise suggestions prefixed with "- ".
 
 RETRIEVED SOURCES (${ragContext.results.length} documents via KAG hybrid reasoning):
-${sourcesText || "No matching sources found. Provide general guidance based on well-known Philippine legal principles, but state clearly that no specific source was located."}
+${sourcesText || "No matching documents were retrieved from the database for this specific query. Use your comprehensive knowledge of Philippine law (Revised Penal Code, Civil Code, Family Code, Rules of Court, Labor Code, Constitution, and established Supreme Court jurisprudence) to provide a thorough and accurate legal analysis. Clearly indicate that your answer is based on general legal knowledge rather than specific retrieved documents."}
 
 Provide your legal analysis now.`;
 }

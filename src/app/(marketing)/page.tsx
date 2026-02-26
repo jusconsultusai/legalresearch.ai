@@ -141,7 +141,7 @@ export default async function HomePage() {
             </span>
           </h1>
 
-          <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto mb-10 leading-relaxed">
+          <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto mb-10 leading-relaxed text-center">
             The most comprehensive AI-powered legal research platform for the
             Philippine Justice System. Access jurisprudence, statutes, and legal
             documents with intelligent analysis in seconds.
@@ -168,7 +168,7 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <p className="mt-6 text-sm text-gray-400">
+          <p className="mt-6 text-sm text-gray-400 text-center">
             Free 14-day trial • No credit card required
           </p>
 
@@ -248,7 +248,7 @@ export default async function HomePage() {
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
               Everything You Need for Legal Research
             </h2>
-            <p className="text-lg text-text-secondary max-w-2xl mx-auto">
+            <p className="text-lg text-text-secondary max-w-2xl mx-auto text-center">
               Powered by advanced AI with RAG technology, fine-tuned for Philippine law
             </p>
           </div>
@@ -256,11 +256,11 @@ export default async function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, i) => (
               <Card key={i} className="group">
-                <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center mb-4 group-hover:bg-primary-100 transition-colors">
+                <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center mb-4 group-hover:bg-primary-100 transition-colors mx-auto">
                   <feature.Icon className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                <p className="text-sm text-text-secondary leading-relaxed">
+                <h3 className="text-lg font-semibold mb-2 text-center">{feature.title}</h3>
+                <p className="text-sm text-text-secondary leading-relaxed text-center">
                   {feature.description}
                 </p>
               </Card>
@@ -278,7 +278,7 @@ export default async function HomePage() {
               <h2 className="text-3xl sm:text-4xl font-bold mb-6">
                 The Most Complete Philippine Legal Database
               </h2>
-              <p className="text-lg text-text-secondary mb-8 leading-relaxed">
+              <p className="text-lg text-text-secondary mb-8 leading-relaxed text-center">
                 Access thousands of Supreme Court decisions, laws, executive issuances, treaties, and reference materials — all indexed, summarized, and searchable with AI.
               </p>
 
@@ -303,7 +303,7 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="bg-white rounded-2xl border border-border shadow-lg p-6">
+            <div className="bg-white rounded-2xl border border-border shadow-lg p-6 text-center">
               <div className="space-y-4">
                 {["Supreme Court", "Laws", "Executive Issuances", "References", "Treaties"].map((cat, i) => (
                   <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-surface-secondary hover:bg-surface-tertiary transition-colors cursor-pointer">
@@ -330,7 +330,7 @@ export default async function HomePage() {
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
               Simple, Transparent Pricing
             </h2>
-            <p className="text-lg text-text-secondary">
+            <p className="text-lg text-text-secondary text-center">
               Start free, upgrade as you grow
             </p>
           </div>
@@ -389,7 +389,7 @@ export default async function HomePage() {
           <h2 className="text-3xl sm:text-4xl font-bold mb-6">
             Ready to Transform Your Legal Research?
           </h2>
-          <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto text-center">
             Join thousands of Philippine legal professionals who trust JusConsultus AI for faster, more accurate legal research.
           </p>
           <Link href="/signup">

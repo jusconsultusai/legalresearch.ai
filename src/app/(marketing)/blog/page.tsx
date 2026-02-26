@@ -28,7 +28,7 @@ export default function BlogPage() {
       <section className="relative bg-linear-to-br from-primary-950 via-primary-900 to-primary-800 text-white py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold mb-4">JusConsultus Blog</h1>
-          <p className="text-lg text-primary-200 max-w-2xl mx-auto">
+          <p className="text-lg text-primary-200 max-w-2xl mx-auto text-center">
             Insights on AI-powered legal research, Philippine jurisprudence, and the future of legal
             technology.
           </p>
@@ -162,7 +162,7 @@ export default function BlogPage() {
         {/* Newsletter CTA */}
         <section className="mt-20 bg-linear-to-r from-primary-600 to-primary-700 rounded-2xl p-8 sm:p-12 text-white text-center">
           <h2 className="text-2xl sm:text-3xl font-bold mb-3">Stay Updated</h2>
-          <p className="text-primary-100 mb-6 max-w-lg mx-auto">
+          <p className="text-primary-100 mb-6 max-w-lg mx-auto text-center">
             Get the latest insights on Philippine legal tech delivered straight to your inbox.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">

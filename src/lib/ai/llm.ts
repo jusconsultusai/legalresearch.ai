@@ -60,7 +60,8 @@ export async function generateCompletion(
   if (apiKey && apiKey !== "your-openai-api-key") {
     try {
       // deepseek-reasoner does not support custom temperatures — must use 1
-      const effectiveTemperature = model.toLowerCase().includes("reasoner") ? 1 : temperature;
+      const isReasoner = model.toLowerCase().includes("reasoner");
+      const effectiveTemperature = isReasoner ? 1 : temperature;
 
       const response = await fetch(`${baseUrl}/v1/chat/completions`, {
         method: "POST",
@@ -75,9 +76,34 @@ export async function generateCompletion(
           max_tokens: maxTokens,
         }),
       });
+
+      // Handle non-OK responses from the LLM API
+      if (!response.ok) {
+        const errorBody = await response.text().catch(() => "");
+        console.error(`LLM API returned ${response.status}: ${errorBody.slice(0, 300)}`);
+        // For 401/403 — API key issues; fall through to mock
+        // For 429 — rate limited; fall through to mock
+        // For 5xx — server error; fall through to mock
+        return generateMockResponse(lastUserMessage);
+      }
+
       const data = await response.json();
-      const rawContent = data.choices[0]?.message?.content || "";
+      const msg = data.choices?.[0]?.message;
+
+      // deepseek-reasoner returns the real answer in `content` but sometimes
+      // it's empty when the model only fills `reasoning_content`. Handle both.
+      let rawContent = msg?.content || "";
+      if (!rawContent && msg?.reasoning_content) {
+        // The reasoning IS the content for reasoner models — use it directly
+        rawContent = msg.reasoning_content;
+      }
+
       const content = stripThinkingBlocks(rawContent);
+
+      if (!content) {
+        console.warn("LLM returned empty content, falling back to mock");
+        return generateMockResponse(lastUserMessage);
+      }
 
       // Cache the response
       await AICache.setLLMResponse(cachePrompt, model, content);
@@ -123,6 +149,14 @@ export async function* generateStreamingCompletion(
           stream: true,
         }),
       });
+
+      // Handle non-OK responses
+      if (!response.ok) {
+        const errorBody = await response.text().catch(() => "");
+        console.error(`LLM streaming API returned ${response.status}: ${errorBody.slice(0, 300)}`);
+        yield generateMockResponse(messages.filter((m) => m.role === "user").pop()?.content || "");
+        return;
+      }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();

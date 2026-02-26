@@ -718,7 +718,7 @@ export default function ChatPage() {
                       <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-110", cap.bg)}>
                         <cap.icon className={cn("w-4 h-4", cap.text)} />
                       </div>
-                      <p className="text-xs font-bold text-text-primary leading-snug group-hover:text-primary-700 dark:group-hover:text-primary-400 transition-colors">{cap.label}</p>
+                      <p className="text-xs font-bold text-text-primary leading-snug group-hover:text-primary-700 dark:group-hover:text-primary-400 transition-colors text-left">{cap.label}</p>
                       <p className="text-[11px] text-text-tertiary leading-relaxed">{cap.description}</p>
                       <span className="text-[10px] font-semibold text-primary-600 dark:text-primary-400 flex items-center gap-1 mt-auto opacity-0 group-hover:opacity-100 transition-opacity">
                         {cap.action.type === "navigate" ? "Open" : cap.action.type === "upload" ? "Upload a file" : "Get started"}

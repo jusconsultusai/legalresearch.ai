@@ -287,22 +287,17 @@ I decomposed the user's question into these research sub-queries:
 ${subQueries.map((q, i) => `  ${i + 1}. ${q}`).join("\n")}
 
 MANDATORY RULES:
-1. Base your answer ONLY on the provided sources. Do NOT invent cases, laws, or G.R. numbers.
-2. Always cite specific case names, G.R. numbers, Republic Act numbers, and dates when available.
-3. For Supreme Court decisions, provide:
-   - Case title and G.R. Number
-   - Date of decision
-   - Key doctrine and ruling
-4. For laws and statutes, provide:
-   - Full title and number
-   - Date of approval
-   - Key provisions
-5. Structure your response with:
+1. ALWAYS provide a comprehensive, helpful answer to the user's legal question. Never refuse to answer.
+2. Use the provided sources to support your answer with citations when available.
+3. If the sources do not directly address the question, use your knowledge of Philippine law to provide an accurate and thorough answer, noting which parts come from general legal knowledge vs. retrieved sources.
+4. When citing Supreme Court decisions: Case Title + G.R. Number + Date + Key doctrine.
+5. When citing laws/statutes: Full title + Number + Key provisions.
+6. Structure your response with:
    - **Bottom line:** (1-2 sentence direct answer)
    - **Legal Basis / Doctrine** with proper headings
    - Detailed analysis under clear sub-headings
-6. Clearly state when your information may be incomplete or when the user should consult a lawyer.
-7. NEVER fabricate citations or case numbers. If no source covers the question, say so.
+7. Do NOT invent fake G.R. numbers or case names. Use qualifiers like "as established in jurisprudence" when citing from memory.
+8. State when the user should consult a lawyer for case-specific advice.
 
 CITATION FORMAT:
 When citing a law, wrap it: {{law: FULL TITLE}}
@@ -313,7 +308,7 @@ FOLLOW-UP TOPICS:
 At the end, include "## Suggested Follow-Up Topics" with 3 concise topic suggestions, each on its own line prefixed with "- ".
 
 RETRIEVED SOURCES FROM THE PHILIPPINE LEGAL DATABASE (${sources.length} documents):
-${sourcesText || "No matching sources were found. Provide general guidance based on well-known Philippine legal principles, but clearly state that no specific source was located."}
+${sourcesText || "No specific documents were retrieved from the database. Use your comprehensive knowledge of Philippine law (Revised Penal Code, Civil Code, Family Code, Rules of Court, Labor Code, Constitution, and established Supreme Court jurisprudence) to provide a thorough and accurate legal analysis."}
 
 Provide your legal analysis now.`;
 }
