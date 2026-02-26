@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
-import { Scale, Users, Target, Globe, ArrowRight } from "lucide-react";
+import { Users, ArrowRight } from "lucide-react";
 
 export default async function AboutPage() {
   const user = await getCurrentUser();
@@ -23,12 +23,11 @@ export default async function AboutPage() {
         {/* Mission */}
         <div className="grid md:grid-cols-3 gap-6">
           {[
-            { icon: <Scale className="w-8 h-8 text-primary-600" />, title: "Our Mission", desc: "To democratize access to Philippine legal information through cutting-edge AI technology, helping legal professionals research faster and citizens understand their rights." },
-            { icon: <Target className="w-8 h-8 text-green-600" />, title: "Our Vision", desc: "A Philippines where every citizen can easily navigate the legal system, and every legal professional has a powerful AI research partner at their fingertips." },
-            { icon: <Globe className="w-8 h-8 text-blue-600" />, title: "Our Impact", desc: "Serving hundreds of legal professionals across the Philippines with AI-powered research tools that reduce research time by up to 80%." },
+            { title: "Our Mission", desc: "To democratize access to Philippine legal information through cutting-edge AI technology, helping legal professionals research faster and citizens understand their rights." },
+            { title: "Our Vision", desc: "A Philippines where every citizen can easily navigate the legal system, and every legal professional has a powerful AI research partner at their fingertips." },
+            { title: "Our Impact", desc: "Serving hundreds of legal professionals across the Philippines with AI-powered research tools that reduce research time by up to 80%." },
           ].map((item) => (
             <div key={item.title} className="p-6 rounded-2xl border border-border">
-              <div className="mb-4">{item.icon}</div>
               <h3 className="font-bold text-lg mb-2">{item.title}</h3>
               <p className="text-sm text-text-secondary">{item.desc}</p>
             </div>
@@ -39,7 +38,7 @@ export default async function AboutPage() {
         <div className="prose prose-lg max-w-none">
           <h2 className="text-2xl font-bold text-text-primary">Our Story</h2>
           <p className="text-text-secondary leading-relaxed">
-            JusConsultus AI was founded by a team of legal professionals and AI engineers who saw firsthand the challenges of legal research in the Philippines. Thousands of Supreme Court decisions, hundreds of laws, and countless executive issuances — navigating this vast body of legal knowledge consumed enormous time and resources.
+            JusConsultus AI was founded by a team of legal professionals and AI enthusiasts who saw firsthand the challenges of legal research in the Philippines. Thousands of Supreme Court decisions, hundreds of laws, and countless executive issuances — navigating this vast body of legal knowledge consumed enormous time and resources.
           </p>
           <p className="text-text-secondary leading-relaxed">
             We built JusConsultus AI to change that. By combining the latest advances in large language models, retrieval-augmented generation (RAG), and a comprehensive database of Philippine legal materials, we created a platform that can answer complex legal questions in seconds.

@@ -205,7 +205,7 @@ export default async function BlogArticlePage({ params }: PageProps) {
                 <div>
                   <p className="font-semibold">JusConsultus AI</p>
                   <p className="text-sm text-muted-foreground">
-                    &copy; {new Date().getFullYear()} JusConsultus AI. All rights reserved. This
+                    &copy; 2025 JusConsultus AI. All rights reserved. This
                     article is an original publication of JusConsultus AI and may not be reproduced
                     without permission.
                   </p>

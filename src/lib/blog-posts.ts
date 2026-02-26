@@ -17,7 +17,7 @@ export const BLOG_POSTS: BlogPost[] = [
     excerpt:
       "Discover how artificial intelligence is reshaping how Filipino lawyers conduct legal research, from automated case analysis to predictive legal outcomes.",
     category: "AI & Law",
-    date: "2025-01-15",
+    date: "2026-02-14",
     readTime: "8 min read",
     featured: true,
     tags: ["AI", "Legal Research", "Philippines", "Technology"],
@@ -71,7 +71,7 @@ export const BLOG_POSTS: BlogPost[] = [
     excerpt:
       "Everything practitioners need to know about the Data Privacy Act — from the rights of data subjects to the obligations of personal information controllers and processors.",
     category: "Philippine Law",
-    date: "2025-01-10",
+    date: "2026-01-28",
     readTime: "12 min read",
     featured: true,
     tags: ["Data Privacy", "Republic Act 10173", "NPC", "Compliance"],
@@ -158,7 +158,7 @@ export const BLOG_POSTS: BlogPost[] = [
     excerpt:
       "Our new Context Awareness engine understands the full scope of your legal query, delivering more accurate and relevant results for Philippine jurisprudence.",
     category: "Legal Tech",
-    date: "2025-01-05",
+    date: "2026-01-10",
     readTime: "5 min read",
     featured: false,
     tags: ["Product Update", "AI", "Context Awareness"],
@@ -216,7 +216,7 @@ export const BLOG_POSTS: BlogPost[] = [
     excerpt:
       "A curated digest of the most impactful Supreme Court decisions rendered in 2024, covering labor, criminal, civil, and constitutional law.",
     category: "Case Studies",
-    date: "2024-12-28",
+    date: "2025-12-20",
     readTime: "15 min read",
     featured: false,
     tags: ["Supreme Court", "Jurisprudence", "2024", "Case Digest"],
@@ -270,7 +270,7 @@ export const BLOG_POSTS: BlogPost[] = [
     excerpt:
       "Learn how to leverage document templates and AI-assisted drafting to reduce turnaround time while maintaining the quality of your legal documents.",
     category: "Guides",
-    date: "2024-12-20",
+    date: "2025-12-05",
     readTime: "10 min read",
     featured: false,
     tags: ["Document Drafting", "Automation", "Legal Tech", "Guides"],
@@ -345,7 +345,7 @@ export const BLOG_POSTS: BlogPost[] = [
     excerpt:
       "An analysis of the practical challenges and considerations in implementing the Bawal Bastos Law across local government units and workplaces.",
     category: "Philippine Law",
-    date: "2024-12-15",
+    date: "2025-11-22",
     readTime: "7 min read",
     featured: false,
     tags: ["Safe Spaces Act", "Gender-Based Violence", "Workplace Law", "LGU"],
@@ -404,7 +404,7 @@ export const BLOG_POSTS: BlogPost[] = [
     excerpt:
       "Understanding how RAG technology enables AI systems to provide accurate, citation-backed legal answers instead of generic responses.",
     category: "AI & Law",
-    date: "2024-12-10",
+    date: "2025-11-15",
     readTime: "6 min read",
     featured: false,
     tags: ["RAG", "AI Technology", "Legal Research", "Citations"],
@@ -467,7 +467,7 @@ export const BLOG_POSTS: BlogPost[] = [
     excerpt:
       "A practitioner's guide to the latest amendments affecting marriage, property relations, and parental authority under Philippine law.",
     category: "Philippine Law",
-    date: "2024-12-05",
+    date: "2025-11-08",
     readTime: "9 min read",
     featured: false,
     tags: ["Family Code", "Marriage", "Parental Authority", "Property Relations"],

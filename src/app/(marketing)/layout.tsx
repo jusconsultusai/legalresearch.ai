@@ -48,7 +48,7 @@ export default function MarketingLayout({
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-gray-800 text-center text-sm text-gray-500">
-            &copy; {new Date().getFullYear()} JusConsultus AI. All rights reserved.
+            &copy; 2025 JusConsultus AI. All rights reserved.
           </div>
         </div>
       </footer>
