@@ -117,6 +117,8 @@ export interface DocumentAnalysisModalProps {
   onAutoPopulateSuggestions?: (suggestions: AISuggestion[]) => void;
   onApplySuggestion?: (suggestion: AISuggestion) => void;
   onInsertAnalysis?: (analysis: AnalysisResult) => void;
+  /** Called immediately when analysis finishes successfully — use for post-analysis side-effects like redirects */
+  onAnalysisComplete?: (analysis: AnalysisResult, extractedText: string) => void;
   /** Toast callback aligned with the editor page's built-in toast */
   showToast?: (text: string, type?: "success" | "error" | "info") => void;
   /** Pre-load a file and auto-start analysis when the modal opens */
@@ -132,6 +134,7 @@ export default function DocumentAnalysisModal({
   onAutoPopulateSuggestions,
   onApplySuggestion,
   onInsertAnalysis,
+  onAnalysisComplete,
   showToast,
   initialFile,
 }: DocumentAnalysisModalProps) {
@@ -253,6 +256,9 @@ export default function DocumentAnalysisModal({
         setExtractedText(text);
         if (onAutoPopulateSuggestions && data.analysis?.aiSuggestions?.length) {
           onAutoPopulateSuggestions(data.analysis.aiSuggestions);
+        }
+        if (onAnalysisComplete) {
+          onAnalysisComplete(data.analysis, text);
         }
         if (onInsertText && text) {
           onInsertText(text);

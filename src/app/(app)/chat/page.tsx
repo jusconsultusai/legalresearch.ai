@@ -76,16 +76,17 @@ const CONTEXT_VERSIONS: { id: ContextVersion; label: string; description: string
 type CapabilityAction =
   | { type: "mode"; mode: ChatMode; prompt?: string }
   | { type: "upload" }
+  | { type: "doc-analysis" }
   | { type: "navigate"; path: string }
   | { type: "deep-research"; prompt?: string };
 
 const CAPABILITIES: { icon: typeof Search; label: string; description: string; bg: string; text: string; action: CapabilityAction }[] = [
   { icon: PenTool,       label: "Legal Document Drafting",   description: "Quick-start drafting for any document type — letters, contracts, pleadings, and more. Linked to Document Builder.",
     bg: "bg-purple-100 dark:bg-purple-900/30",  text: "text-purple-600 dark:text-purple-400",
-    action: { type: "mode", mode: "draft", prompt: "Draft: " } },
+    action: { type: "navigate", path: "/documents/new" } },
   { icon: FileText,      label: "Document Analysis",         description: "Comprehensive AI review that identifies risks, key clauses, and issues in any legal document you upload.",
     bg: "bg-blue-100 dark:bg-blue-900/30",      text: "text-blue-600 dark:text-blue-400",
-    action: { type: "upload" } },
+    action: { type: "doc-analysis" } },
   { icon: BookOpen,      label: "Contextual Legal Research", description: "Vast knowledge database delivering tailored legal insights — identifying relevant case law and regulations instantly.",
     bg: "bg-emerald-100 dark:bg-emerald-900/30",text: "text-emerald-600 dark:text-emerald-400",
     action: { type: "mode", mode: "find", prompt: "Find: " } },
@@ -372,6 +373,9 @@ export default function ChatPage() {
   const [showContextDropdown, setShowContextDropdown] = useState(false);
   const [fileError, setFileError] = useState("");
   const [showDocAnalysis, setShowDocAnalysis] = useState(false);
+  // When true, closing the analysis modal after a completed analysis
+  // redirects to the document editor instead of staying in chat
+  const [docAnalysisRedirectToEditor, setDocAnalysisRedirectToEditor] = useState(false);
 
 
   const [lastDeepMeta, setLastDeepMeta] = useState<DeepSearchMeta | null>(null);
@@ -549,6 +553,12 @@ export default function ChatPage() {
       case "upload":
         fileInputRef.current?.click();
         break;
+      case "doc-analysis":
+        // Trigger file picker; after analysis completes the modal will
+        // save results to sessionStorage and navigate to the document editor
+        setDocAnalysisRedirectToEditor(true);
+        fileInputRef.current?.click();
+        break;
       case "navigate":
         router.push(action.path);
         break;
@@ -602,7 +612,7 @@ export default function ChatPage() {
                 <ChatInput {...chatInputProps} />
 
                 {/* Mode buttons */}
-                <div className="flex flex-wrap items-center gap-2 mt-4">
+                <div className="hidden">
                   {MODES.map((mode) => (
                     <button key={mode.id} onClick={() => handleModeClick(mode.id)} title={mode.description}
                       className={cn("flex items-center gap-2 px-3 py-2 text-xs rounded-lg border transition-all",
@@ -870,7 +880,7 @@ export default function ChatPage() {
             {/* Bottom input bar */}
             <div className="border-t border-border bg-surface px-4 py-3 shrink-0">
               <div className="max-w-4xl mx-auto">
-                <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                <div className="hidden">
                   {MODES.map((mode) => (
                     <button key={mode.id} onClick={() => handleModeClick(mode.id)}
                       className={cn("flex items-center gap-1.5 px-2.5 py-1 text-[11px] rounded-lg border transition-colors",
@@ -925,12 +935,30 @@ export default function ChatPage() {
     {/* ===================== DOCUMENT ANALYSIS MODAL ===================== */}
     <DocumentAnalysisModal
       isOpen={showDocAnalysis}
-      onClose={() => setShowDocAnalysis(false)}
+      onClose={() => {
+        setShowDocAnalysis(false);
+        setAttachedFile(null);
+        setDocAnalysisRedirectToEditor(false);
+      }}
       initialFile={attachedFile ?? undefined}
       onInsertText={(text) => {
-        setShowDocAnalysis(false);
-        setInputValue(text.length > 300 ? text.substring(0, 300) + "…" : text);
-        setTimeout(() => textareaRef.current?.focus(), 0);
+        if (!docAnalysisRedirectToEditor) {
+          setShowDocAnalysis(false);
+          setInputValue(text.length > 300 ? text.substring(0, 300) + "…" : text);
+          setTimeout(() => textareaRef.current?.focus(), 0);
+        }
+      }}
+      onAnalysisComplete={(analysis, extractedText) => {
+        if (docAnalysisRedirectToEditor) {
+          localStorage.setItem(
+            "jusconsultus-pending-analysis",
+            JSON.stringify({ analysis, extractedText })
+          );
+          setShowDocAnalysis(false);
+          setAttachedFile(null);
+          setDocAnalysisRedirectToEditor(false);
+          router.push("/documents/new");
+        }
       }}
     />
     </>

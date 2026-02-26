@@ -210,6 +210,31 @@ export default function NewDocumentPage() {
     setImportedFile(null);
   };
 
+  // ── Pending analysis from Document Analysis chat feature ──────────
+  const [pendingAnalysis, setPendingAnalysis] = useState<{
+    analysis: {
+      documentType: string;
+      documentCategory: string;
+      summary: string;
+      overallScore: number;
+      issues: { severity: string; category: string; description: string; suggestion: string }[];
+      improvements: { area: string; recommendation: string; priority: string }[];
+      aiSuggestions: { id: string; title: string; description: string }[];
+      keyTerms?: string[];
+    };
+    extractedText: string;
+  } | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("jusconsultus-pending-analysis");
+      if (raw) {
+        setPendingAnalysis(JSON.parse(raw));
+        localStorage.removeItem("jusconsultus-pending-analysis");
+      }
+    } catch {}
+  }, []);
+
   // ── Fetch template preview when type selected ────────────────────
   useEffect(() => {
     if (mode !== "template" || !selectedType) { setTemplatePreview(null); return; }
@@ -379,6 +404,82 @@ export default function NewDocumentPage() {
               <X className="w-3.5 h-3.5 text-amber-600" />
             </button>
           </div>
+        </div>
+      )}
+
+      {/* ── Pending Document Analysis banner ─────────────────────── */}
+      {pendingAnalysis && (
+        <div className="border border-violet-200 bg-violet-50 rounded-xl p-4 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Brain className="w-4 h-4 text-violet-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-violet-800">
+                  Document Analysis Results
+                </p>
+                <p className="text-xs text-violet-600 mt-0.5">
+                  {pendingAnalysis.analysis.documentType && pendingAnalysis.analysis.documentType !== "Unknown"
+                    ? pendingAnalysis.analysis.documentType
+                    : "Legal Document"}{" "}
+                  &mdash; Overall score:{" "}
+                  <span className={cn(
+                    "font-bold",
+                    pendingAnalysis.analysis.overallScore >= 75 ? "text-emerald-700" :
+                    pendingAnalysis.analysis.overallScore >= 50 ? "text-amber-700" : "text-red-700"
+                  )}>
+                    {pendingAnalysis.analysis.overallScore}/100
+                  </span>
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setPendingAnalysis(null)}
+              className="p-1.5 hover:bg-violet-100 rounded-lg transition-colors shrink-0"
+            >
+              <X className="w-3.5 h-3.5 text-violet-500" />
+            </button>
+          </div>
+
+          {pendingAnalysis.analysis.summary && (
+            <p className="text-xs text-violet-700 leading-relaxed line-clamp-3">
+              {pendingAnalysis.analysis.summary}
+            </p>
+          )}
+
+          <div className="flex flex-wrap gap-3 text-xs">
+            {pendingAnalysis.analysis.issues?.length > 0 && (
+              <div className="flex items-center gap-1.5 text-amber-700 font-medium">
+                <AlertCircle className="w-3.5 h-3.5" />
+                {pendingAnalysis.analysis.issues.length} issue{pendingAnalysis.analysis.issues.length !== 1 ? "s" : ""} found
+              </div>
+            )}
+            {pendingAnalysis.analysis.improvements?.length > 0 && (
+              <div className="flex items-center gap-1.5 text-blue-700 font-medium">
+                <Sparkles className="w-3.5 h-3.5" />
+                {pendingAnalysis.analysis.improvements.length} improvement suggestion{pendingAnalysis.analysis.improvements.length !== 1 ? "s" : ""}
+              </div>
+            )}
+            {pendingAnalysis.analysis.aiSuggestions?.length > 0 && (
+              <div className="flex items-center gap-1.5 text-violet-700 font-medium">
+                <Wand2 className="w-3.5 h-3.5" />
+                {pendingAnalysis.analysis.aiSuggestions.length} AI suggestion{pendingAnalysis.analysis.aiSuggestions.length !== 1 ? "s" : ""}
+              </div>
+            )}
+          </div>
+
+          {pendingAnalysis.extractedText && (
+            <div className="bg-white border border-violet-100 rounded-lg px-3 py-2">
+              <p className="text-xs text-text-secondary font-medium mb-1">Extracted text preview</p>
+              <p className="text-xs text-text-primary leading-relaxed line-clamp-2 font-mono">
+                {pendingAnalysis.extractedText.substring(0, 300)}
+                {pendingAnalysis.extractedText.length > 300 ? "…" : ""}
+              </p>
+            </div>
+          )}
+
+          <p className="text-xs text-violet-600 italic">
+            The analysis results above are from your uploaded document. Create or open a document below to apply the suggestions in the editor.
+          </p>
         </div>
       )}
 
