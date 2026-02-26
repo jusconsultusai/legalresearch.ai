@@ -77,6 +77,7 @@ type CapabilityAction =
   | { type: "mode"; mode: ChatMode; prompt?: string }
   | { type: "upload" }
   | { type: "doc-analysis" }
+  | { type: "trend-analysis" }
   | { type: "navigate"; path: string }
   | { type: "deep-research"; prompt?: string };
 
@@ -104,7 +105,7 @@ const CAPABILITIES: { icon: typeof Search; label: string; description: string; b
     action: { type: "deep-research", prompt: "Find: " } },
   { icon: BarChart3,     label: "Trend & Pattern Analysis",  description: "Identify trends, spot patterns, and answer questions about related documents and contract families across your entire library.",
     bg: "bg-orange-100 dark:bg-orange-900/30",  text: "text-orange-600 dark:text-orange-400",
-    action: { type: "mode", mode: "analyze", prompt: "Analyze: " } },
+    action: { type: "trend-analysis" } },
 ];
 
 /* ---------- Helpers ---------- */
@@ -542,6 +543,60 @@ export default function ChatPage() {
     setTimeout(() => textareaRef.current?.focus(), 0);
   };
 
+  /* ── Trend & Pattern Analysis: calls dedicated API, injects result as chat message ── */
+  const handleTrendAnalysis = async (focusQuery = "") => {
+    if (sending) return;
+    setSending(true);
+    setDeepSearchSteps([{ type: "decompose", label: "", detail: "", startedAt: Date.now() }]);
+    const tempId = `temp-${Date.now()}`;
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: tempId,
+        chatId: currentChat?.id || "",
+        role: "user",
+        content: focusQuery ? `Trend & Pattern Analysis: ${focusQuery}` : "Trend & Pattern Analysis — Scanning my document library…",
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+    try {
+      const res = await fetch("/api/ai/trend-analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: focusQuery }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        if (d.deepSearchMeta) setLastDeepMeta(d.deepSearchMeta);
+        setMessages((prev) => [
+          ...prev.filter((m) => m.id !== tempId),
+          {
+            id: `trend-${Date.now()}`,
+            chatId: currentChat?.id || "",
+            role: "assistant",
+            content: d.answer,
+            sources: d.sources || [],
+            createdAt: new Date().toISOString(),
+          },
+        ]);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setMessages((prev) => [
+          ...prev.filter((m) => m.id !== tempId),
+          { id: `err-${Date.now()}`, chatId: currentChat?.id || "", role: "assistant", content: err.error || "Trend analysis failed.", createdAt: new Date().toISOString() },
+        ]);
+      }
+    } catch {
+      setMessages((prev) => [
+        ...prev.filter((m) => m.id !== tempId),
+        { id: `err-${Date.now()}`, chatId: currentChat?.id || "", role: "assistant", content: "Network error during trend analysis.", createdAt: new Date().toISOString() },
+      ]);
+    } finally {
+      setSending(false);
+      setDeepSearchSteps([]);
+    }
+  };
+
   /* ── Capability card click handler ── */
   const handleCapabilityClick = (action: CapabilityAction) => {
     switch (action.type) {
@@ -567,6 +622,9 @@ export default function ChatPage() {
         setDeepThinkEnabled(true);
         setInputValue(action.prompt || "Find: ");
         setTimeout(() => textareaRef.current?.focus(), 0);
+        break;
+      case "trend-analysis":
+        handleTrendAnalysis();
         break;
     }
   };

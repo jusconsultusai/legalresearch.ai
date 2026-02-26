@@ -228,57 +228,60 @@ export async function searchFilesystemLegalDB(
         return keywords.some((kw) => fl.includes(kw));
       });
 
-      // Also include files whose names don't match but we need to check content
-      // (limit random content scans to prevent excessive reads)
-      const nonMatching = files.filter((f) => !candidates.includes(f)).slice(0, 50);
+      // Also scan a small sample of name-unmatched files for keyword hits in content.
+      // Kept small (8) to avoid excessive disk reads per folder.
+      const nonMatching = files.filter((f) => !candidates.includes(f)).slice(0, 8);
       const toScan = [...candidates, ...nonMatching];
 
-      for (const { filename, absPath, yearFolder } of toScan) {
-        try {
-          const html = await fs.readFile(absPath, "utf-8");
-          const text = htmlToText(html);
-          const meta = parseMeta(filename);
-          const yearStr = yearFolder || meta.year;
+      // Parallelize file reads within each folder for maximum throughput
+      await Promise.all(
+        toScan.map(async ({ filename, absPath, yearFolder }) => {
+          try {
+            const html = await fs.readFile(absPath, "utf-8");
+            const text = htmlToText(html);
+            const meta = parseMeta(filename);
+            const yearStr = yearFolder || meta.year;
 
-          const score = scoreDocument(
-            text,
-            meta.title.toLowerCase(),
-            meta.number.toLowerCase(),
-            keywords
-          );
+            const score = scoreDocument(
+              text,
+              meta.title.toLowerCase(),
+              meta.number.toLowerCase(),
+              keywords
+            );
 
-          if (score > 0) {
-            // Extract a relevant snippet (~600 chars around first keyword hit)
-            let snippet = "";
-            const textLower = text.toLowerCase();
-            for (const kw of keywords) {
-              const idx = textLower.indexOf(kw);
-              if (idx >= 0) {
-                const start = Math.max(0, idx - 200);
-                const end = Math.min(text.length, idx + 400);
-                snippet = text.slice(start, end);
-                break;
+            if (score > 0) {
+              // Extract a relevant snippet (~600 chars around first keyword hit)
+              let snippet = "";
+              const textLower = text.toLowerCase();
+              for (const kw of keywords) {
+                const idx = textLower.indexOf(kw);
+                if (idx >= 0) {
+                  const start = Math.max(0, idx - 200);
+                  const end = Math.min(text.length, idx + 400);
+                  snippet = text.slice(start, end);
+                  break;
+                }
               }
+
+              const relPath = path.relative(LEGAL_DB_ROOT, absPath).replace(/\\/g, "/");
+
+              allCandidates.push({
+                documentId: Buffer.from(relPath).toString("base64url"),
+                title: meta.title,
+                category,
+                subcategory,
+                number: meta.number || undefined,
+                date: yearStr || undefined,
+                summary: snippet.slice(0, 350),
+                relevantText: snippet,
+                score,
+                relativePath: relPath,
+                _sortScore: score,
+              });
             }
-
-            const relPath = path.relative(LEGAL_DB_ROOT, absPath).replace(/\\/g, "/");
-
-            allCandidates.push({
-              documentId: Buffer.from(relPath).toString("base64url"),
-              title: meta.title,
-              category,
-              subcategory,
-              number: meta.number || undefined,
-              date: yearStr || undefined,
-              summary: snippet.slice(0, 350),
-              relevantText: snippet,
-              score,
-              relativePath: relPath,
-              _sortScore: score,
-            });
-          }
-        } catch { /* skip unreadable files */ }
-      }
+          } catch { /* skip unreadable files */ }
+        })
+      );
     })
   );
 

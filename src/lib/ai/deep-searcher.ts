@@ -73,6 +73,12 @@ async function decomposeQuery(
   chatMode?: string,
   history?: { role: string; content: string }[]
 ): Promise<string[]> {
+  // Short-circuit for simple queries — saves an LLM round-trip
+  const wordCount = query.trim().split(/\s+/).length;
+  if (wordCount <= 4 || query.length <= 40) {
+    return [query];
+  }
+
   const historyContext = history?.length
     ? `\nConversation context:\n${history.slice(-4).map((m) => `${m.role}: ${m.content.slice(0, 200)}`).join("\n")}`
     : "";
@@ -346,7 +352,9 @@ export async function deepSearch(
     } catch { /* proceed with fresh search */ }
   }
 
-  // ── Step 1: Query Decomposition ──
+  // ── Steps 1 & 2: Decompose + initial retrieval IN PARALLEL ──
+  // Kick off initial retrieval with the original query immediately while the
+  // LLM decomposes the question — this hides the decomposition latency.
   const decomposeStep: DeepSearchStep = {
     type: "decompose",
     label: "Analyzing your question",
@@ -355,22 +363,45 @@ export async function deepSearch(
   };
   steps.push(decomposeStep);
 
-  const subQueries = await decomposeQuery(query, chatMode, history);
-  decomposeStep.completedAt = Date.now();
-
-  // ── Step 2: Iterative Retrieval ──
   const searchStep: DeepSearchStep = {
     type: "search",
-    label: `Searching ${subQueries.length} queries across legal database`,
-    detail: subQueries.join(" | "),
+    label: "Searching legal database",
+    detail: query,
     startedAt: Date.now(),
   };
   steps.push(searchStep);
 
-  const { results: rawResults, totalScanned } = await iterativeRetrieval(
-    subQueries.slice(0, effectiveMaxSubQueries),
-    options
+  const [subQueriesRaw, initialResult] = await Promise.all([
+    decomposeQuery(query, chatMode, history),
+    iterativeRetrieval([query], {
+      ...options,
+      // Use a smaller source cap for the initial pass; extra sub-queries fill in the rest
+      maxSources: Math.ceil((effectiveMaxSources * 0.6)),
+    }),
+  ]);
+  decomposeStep.completedAt = Date.now();
+
+  const subQueries = subQueriesRaw.slice(0, effectiveMaxSubQueries);
+
+  // Run any genuinely distinct sub-queries discovered by decomposition
+  const extraSubQueries = subQueries.filter(
+    (q) => q.toLowerCase().trim() !== query.toLowerCase().trim()
   );
+
+  let rawResults = [...initialResult.results];
+  let totalScanned = initialResult.totalScanned;
+
+  if (extraSubQueries.length > 0) {
+    const { results: extraResults, totalScanned: extraScanned } = await iterativeRetrieval(
+      extraSubQueries,
+      options
+    );
+    rawResults = [...rawResults, ...extraResults];
+    totalScanned += extraScanned;
+  }
+
+  searchStep.label = `Searched ${subQueries.length + 1} queries across legal database`;
+  searchStep.detail = [query, ...extraSubQueries].join(" | ");
   searchStep.completedAt = Date.now();
 
   // ── Step 3: Evaluation & Deduplication ──
