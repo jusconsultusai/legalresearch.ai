@@ -248,46 +248,19 @@ export default function OnlyOfficeEditor({
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-surface p-8">
         <div className="text-red-500 mb-4">
-          <svg
-            className="w-12 h-12 mx-auto"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.07 16.5c-.77.833.192 2.5 1.732 2.5z"
-            />
+          <svg className="w-12 h-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.07 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-text-primary mb-2">
-          Editor Could Not Load
-        </h3>
-        <p className="text-sm text-text-secondary text-center max-w-md mb-4">
-          {error}
-        </p>
-        <div className="flex gap-3 mt-4">
-          <button
-            onClick={() => onError?.("fallback")}
-            className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            Use Built-in Editor
-          </button>
-          <button
-            onClick={() => {
-              setError(null);
-              setLoading(true);
-            }}
-            className="px-4 py-2 border border-border text-text-secondary text-sm rounded-lg hover:bg-surface-secondary transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-        <p className="text-xs text-text-tertiary mt-3">
-          To use ONLYOFFICE, run: <code className="bg-surface-secondary px-2 py-0.5 rounded">docker-compose up -d</code>
-        </p>
+        <h3 className="text-lg font-semibold text-text-primary mb-2">Editor Could Not Load</h3>
+        <p className="text-sm text-text-secondary text-center max-w-md whitespace-pre-line mb-6">{error}</p>
+        <button
+          onClick={() => { setError(null); setLoading(true); }}
+          className="px-5 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          Retry
+        </button>
       </div>
     );
   }
