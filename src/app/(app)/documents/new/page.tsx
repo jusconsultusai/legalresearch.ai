@@ -143,7 +143,7 @@ const DOCUMENT_CATEGORIES = [
     category: "notarial",
     label: "Notarial",
     icon: "✍️",
-    color: "border-gray-200 bg-gray-50 text-gray-700",
+    color: "border-gray-200 bg-gray-50 dark:border-slate-600 dark:bg-slate-800 text-gray-700 dark:text-slate-300",
     types: [
       { key: "affidavit", label: "Affidavit" },
       { key: "spa", label: "Special Power of Attorney" },
@@ -491,7 +491,7 @@ export default function NewDocumentPage() {
           className={cn(
             "p-5 rounded-xl border-2 text-left transition-all",
             mode === "blank"
-              ? "border-slate-600 bg-slate-50 text-slate-700"
+              ? "border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
               : "border-border hover:border-slate-300 hover:bg-surface-secondary"
           )}
         >
@@ -508,7 +508,7 @@ export default function NewDocumentPage() {
           className={cn(
             "p-5 rounded-xl border-2 text-left transition-all relative",
             mode === "template"
-              ? "border-blue-600 bg-blue-50 text-blue-700"
+              ? "border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
               : "border-border hover:border-blue-300 hover:bg-surface-secondary"
           )}
         >
@@ -528,7 +528,7 @@ export default function NewDocumentPage() {
           className={cn(
             "p-5 rounded-xl border-2 text-left transition-all relative",
             mode === "ai"
-              ? "border-primary-600 bg-primary-50 text-primary-700"
+              ? "border-primary-600 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300"
               : "border-border hover:border-primary-300 hover:bg-surface-secondary"
           )}
         >
@@ -574,7 +574,7 @@ export default function NewDocumentPage() {
               className={cn(
                 "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
                 templateSource === "official"
-                  ? "bg-white text-blue-700 shadow-sm"
+                  ? "bg-surface text-blue-700 dark:text-blue-300 shadow-sm"
                   : "text-text-secondary hover:text-text-primary"
               )}
             >
@@ -591,7 +591,7 @@ export default function NewDocumentPage() {
               className={cn(
                 "px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2",
                 templateSource === "myfiles"
-                  ? "bg-white text-amber-700 shadow-sm"
+                  ? "bg-surface text-amber-700 dark:text-amber-300 shadow-sm"
                   : "text-text-secondary hover:text-text-primary"
               )}
             >
@@ -628,7 +628,7 @@ export default function NewDocumentPage() {
                       className={cn(
                         "w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-left transition-colors",
                         selectedCategory === cat.category
-                          ? "bg-blue-50 text-blue-700 font-medium"
+                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-medium"
                           : "hover:bg-surface-secondary text-text-secondary"
                       )}
                     >
@@ -681,7 +681,7 @@ export default function NewDocumentPage() {
                       </button>
                       {showPreview && templatePreview && (
                         <div
-                          className="max-h-80 overflow-auto p-4 bg-white text-[13px] leading-relaxed"
+                          className="max-h-80 overflow-auto p-4 bg-surface text-[13px] leading-relaxed"
                           dangerouslySetInnerHTML={{ __html: templatePreview }}
                         />
                       )}
@@ -801,7 +801,7 @@ export default function NewDocumentPage() {
                       </button>
                       {showMyFilePreview && (
                         <div
-                          className="max-h-80 overflow-auto p-4 bg-white text-[13px] leading-relaxed"
+                          className="max-h-80 overflow-auto p-4 bg-surface text-[13px] leading-relaxed"
                           dangerouslySetInnerHTML={{ __html: myFilePreview }}
                         />
                       )}

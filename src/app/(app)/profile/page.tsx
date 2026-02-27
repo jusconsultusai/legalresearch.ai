@@ -55,7 +55,7 @@ export default function ProfilePage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-left transition-colors ${
-                activeTab === tab.id ? "bg-primary-50 text-primary-700 font-medium" : "hover:bg-surface-secondary text-text-secondary"
+                activeTab === tab.id ? "bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 font-medium" : "hover:bg-surface-secondary text-text-secondary"
               }`}
             >
               {tab.icon}
@@ -73,7 +73,7 @@ export default function ProfilePage() {
                 {/* Avatar */}
                 <div className="flex items-center gap-4 mb-6">
                   <div className="relative">
-                    <div className="w-20 h-20 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-2xl font-bold">
+                    <div className="w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-200 flex items-center justify-center text-2xl font-bold">
                       {user?.name?.charAt(0).toUpperCase() || "U"}
                     </div>
                   </div>
@@ -200,7 +200,7 @@ export default function ProfilePage() {
                       className={`w-11 h-6 rounded-full transition-colors ${form.notifications[n.key as keyof typeof form.notifications] ? "bg-primary-600" : "bg-surface-tertiary"}`}
                       title={`Toggle ${n.label.toLowerCase()}`}
                     >
-                      <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform mx-1 ${form.notifications[n.key as keyof typeof form.notifications] ? "translate-x-5" : ""}`} />
+                      <div className={`w-4 h-4 bg-white dark:bg-slate-300 rounded-full shadow transition-transform mx-1 ${form.notifications[n.key as keyof typeof form.notifications] ? "translate-x-5" : ""}`} />
                     </button>
                   </div>
                 ))}

@@ -17,9 +17,9 @@ interface BookmarkItem {
 }
 
 const TYPE_COLORS = {
-  document: "bg-blue-100 text-blue-700",
-  case: "bg-green-100 text-green-700",
-  law: "bg-purple-100 text-purple-700",
+  document: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  case: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+  law: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
 };
 
 const TYPE_ICONS = {

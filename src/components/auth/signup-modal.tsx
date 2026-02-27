@@ -97,7 +97,7 @@ export function SignupModal() {
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={close} />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden animate-fade-in">
+      <div className="relative bg-surface rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden animate-fade-in border border-border">
         {/* Progress Bar */}
         <ProgressBar value={progress} className="h-1 bg-gray-200 rounded-none" barClassName="bg-primary-600 transition-all duration-300 rounded-none" aria-label="Sign up progress" />
 

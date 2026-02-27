@@ -302,7 +302,7 @@ export default function MyFilesPage() {
       </div>
 
       {/* Storage Usage */}
-      <div className="flex items-center gap-4 bg-white rounded-xl border border-border p-4">
+      <div className="flex items-center gap-4 bg-surface rounded-xl border border-border p-4">
         <HardDrive className="w-5 h-5 text-text-secondary" />
         <div className="flex-1">
           <div className="flex items-center justify-between mb-1">
@@ -390,7 +390,7 @@ export default function MyFilesPage() {
           )}
         </div>
       ) : viewMode === "list" ? (
-        <div className="bg-white rounded-xl border border-border divide-y divide-border">
+        <div className="bg-surface rounded-xl border border-border divide-y divide-border">
           {filtered.map((file) => (
             <div
               key={file.id}
@@ -447,8 +447,7 @@ export default function MyFilesPage() {
                 {/* Labeled: AI Analyze */}
                 <button
                   onClick={() => openAIAnalysis(file)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-medium transition-colors border border-purple-200"
-                  title="AI Analyze"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-xs font-medium transition-colors border border-purple-200 dark:border-purple-700/40"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   AI Analyze
@@ -458,8 +457,7 @@ export default function MyFilesPage() {
                 <button
                   onClick={() => handleUseInDocBuilder(file)}
                   disabled={builderLoading === file.id}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-700 text-xs font-medium transition-colors border border-primary-200 disabled:opacity-60"
-                  title="Open in Document Builder"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-50 hover:bg-primary-100 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 text-primary-700 dark:text-primary-300 text-xs font-medium transition-colors border border-primary-200 dark:border-primary-700/40 disabled:opacity-60"
                 >
                   {builderLoading === file.id ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -491,8 +489,7 @@ export default function MyFilesPage() {
                 ) : (
                   <button
                     onClick={() => setDeleteConfirm(file.id)}
-                    className="p-2 rounded-lg hover:bg-red-50 text-text-tertiary hover:text-red-500 transition-colors"
-                    title="Delete"
+                  className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-text-tertiary hover:text-red-500 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -506,7 +503,7 @@ export default function MyFilesPage() {
           {filtered.map((file) => (
             <div
               key={file.id}
-              className="bg-white rounded-xl border border-border p-4 hover:shadow-md transition-all flex flex-col"
+              className="bg-surface rounded-xl border border-border p-4 hover:shadow-md transition-all flex flex-col"
             >
               {/* Icon + type badge */}
               <div className="relative w-fit mb-3">
@@ -527,8 +524,7 @@ export default function MyFilesPage() {
               <div className="flex gap-1.5 mb-2">
                 <button
                   onClick={() => openAIAnalysis(file)}
-                  className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-medium transition-colors border border-purple-200"
-                  title="AI Analyze"
+                  className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-xs font-medium transition-colors border border-purple-200 dark:border-purple-700/40"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   AI
@@ -536,8 +532,7 @@ export default function MyFilesPage() {
                 <button
                   onClick={() => handleUseInDocBuilder(file)}
                   disabled={builderLoading === file.id}
-                  className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-700 text-xs font-medium transition-colors border border-primary-200 disabled:opacity-60"
-                  title="Use in Document Builder"
+                  className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-primary-50 hover:bg-primary-100 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 text-primary-700 dark:text-primary-300 text-xs font-medium transition-colors border border-primary-200 dark:border-primary-700/40 disabled:opacity-60"
                 >
                   {builderLoading === file.id ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -574,7 +569,7 @@ export default function MyFilesPage() {
                 ) : (
                   <button
                     onClick={() => setDeleteConfirm(file.id)}
-                    className="p-1.5 rounded-lg hover:bg-red-50 text-text-tertiary hover:text-red-500 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-text-tertiary hover:text-red-500 transition-colors"
                     title="Delete"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -589,7 +584,7 @@ export default function MyFilesPage() {
       {/* Upload Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4">
+          <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-lg mx-4">
             <div className="flex items-center justify-between p-5 border-b border-border">
               <h3 className="font-semibold">Upload Files</h3>
               <button onClick={() => setShowUploadModal(false)} className="p-2 hover:bg-surface-tertiary rounded-lg" title="Close">
@@ -658,7 +653,7 @@ export default function MyFilesPage() {
       {/* Preview Modal */}
       {previewFile && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col">
+          <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col">
             <div className="flex items-center justify-between p-5 border-b border-border">
               <div>
                 <h3 className="font-semibold text-sm">{previewFile.name}</h3>

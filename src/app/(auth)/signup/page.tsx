@@ -129,7 +129,7 @@ export default function SignUpPage() {
             <div className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center text-xs text-text-tertiary">
-            <span className="bg-white px-2">or sign up with email</span>
+            <span className="bg-surface px-2">or sign up with email</span>
           </div>
         </div>
 

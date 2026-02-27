@@ -241,7 +241,7 @@ export default async function HomePage() {
       </section>
 
       {/* Features */}
-      <section className="py-24 bg-white" id="features">
+      <section className="py-24 bg-surface" id="features">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <Badge variant="primary" className="mb-4">Features</Badge>
@@ -284,7 +284,7 @@ export default async function HomePage() {
 
               <div className="grid grid-cols-2 gap-4 mb-8">
                 {databaseCategories.map((cat, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-border">
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border">
                     <div className="w-10 h-10 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
                       <cat.Icon className="w-5 h-5" />
                     </div>
@@ -303,7 +303,7 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="bg-white rounded-2xl border border-border shadow-lg p-6 text-center">
+            <div className="bg-surface rounded-2xl border border-border shadow-lg p-6 text-center">
               <div className="space-y-4">
                 {["Supreme Court", "Laws", "Executive Issuances", "References", "Treaties"].map((cat, i) => (
                   <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-surface-secondary hover:bg-surface-tertiary transition-colors cursor-pointer">
@@ -323,7 +323,7 @@ export default async function HomePage() {
       </section>
 
       {/* Pricing */}
-      <section className="py-24 bg-white" id="pricing">
+      <section className="py-24 bg-surface" id="pricing">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <Badge variant="primary" className="mb-4">Pricing</Badge>

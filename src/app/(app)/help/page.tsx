@@ -211,7 +211,7 @@ export default function HelpPage() {
         />
         {/* Search Results Dropdown */}
         {searchQuery.trim() && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl border border-border shadow-xl z-10 max-h-80 overflow-auto">
+          <div className="absolute top-full left-0 right-0 mt-2 bg-surface rounded-xl border border-border shadow-xl z-10 max-h-80 overflow-auto">
             {searchResults.length === 0 ? (
               <p className="p-4 text-sm text-text-secondary text-center">No results found</p>
             ) : (
@@ -304,7 +304,7 @@ export default function HelpPage() {
         <div className="flex-1 min-w-0">
           {currentArticle ? (
             /* Article View */
-            <div className="bg-white rounded-xl border border-border p-8">
+            <div className="bg-surface rounded-xl border border-border p-8">
               <button
                 onClick={() => setActiveArticle(null)}
                 className="text-xs text-primary-600 hover:underline mb-4 flex items-center gap-1"
@@ -381,7 +381,7 @@ export default function HelpPage() {
                   <button
                     key={article.id}
                     onClick={() => setActiveArticle(article.id)}
-                    className="w-full text-left bg-white rounded-xl border border-border p-5 hover:shadow-md hover:border-primary-300 transition-all group"
+                    className="w-full text-left bg-surface rounded-xl border border-border p-5 hover:shadow-md hover:border-primary-300 transition-all group"
                   >
                     <div className="flex items-center justify-between">
                       <div>
@@ -406,7 +406,7 @@ export default function HelpPage() {
               <h2 className="text-xl font-bold text-text-primary mb-6">Frequently Asked Questions</h2>
               <div className="space-y-3">
                 {FAQ_ITEMS.map((faq, i) => (
-                  <div key={i} className="bg-white rounded-xl border border-border overflow-hidden">
+                  <div key={i} className="bg-surface rounded-xl border border-border overflow-hidden">
                     <button
                       onClick={() => setExpandedFAQ(expandedFAQ === i ? null : i)}
                       className="w-full flex items-center justify-between p-5 text-left"
@@ -489,7 +489,7 @@ export default function HelpPage() {
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Link
                 href="/terms"
-                className="flex items-center gap-3 p-4 bg-white rounded-xl border border-border hover:shadow-md transition-all group"
+                className="flex items-center gap-3 p-4 bg-surface rounded-xl border border-border hover:shadow-md transition-all group"
               >
                 <Scale className="w-5 h-5 text-text-secondary" />
                 <div>
@@ -500,7 +500,7 @@ export default function HelpPage() {
               </Link>
               <Link
                 href="/privacy"
-                className="flex items-center gap-3 p-4 bg-white rounded-xl border border-border hover:shadow-md transition-all group"
+                className="flex items-center gap-3 p-4 bg-surface rounded-xl border border-border hover:shadow-md transition-all group"
               >
                 <Shield className="w-5 h-5 text-text-secondary" />
                 <div>
