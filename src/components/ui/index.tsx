@@ -15,7 +15,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "primary", size = "md", loading, children, disabled, ...props }, ref) => {
     const variants = {
       primary: "bg-primary-900 text-white hover:bg-primary-800 focus:ring-primary-500",
-      secondary: "border border-border bg-white text-text-primary hover:bg-surface-secondary",
+      secondary: "border border-border bg-surface text-text-primary hover:bg-surface-secondary",
       ghost: "text-text-secondary hover:bg-surface-tertiary hover:text-text-primary",
       danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
       outline: "border-2 border-primary-600 text-primary-700 hover:bg-primary-50",
@@ -153,7 +153,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          "rounded-xl border border-border bg-white shadow-sm transition-all",
+          "rounded-xl border border-border bg-surface shadow-sm transition-all",
           hover && "hover:shadow-md",
           paddings[padding],
           className
@@ -256,7 +256,7 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className={cn("relative bg-white rounded-2xl shadow-2xl w-full mx-4 animate-fade-in", sizes[size])}>
+      <div className={cn("relative bg-surface rounded-2xl shadow-2xl w-full mx-4 animate-fade-in", sizes[size])}>
         {title && (
           <div className="flex items-center justify-between px-6 py-4 border-b border-border">
             <h3 className="text-lg font-semibold">{title}</h3>

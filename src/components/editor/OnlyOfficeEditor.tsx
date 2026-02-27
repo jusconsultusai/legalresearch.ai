@@ -246,7 +246,7 @@ export default function OnlyOfficeEditor({
 
   if (error) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-white p-8">
+      <div className="flex-1 flex flex-col items-center justify-center bg-surface p-8">
         <div className="text-red-500 mb-4">
           <svg
             className="w-12 h-12 mx-auto"
@@ -291,7 +291,7 @@ export default function OnlyOfficeEditor({
   return (
     <div className="relative w-full h-full">
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
+        <div className="absolute inset-0 flex items-center justify-center bg-surface z-10">
           <div className="text-center">
             <div className="w-8 h-8 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-3" />
             <p className="text-sm text-text-secondary">

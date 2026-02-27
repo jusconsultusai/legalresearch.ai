@@ -84,7 +84,7 @@ export function ProductTour() {
 
       {/* Tour Card */}
       <div className={cn(
-        "fixed z-102 w-105 bg-white rounded-2xl shadow-2xl border border-border animate-fade-in overflow-hidden",
+        "fixed z-102 w-105 bg-surface rounded-2xl shadow-2xl border border-border animate-fade-in overflow-hidden",
         step.target ? "top-1/3 left-72" : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
       )}>
         {/* Header with gradient accent */}
@@ -131,7 +131,7 @@ export function ProductTour() {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-between px-6 py-4 bg-white border-t border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 bg-surface border-t border-border">
           <button
             onClick={end}
             className="text-sm font-medium text-text-tertiary hover:text-primary-600 transition-colors"

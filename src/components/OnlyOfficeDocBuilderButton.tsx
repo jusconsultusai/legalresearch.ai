@@ -198,7 +198,7 @@ export default function OnlyOfficeDocBuilderButton({
             className="fixed inset-0 z-40"
             onClick={() => setShowDropdown(false)}
           />
-          <div className="absolute left-0 top-full mt-1 w-64 bg-white rounded-lg shadow-lg border border-border z-50 py-1">
+          <div className="absolute left-0 top-full mt-1 w-64 bg-surface rounded-lg shadow-lg border border-border z-50 py-1">
             {templates.map((template) => {
               const Icon = iconMap[template.icon || "word"] || FileText;
               return (

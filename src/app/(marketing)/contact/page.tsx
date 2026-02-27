@@ -31,7 +31,7 @@ export default async function ContactPage() {
           {/* Email */}
           <a
             href="mailto:jusconsultus.ai@gmail.com"
-            className="group p-6 rounded-2xl border border-border hover:border-primary-300 hover:shadow-md transition-all bg-surface-primary"
+            className="group p-6 rounded-2xl border border-border hover:border-primary-300 hover:shadow-md transition-all bg-surface"
           >
             <div className="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center mb-4 group-hover:bg-primary-100 transition-colors">
               <Mail className="w-6 h-6 text-primary-600" />
@@ -46,7 +46,7 @@ export default async function ContactPage() {
           {/* Phone */}
           <a
             href="tel:+639757477099"
-            className="group p-6 rounded-2xl border border-border hover:border-primary-300 hover:shadow-md transition-all bg-surface-primary"
+            className="group p-6 rounded-2xl border border-border hover:border-primary-300 hover:shadow-md transition-all bg-surface"
           >
             <div className="w-12 h-12 rounded-xl bg-accent-50 flex items-center justify-center mb-4 group-hover:bg-accent-100 transition-colors">
               <Phone className="w-6 h-6 text-accent-600" />
@@ -57,7 +57,7 @@ export default async function ContactPage() {
           </a>
 
           {/* Address */}
-          <div className="group p-6 rounded-2xl border border-border hover:border-primary-300 hover:shadow-md transition-all bg-surface-primary">
+          <div className="group p-6 rounded-2xl border border-border hover:border-primary-300 hover:shadow-md transition-all bg-surface">
             <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center mb-4 group-hover:bg-green-100 transition-colors">
               <MapPin className="w-6 h-6 text-green-600" />
             </div>
@@ -112,13 +112,13 @@ export default async function ContactPage() {
             <div className="space-y-2">
               <Link
                 href="/help"
-                className="flex items-center justify-between w-full px-4 py-2.5 rounded-xl border border-border hover:border-primary-300 hover:bg-surface-primary transition-all text-sm font-medium"
+                className="flex items-center justify-between w-full px-4 py-2.5 rounded-xl border border-border hover:border-primary-300 hover:bg-surface transition-all text-sm font-medium"
               >
                 Visit Help Center <ArrowRight className="w-4 h-4 text-text-tertiary" />
               </Link>
               <Link
                 href="/chat"
-                className="flex items-center justify-between w-full px-4 py-2.5 rounded-xl border border-border hover:border-primary-300 hover:bg-surface-primary transition-all text-sm font-medium"
+                className="flex items-center justify-between w-full px-4 py-2.5 rounded-xl border border-border hover:border-primary-300 hover:bg-surface transition-all text-sm font-medium"
               >
                 Ask AI Assistant <ArrowRight className="w-4 h-4 text-text-tertiary" />
               </Link>
@@ -135,7 +135,7 @@ export default async function ContactPage() {
               href="https://www.facebook.com/jusconsultus.online/"
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex flex-col items-center gap-3 p-6 rounded-2xl border border-border hover:border-[#1877F2] hover:shadow-md transition-all bg-surface-primary"
+              className="group flex flex-col items-center gap-3 p-6 rounded-2xl border border-border hover:border-[#1877F2] hover:shadow-md transition-all bg-surface"
             >
               <div className="w-12 h-12 rounded-xl bg-[#1877F2]/10 flex items-center justify-center group-hover:bg-[#1877F2]/20 transition-colors">
                 <svg className="w-6 h-6 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24">
@@ -153,7 +153,7 @@ export default async function ContactPage() {
               href="https://www.instagram.com/jusconsultus"
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex flex-col items-center gap-3 p-6 rounded-2xl border border-border hover:border-[#E1306C] hover:shadow-md transition-all bg-surface-primary"
+              className="group flex flex-col items-center gap-3 p-6 rounded-2xl border border-border hover:border-[#E1306C] hover:shadow-md transition-all bg-surface"
             >
               <div className="w-12 h-12 rounded-xl bg-[#E1306C]/10 flex items-center justify-center group-hover:bg-[#E1306C]/20 transition-colors">
                 <svg className="w-6 h-6 text-[#E1306C]" fill="currentColor" viewBox="0 0 24 24">
@@ -171,7 +171,7 @@ export default async function ContactPage() {
               href="https://www.tiktok.com/@jusconsultus"
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex flex-col items-center gap-3 p-6 rounded-2xl border border-border hover:border-[#010101] hover:shadow-md transition-all bg-surface-primary"
+              className="group flex flex-col items-center gap-3 p-6 rounded-2xl border border-border hover:border-[#010101] hover:shadow-md transition-all bg-surface"
             >
               <div className="w-12 h-12 rounded-xl bg-black/5 flex items-center justify-center group-hover:bg-black/10 transition-colors">
                 <svg className="w-6 h-6 text-[#010101] dark:text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -189,7 +189,7 @@ export default async function ContactPage() {
               href="https://www.youtube.com/@jusconsultus"
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex flex-col items-center gap-3 p-6 rounded-2xl border border-border hover:border-[#FF0000] hover:shadow-md transition-all bg-surface-primary"
+              className="group flex flex-col items-center gap-3 p-6 rounded-2xl border border-border hover:border-[#FF0000] hover:shadow-md transition-all bg-surface"
             >
               <div className="w-12 h-12 rounded-xl bg-[#FF0000]/10 flex items-center justify-center group-hover:bg-[#FF0000]/20 transition-colors">
                 <svg className="w-6 h-6 text-[#FF0000]" fill="currentColor" viewBox="0 0 24 24">
