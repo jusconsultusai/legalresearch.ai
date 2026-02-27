@@ -34,6 +34,20 @@ import {
   Brain,
   Loader2,
   FileScan,
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  List,
+  ListOrdered,
+  Undo2,
+  Redo2,
+  IndentIncrease,
+  IndentDecrease,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge, Tabs, Skeleton } from "@/components/ui";
@@ -86,7 +100,10 @@ export default function DocumentEditorPage() {
   const [showAiModal, setShowAiModal] = useState(mode === "ai");
   const [generatingAI, setGeneratingAI] = useState(false);
   const [zoom, setZoom] = useState(100);
-  const [editorFallback, setEditorFallback] = useState(false);
+  // Default true — ONLYOFFICE requires Docker which is not installed on this machine
+  const [editorFallback, setEditorFallback] = useState(true);
+  const [editorFontSize, setEditorFontSize] = useState(12);
+  const [editorFontFamily, setEditorFontFamily] = useState("Times New Roman");
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -741,6 +758,121 @@ export default function DocumentEditorPage() {
         </button>
       </div>
 
+      {/* Formatting Toolbar — shown when using the built-in PaginatedEditor */}
+      {editorFallback && (
+        <div className="flex items-center gap-0.5 px-3 py-1 bg-surface border-b border-border shrink-0 flex-wrap">
+          {/* Undo / Redo */}
+          <button type="button" title="Undo (Ctrl+Z)"
+            className="p-1.5 rounded hover:bg-surface-tertiary text-text-secondary hover:text-text-primary transition-colors"
+            onMouseDown={(e) => { e.preventDefault(); document.execCommand('undo'); }}>
+            <Undo2 className="w-3.5 h-3.5" />
+          </button>
+          <button type="button" title="Redo (Ctrl+Y)"
+            className="p-1.5 rounded hover:bg-surface-tertiary text-text-secondary hover:text-text-primary transition-colors"
+            onMouseDown={(e) => { e.preventDefault(); document.execCommand('redo'); }}>
+            <Redo2 className="w-3.5 h-3.5" />
+          </button>
+
+          <div className="w-px h-5 bg-border mx-1 shrink-0" />
+
+          {/* Block style */}
+          <select
+            className="text-xs border border-border rounded px-1.5 py-0.5 bg-surface text-text-primary h-7 cursor-pointer"
+            defaultValue="p"
+            onChange={(e) => { document.execCommand('formatBlock', false, e.target.value); }}>
+            <option value="p">Paragraph</option>
+            <option value="h1">Heading 1</option>
+            <option value="h2">Heading 2</option>
+            <option value="h3">Heading 3</option>
+            <option value="blockquote">Quote</option>
+          </select>
+
+          {/* Font Family */}
+          <select
+            className="text-xs border border-border rounded px-1.5 py-0.5 bg-surface text-text-primary h-7 cursor-pointer ml-1"
+            value={editorFontFamily}
+            onChange={(e) => setEditorFontFamily(e.target.value)}>
+            <option>Times New Roman</option>
+            <option>Arial</option>
+            <option>Georgia</option>
+            <option>Courier New</option>
+            <option>Verdana</option>
+            <option>Calibri</option>
+          </select>
+
+          {/* Font Size */}
+          <select
+            className="text-xs border border-border rounded px-1.5 py-0.5 bg-surface text-text-primary h-7 w-20 cursor-pointer ml-1"
+            value={editorFontSize}
+            onChange={(e) => setEditorFontSize(Number(e.target.value))}>
+            {[8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72].map(s => (
+              <option key={s} value={s}>{s} pt</option>
+            ))}
+          </select>
+
+          <div className="w-px h-5 bg-border mx-1 shrink-0" />
+
+          {/* Bold / Italic / Underline / Strikethrough */}
+          {([
+            { cmd: 'bold', title: 'Bold (Ctrl+B)', icon: <Bold className="w-3.5 h-3.5" /> },
+            { cmd: 'italic', title: 'Italic (Ctrl+I)', icon: <Italic className="w-3.5 h-3.5" /> },
+            { cmd: 'underline', title: 'Underline (Ctrl+U)', icon: <Underline className="w-3.5 h-3.5" /> },
+            { cmd: 'strikeThrough', title: 'Strikethrough', icon: <Strikethrough className="w-3.5 h-3.5" /> },
+          ]).map(({ cmd, title, icon }) => (
+            <button key={cmd} type="button" title={title}
+              className="p-1.5 rounded hover:bg-surface-tertiary text-text-secondary hover:text-text-primary transition-colors"
+              onMouseDown={(e) => { e.preventDefault(); document.execCommand(cmd); }}>
+              {icon}
+            </button>
+          ))}
+
+          <div className="w-px h-5 bg-border mx-1 shrink-0" />
+
+          {/* Alignment */}
+          {([
+            { cmd: 'justifyLeft', title: 'Align Left', icon: <AlignLeft className="w-3.5 h-3.5" /> },
+            { cmd: 'justifyCenter', title: 'Align Center', icon: <AlignCenter className="w-3.5 h-3.5" /> },
+            { cmd: 'justifyRight', title: 'Align Right', icon: <AlignRight className="w-3.5 h-3.5" /> },
+            { cmd: 'justifyFull', title: 'Justify', icon: <AlignJustify className="w-3.5 h-3.5" /> },
+          ]).map(({ cmd, title, icon }) => (
+            <button key={cmd} type="button" title={title}
+              className="p-1.5 rounded hover:bg-surface-tertiary text-text-secondary hover:text-text-primary transition-colors"
+              onMouseDown={(e) => { e.preventDefault(); document.execCommand(cmd); }}>
+              {icon}
+            </button>
+          ))}
+
+          <div className="w-px h-5 bg-border mx-1 shrink-0" />
+
+          {/* Lists and Indent */}
+          {([
+            { cmd: 'insertUnorderedList', title: 'Bullet List', icon: <List className="w-3.5 h-3.5" /> },
+            { cmd: 'insertOrderedList', title: 'Numbered List', icon: <ListOrdered className="w-3.5 h-3.5" /> },
+            { cmd: 'indent', title: 'Increase Indent', icon: <IndentIncrease className="w-3.5 h-3.5" /> },
+            { cmd: 'outdent', title: 'Decrease Indent', icon: <IndentDecrease className="w-3.5 h-3.5" /> },
+          ]).map(({ cmd, title, icon }) => (
+            <button key={cmd} type="button" title={title}
+              className="p-1.5 rounded hover:bg-surface-tertiary text-text-secondary hover:text-text-primary transition-colors"
+              onMouseDown={(e) => { e.preventDefault(); document.execCommand(cmd); }}>
+              {icon}
+            </button>
+          ))}
+
+          <div className="w-px h-5 bg-border mx-1 shrink-0" />
+
+          {/* Zoom */}
+          <span className="text-xs text-text-tertiary shrink-0">Zoom:</span>
+          <select
+            className="text-xs border border-border rounded px-1.5 py-0.5 bg-surface text-text-primary h-7 cursor-pointer ml-1"
+            value={zoom}
+            onChange={(e) => setZoom(Number(e.target.value))}>
+            {[50, 75, 100, 125, 150, 175, 200].map(z => (
+              <option key={z} value={z}>{z}%</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Toast Notification */}
       {toast && (
         <div className={cn(
@@ -809,8 +941,8 @@ export default function DocumentEditorPage() {
                   } catch { setSaveState("error"); }
                 }, 1500);
               }}
-              fontSize={12}
-              fontFamily="Times New Roman"
+              fontSize={editorFontSize}
+              fontFamily={editorFontFamily}
               zoom={zoom}
               className="h-full"
             />

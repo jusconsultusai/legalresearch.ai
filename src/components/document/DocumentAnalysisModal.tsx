@@ -254,8 +254,15 @@ export default function DocumentAnalysisModal({
 
       const res = await fetch("/api/ai/analyze-document", { method: "POST", body: fd });
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Analysis failed");
+        let errMsg = `Server error (${res.status})`;
+        try {
+          const ct = res.headers.get("content-type") ?? "";
+          if (ct.includes("application/json")) {
+            const errBody = await res.json();
+            errMsg = errBody.error || errMsg;
+          }
+        } catch { /* HTML or empty body — keep generic message */ }
+        throw new Error(errMsg);
       }
       const data = await res.json();
       if (data.success) {
@@ -307,8 +314,15 @@ export default function DocumentAnalysisModal({
 
       const res = await fetch("/api/ai/analyze-document", { method: "POST", body: fd });
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Text extraction failed");
+        let errMsg = `Server error (${res.status})`;
+        try {
+          const ct = res.headers.get("content-type") ?? "";
+          if (ct.includes("application/json")) {
+            const errBody = await res.json();
+            errMsg = errBody.error || errMsg;
+          }
+        } catch { /* HTML or empty body */ }
+        throw new Error(errMsg);
       }
       const data = await res.json();
       if (data.success && data.extractedText) {

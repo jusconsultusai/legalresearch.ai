@@ -209,25 +209,48 @@ async function analyzeWithAI(text: string, fileName: string): Promise<object> {
 
   let raw = "";
   try {
-    raw = await generateCompletion(messages, { temperature: 0.2, maxTokens: 4096 });
+    raw = await generateCompletion(messages, { temperature: 0.2, maxTokens: 8192 });
   } catch (err) {
     console.error("[analyze-document] LLM call failed:", err);
     return buildFallbackAnalysis(text, fileName);
   }
 
-  // Strip markdown code fences if model wraps the JSON
-  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+  // Strip markdown code fences and <think>…</think> blocks
+  const cleaned = raw
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .replace(/^```(?:json)?\s*/im, "")
+    .replace(/\s*```\s*$/m, "")
+    .trim();
+
+  // Attempt 1: direct parse
   try {
     return JSON.parse(cleaned);
-  } catch {
-    // Model returned non-JSON (e.g. an explanation) — try to extract embedded JSON
-    const jsonMatch = cleaned.match(/\{[\s\S]+\}/);
-    if (jsonMatch) {
-      try { return JSON.parse(jsonMatch[0]); } catch { /* fall through */ }
+  } catch { /* try extraction */ }
+
+  // Attempt 2: locate the outermost JSON object using brace counting
+  const firstBrace = cleaned.indexOf("{");
+  if (firstBrace !== -1) {
+    let depth = 0;
+    let inString = false;
+    let escape = false;
+    let end = -1;
+    for (let i = firstBrace; i < cleaned.length; i++) {
+      const ch = cleaned[i];
+      if (escape) { escape = false; continue; }
+      if (ch === "\\" && inString) { escape = true; continue; }
+      if (ch === '"') { inString = !inString; continue; }
+      if (inString) continue;
+      if (ch === "{") depth++;
+      else if (ch === "}") { depth--; if (depth === 0) { end = i; break; } }
     }
-    console.warn("[analyze-document] JSON parse failed, using fallback. Raw snippet:", cleaned.slice(0, 200));
-    return buildFallbackAnalysis(text, fileName);
+    if (end !== -1) {
+      const jsonSlice = cleaned.slice(firstBrace, end + 1);
+      try { return JSON.parse(jsonSlice); } catch { /* fall through */ }
+    }
   }
+
+  console.warn("[analyze-document] JSON parse failed, using fallback. Raw snippet:", cleaned.slice(0, 200));
+  return buildFallbackAnalysis(text, fileName);
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────
@@ -308,5 +331,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Don't cache — file uploads require dynamic rendering
+// File uploads require Node.js runtime (pdf-parse, mammoth, tesseract.js) and dynamic rendering
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
