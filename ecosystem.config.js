@@ -66,5 +66,18 @@ module.exports = {
       out_file: "d:\\JusConsultus.AI\\logs\\caddy-out.log",
       merge_logs: true,
     },
+    {
+      name: "cloudflared",
+      script: "d:\\JusConsultus.AI\\tools\\cloudflared\\cloudflared.exe",
+      args: "tunnel --config d:\\JusConsultus.AI\\tools\\cloudflared\\config.yml run",
+      cwd: "d:\\JusConsultus.AI\\tools\\cloudflared",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
+      error_file: "d:\\JusConsultus.AI\\logs\\cloudflared-error.log",
+      out_file: "d:\\JusConsultus.AI\\logs\\cloudflared-out.log",
+      merge_logs: true,
+    },
   ],
 };
