@@ -268,22 +268,26 @@ export default function OnlyOfficeEditor({
         <p className="text-sm text-text-secondary text-center max-w-md mb-4">
           {error}
         </p>
-        <div className="text-xs text-text-tertiary text-center space-y-1">
-          <p>Make sure ONLYOFFICE Document Server is running:</p>
-          <code className="block bg-gray-100 px-3 py-1 rounded">
-            docker-compose up -d
-          </code>
+        <div className="flex gap-3 mt-4">
+          <button
+            onClick={() => onError?.("fallback")}
+            className="px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            Use Built-in Editor
+          </button>
+          <button
+            onClick={() => {
+              setError(null);
+              setLoading(true);
+            }}
+            className="px-4 py-2 border border-border text-text-secondary text-sm rounded-lg hover:bg-surface-secondary transition-colors"
+          >
+            Retry
+          </button>
         </div>
-        <button
-          onClick={() => {
-            setError(null);
-            setLoading(true);
-            window.location.reload();
-          }}
-          className="mt-4 px-4 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          Retry
-        </button>
+        <p className="text-xs text-text-tertiary mt-3">
+          To use ONLYOFFICE, run: <code className="bg-surface-secondary px-2 py-0.5 rounded">docker-compose up -d</code>
+        </p>
       </div>
     );
   }

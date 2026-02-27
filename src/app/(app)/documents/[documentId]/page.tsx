@@ -43,10 +43,12 @@ import OnlyOfficeDocBuilderButton from "@/components/OnlyOfficeDocBuilderButton"
 import DocumentAnalysisModal from "@/components/document/DocumentAnalysisModal";
 
 const OnlyOfficeEditor = dynamic(() => import("@/components/editor/OnlyOfficeEditor"), { ssr: false, loading: () => (
-  <div className="flex-1 bg-white flex items-center justify-center">
+  <div className="flex-1 bg-surface flex items-center justify-center">
     <div className="w-8 h-8 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
   </div>
 )});
+
+const PaginatedEditor = dynamic(() => import("@/components/document/PaginatedEditor"), { ssr: false });
 
 interface Document {
   id: string;
@@ -84,6 +86,7 @@ export default function DocumentEditorPage() {
   const [showAiModal, setShowAiModal] = useState(mode === "ai");
   const [generatingAI, setGeneratingAI] = useState(false);
   const [zoom, setZoom] = useState(100);
+  const [editorFallback, setEditorFallback] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -785,16 +788,43 @@ export default function DocumentEditorPage() {
 
       {/* Editor + Side Panel */}
       <div className="flex-1 flex overflow-hidden">
-        {/* ONLYOFFICE Document Editor */}
+        {/* Document Editor — ONLYOFFICE if server available, else built-in */}
         <div className="flex-1 min-h-0">
-          <OnlyOfficeEditor
-            documentId={params.documentId as string}
-            documentTitle={title || "Untitled Document"}
-            documentKey={`${params.documentId}-v${documentVersion}`}
-            mode="edit"
-            onContentChange={handleContentSync}
-            onSave={handleSave}
-          />
+          {editorFallback ? (
+            <PaginatedEditor
+              content={content}
+              setContent={(html) => {
+                setContent(html);
+                setSaveState("unsaved");
+                if (saveTimer.current) clearTimeout(saveTimer.current);
+                saveTimer.current = setTimeout(async () => {
+                  setSaveState("saving");
+                  try {
+                    const res = await fetch(`/api/documents/${params.documentId}`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ content: html }),
+                    });
+                    setSaveState(res.ok ? "saved" : "error");
+                  } catch { setSaveState("error"); }
+                }, 1500);
+              }}
+              fontSize={12}
+              fontFamily="Times New Roman"
+              zoom={zoom}
+              className="h-full"
+            />
+          ) : (
+            <OnlyOfficeEditor
+              documentId={params.documentId as string}
+              documentTitle={title || "Untitled Document"}
+              documentKey={`${params.documentId}-v${documentVersion}`}
+              mode="edit"
+              onContentChange={handleContentSync}
+              onSave={handleSave}
+              onError={() => setEditorFallback(true)}
+            />
+          )}
         </div>
 
         {/* Side Panel */}
