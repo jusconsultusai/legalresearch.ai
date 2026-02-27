@@ -5,6 +5,19 @@
 }
 
 jusconsultus.online, www.jusconsultus.online {
+	# ── ONLYOFFICE Document Server proxy ──────────────────────────────────────
+	# The browser cannot reach localhost:8000 directly; proxy through the domain.
+	route /onlyoffice/* {
+		# Strip the /onlyoffice prefix before forwarding to the container
+		uri strip_prefix /onlyoffice
+		reverse_proxy localhost:8000 {
+			# Rewrite the Location header on redirects from ONLYOFFICE
+			header_up Host localhost:8000
+		}
+		# Allow ONLYOFFICE frames from the same origin; don't override its own headers
+		header -X-Frame-Options
+	}
+
 	# Reverse proxy to Next.js production server
 	reverse_proxy localhost:3000
 
