@@ -1,6 +1,20 @@
 module.exports = {
   apps: [
     {
+      name: "onlyoffice",
+      script: "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      args: "-NoProfile -Command \"$env:PATH += ';C:\\Program Files\\Docker\\Docker\\resources\\bin'; Set-Location 'D:\\JusConsultus.AI'; docker-compose up -d --remove-orphans 2>&1 | Write-Host; Start-Sleep 5\"",
+      cwd: "d:\\JusConsultus.AI",
+      instances: 1,
+      autorestart: false,
+      watch: false,
+      max_restarts: 1,
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
+      error_file: "d:\\JusConsultus.AI\\logs\\onlyoffice-error.log",
+      out_file: "d:\\JusConsultus.AI\\logs\\onlyoffice-out.log",
+      merge_logs: true,
+    },
+    {
       name: "jusconsultus",
       script: "node_modules/next/dist/bin/next",
       args: "start",
