@@ -130,7 +130,7 @@ export function AppNavbar() {
     <header className="h-14 border-b border-border bg-surface flex items-center px-4 gap-4 shrink-0 z-40">
       <Link href="/chat" className="flex items-center gap-2">
         <Image src="/logo.png" alt="JusConsultus AI" width={28} height={28} className="rounded" />
-        <span className="font-bold text-primary-900 hidden sm:block">JusConsultus AI</span>
+            <span className="font-bold text-primary-900 dark:text-primary-200 hidden sm:block">JusConsultus AI</span>
       </Link>
 
       <div className="flex-1" />
@@ -185,7 +185,7 @@ export function AppNavbar() {
                 <CreditCard className="w-4 h-4" /> Subscription
               </Link>
               <div className="border-t border-border my-1" />
-              <button onClick={logout} className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 w-full">
+              <button onClick={logout} className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 w-full">
                 <LogOut className="w-4 h-4" /> Sign out
               </button>
             </div>

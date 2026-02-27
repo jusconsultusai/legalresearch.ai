@@ -110,20 +110,20 @@ export function ProductTour() {
         </div>
 
         {/* Content */}
-        <div className="px-6 py-5 bg-linear-to-b from-white to-gray-50/50">
+        <div className="px-6 py-5 bg-linear-to-b from-white to-gray-50/50 dark:from-surface dark:to-surface-secondary">
           <h3 className="text-xl font-bold text-text-primary mb-3 leading-tight">{step.title}</h3>
           <p className="text-sm text-text-secondary leading-relaxed">{step.content}</p>
         </div>
 
         {/* Progress Indicator */}
-        <div className="px-6 py-4 bg-gray-50/50">
+        <div className="px-6 py-4 bg-gray-50/50 dark:bg-surface-secondary/50">
           <div className="flex gap-1.5">
             {tourSteps.map((_, i) => (
               <div
                 key={i}
                 className={cn(
                   "h-1.5 flex-1 rounded-full transition-all duration-300",
-                  i <= currentStep ? "bg-primary-600" : "bg-gray-200"
+                  i <= currentStep ? "bg-primary-600" : "bg-gray-200 dark:bg-surface-tertiary"
                 )}
               />
             ))}

@@ -163,7 +163,7 @@ export default function UpgradePage() {
               className={cn(
                 "relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
                 billing === opt.id
-                  ? "bg-white text-text-primary shadow-sm"
+                  ? "bg-surface text-text-primary shadow-sm"
                   : "text-text-secondary hover:text-text-primary"
               )}
             >
@@ -191,8 +191,8 @@ export default function UpgradePage() {
           <div className="space-y-2.5 mb-6">
             {FREE_FEATURES.map((f) => (
               <div key={f} className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                  <Check className="w-2.5 h-2.5 text-gray-500" />
+                <div className="w-4 h-4 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
+                  <Check className="w-2.5 h-2.5 text-gray-500 dark:text-slate-300" />
                 </div>
                 <span className="text-xs text-text-secondary">{f}</span>
               </div>
@@ -314,14 +314,14 @@ export default function UpgradePage() {
       {/* Payment Modal */}
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">
+          <div className="bg-surface rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-border">
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <h2 className="text-lg font-semibold text-text-primary">
                 {checkoutData ? "Payment Instructions" : "Choose Payment Method"}
               </h2>
               <button
                 onClick={() => { setShowPaymentModal(false); setCheckoutData(null); setPaymentMethod(null); setError(""); }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-text-tertiary hover:text-text-primary transition-colors"
                 title="Close"
                 aria-label="Close payment modal"
               >
@@ -333,8 +333,8 @@ export default function UpgradePage() {
               {!checkoutData ? (
                 <>
                   {/* Plan Summary */}
-                  <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                    <p className="text-sm font-medium text-gray-900">
+                  <div className="bg-surface-secondary rounded-xl p-4 mb-6">
+                    <p className="text-sm font-medium text-text-primary">
                       {selectedPlan === "proMonthly" && "Professional Monthly"}
                       {selectedPlan === "proQuarterly" && "Professional Quarterly"}
                       {selectedPlan === "proSemiannual" && "Professional Semiannual"}
@@ -344,7 +344,7 @@ export default function UpgradePage() {
                       {selectedPlan === "teamSemiannual" && "Team Semiannual"}
                       {selectedPlan === "teamAnnual" && "Team Annual"}
                     </p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">
+                    <p className="text-2xl font-bold text-text-primary mt-1">
                       {selectedPlan === "proMonthly" && PRICING.proMonthly.display}
                       {selectedPlan === "proQuarterly" && PRICING.proQuarterly.displayTotal}
                       {selectedPlan === "proSemiannual" && PRICING.proSemiannual.displayTotal}
@@ -353,7 +353,7 @@ export default function UpgradePage() {
                       {selectedPlan === "teamQuarterly" && PRICING.teamQuarterly.displayTotal}
                       {selectedPlan === "teamSemiannual" && PRICING.teamSemiannual.displayTotal}
                       {selectedPlan === "teamAnnual" && PRICING.teamAnnual.displayTotal}
-                      <span className="text-sm font-normal text-gray-500 ml-1">
+                      <span className="text-sm font-normal text-text-secondary ml-1">
                         {selectedPlan.includes("Monthly") ? "/month"
                           : selectedPlan.includes("Quarterly") ? "/quarter"
                           : selectedPlan.includes("Semiannual") ? "/6 months"
@@ -387,16 +387,16 @@ export default function UpgradePage() {
                       className={cn(
                         "w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left",
                         paymentMethod === "gcash"
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 hover:border-gray-300"
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                          : "border-border hover:border-border-strong"
                       )}
                     >
-                      <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                        <Smartphone className="w-6 h-6 text-blue-600" />
+                      <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+                        <Smartphone className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900">GCash</p>
-                        <p className="text-xs text-gray-500">Send via GCash mobile wallet</p>
+                        <p className="font-semibold text-text-primary">GCash</p>
+                        <p className="text-xs text-text-secondary">Send via GCash mobile wallet</p>
                       </div>
                     </button>
 
@@ -405,16 +405,16 @@ export default function UpgradePage() {
                       className={cn(
                         "w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left",
                         paymentMethod === "bank_transfer"
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 hover:border-gray-300"
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                          : "border-border hover:border-border-strong"
                       )}
                     >
-                      <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                        <Building2 className="w-6 h-6 text-green-600" />
+                      <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
+                        <Building2 className="w-6 h-6 text-green-600 dark:text-green-400" />
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900">Bank Transfer</p>
-                        <p className="text-xs text-gray-500">Transfer via Security Bank</p>
+                        <p className="font-semibold text-text-primary">Bank Transfer</p>
+                        <p className="text-xs text-text-secondary">Transfer via Security Bank</p>
                       </div>
                     </button>
                   </div>
@@ -445,18 +445,18 @@ export default function UpgradePage() {
                   {/* Payment Details */}
                   {checkoutData.gcash && (
                     <div className="space-y-2">
-                      <h3 className="font-semibold text-gray-900 text-sm">GCash Details</h3>
-                      <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
+                      <h3 className="font-semibold text-text-primary text-sm">GCash Details</h3>
+                      <div className="bg-surface-secondary rounded-lg p-3 space-y-2 text-sm">
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-500">Number</span>
+                          <span className="text-text-secondary">Number</span>
                           <span className="font-mono font-medium">{checkoutData.gcash.number} <CopyButton text={checkoutData.gcash.number} label="gcash-number" /></span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-500">Name</span>
+                          <span className="text-text-secondary">Name</span>
                           <span className="font-medium">{checkoutData.gcash.name}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-500">Amount</span>
+                          <span className="text-text-secondary">Amount</span>
                           <span className="font-bold text-primary-700">₱{checkoutData.amount.toLocaleString()}</span>
                         </div>
                       </div>
@@ -465,22 +465,22 @@ export default function UpgradePage() {
 
                   {checkoutData.bank && (
                     <div className="space-y-2">
-                      <h3 className="font-semibold text-gray-900 text-sm">Bank Transfer Details</h3>
-                      <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
+                      <h3 className="font-semibold text-text-primary text-sm">Bank Transfer Details</h3>
+                      <div className="bg-surface-secondary rounded-lg p-3 space-y-2 text-sm">
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-500">Bank</span>
+                          <span className="text-text-secondary">Bank</span>
                           <span className="font-medium">{checkoutData.bank.bank}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-500">Account #</span>
+                          <span className="text-text-secondary">Account #</span>
                           <span className="font-mono font-medium">{checkoutData.bank.accountNumber} <CopyButton text={checkoutData.bank.accountNumber} label="acct-number" /></span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-500">Account Name</span>
+                          <span className="text-text-secondary">Account Name</span>
                           <span className="font-medium">{checkoutData.bank.accountName}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-500">Amount</span>
+                          <span className="text-text-secondary">Amount</span>
                           <span className="font-bold text-primary-700">₱{checkoutData.amount.toLocaleString()}</span>
                         </div>
                       </div>
@@ -489,10 +489,10 @@ export default function UpgradePage() {
 
                   {/* Instructions */}
                   <div>
-                    <h3 className="font-semibold text-gray-900 text-sm mb-2">Steps</h3>
+                    <h3 className="font-semibold text-text-primary text-sm mb-2">Steps</h3>
                     <ol className="space-y-2">
                       {checkoutData.instructions.map((step, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                        <li key={i} className="flex items-start gap-2 text-sm text-text-secondary">
                           <span className="shrink-0 w-5 h-5 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
                             {i + 1}
                           </span>
@@ -508,7 +508,7 @@ export default function UpgradePage() {
 
                   <button
                     onClick={() => { setShowPaymentModal(false); setCheckoutData(null); setPaymentMethod(null); }}
-                    className="w-full border border-gray-300 rounded-xl py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="w-full border border-border rounded-xl py-2.5 text-sm font-medium text-text-primary hover:bg-surface-secondary transition-colors"
                   >
                     Done
                   </button>

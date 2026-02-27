@@ -178,8 +178,8 @@ export function Badge({ className, variant = "primary", children, ...props }: Ba
     accent: "bg-accent-100 text-accent-700",
     warning: "bg-amber-100 text-amber-700",
     danger: "bg-red-100 text-red-700",
-    neutral: "bg-gray-100 text-gray-700",
-    outline: "border border-gray-300 text-gray-600 bg-transparent",
+    neutral: "bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300",
+    outline: "border border-gray-300 text-gray-600 bg-transparent dark:border-slate-600 dark:text-slate-400",
   };
 
   return (
@@ -223,7 +223,7 @@ export function Tabs({ tabs, activeTab, onChange, className }: TabsProps) {
           {tab.count !== undefined && (
             <span className={cn(
               "text-xs px-1.5 py-0.5 rounded-full",
-              activeTab === tab.id ? "bg-primary-100 text-primary-700" : "bg-gray-100 text-gray-600"
+              activeTab === tab.id ? "bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300" : "bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-300"
             )}>
               {tab.count}
             </span>
@@ -314,7 +314,7 @@ export function RadioCard({ selected, onClick, icon, label, description, classNa
       className={cn(
         "flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-all w-full",
         selected
-          ? "border-primary-500 bg-primary-50"
+          ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
           : "border-border hover:border-border-strong hover:bg-surface-secondary",
         className
       )}
@@ -368,7 +368,7 @@ export function Toggle({ checked, onChange, label }: ToggleProps) {
     >
       <div className={cn(
         "relative w-10 h-6 rounded-full transition-colors",
-        checked ? "bg-primary-600" : "bg-gray-300"
+        checked ? "bg-primary-600" : "bg-gray-300 dark:bg-slate-600"
       )}>
         <div className={cn(
           "absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform",
@@ -399,7 +399,7 @@ export function Avatar({ src, name, size = "md", className }: AvatarProps) {
 
   return (
     <div className={cn(
-      "rounded-full flex items-center justify-center font-medium bg-primary-100 text-primary-700 shrink-0",
+      "rounded-full flex items-center justify-center font-medium bg-primary-100 text-primary-700 dark:bg-primary-800 dark:text-primary-100 shrink-0",
       sizes[size],
       className
     )}>
