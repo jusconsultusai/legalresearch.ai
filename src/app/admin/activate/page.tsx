@@ -5,6 +5,7 @@ import {
   Shield, RefreshCw, LogOut, CheckCircle2, XCircle, Loader2,
   User, Mail, Calendar, Clock, AlertCircle, Search, CreditCard,
   TrendingUp, Users, Crown, ChevronDown, ChevronUp, BadgeCheck,
+  Eye, EyeOff,
 } from "lucide-react";
 import { PRICING } from "@/lib/pricing";
 
@@ -86,6 +87,7 @@ export default function AdminActivatePage() {
   const [paymentMethod, setPaymentMethod]   = useState("gcash");
   const [activating, setActivating]         = useState(false);
   const [showConfirm, setShowConfirm]       = useState(false);
+  const [showKey, setShowKey]               = useState(false);
 
   const fetchUsers = useCallback(async (silent = false) => {
     if (silent) setRefreshing(true);
@@ -193,15 +195,26 @@ export default function AdminActivatePage() {
                 <label className="block text-sm font-medium text-blue-200 mb-2">
                   Admin Activation Key
                 </label>
-                <input
-                  type="password"
-                  value={adminKey}
-                  onChange={(e) => setAdminKey(e.target.value)}
-                  className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm"
-                  placeholder="Enter your admin key"
-                  required
-                  autoFocus
-                />
+                <div className="relative">
+                  <input
+                    type={showKey ? "text" : "password"}
+                    value={adminKey}
+                    onChange={(e) => setAdminKey(e.target.value)}
+                    className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 pr-11 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm"
+                    placeholder="Enter your admin key"
+                    required
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowKey((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors"
+                    tabIndex={-1}
+                    aria-label={showKey ? "Hide key" : "Show key"}
+                  >
+                    {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               {error && (

@@ -15,6 +15,12 @@ tools/caddy/*.exe
 tools/caddy/*.zip
 tools/caddy/extracted/
 
+# Cloudflared binary (downloaded separately)
+tools/cloudflared/*.exe
+
+# Temp files
+*.tmp
+
 # ngrok
 tools/ngrok/
 

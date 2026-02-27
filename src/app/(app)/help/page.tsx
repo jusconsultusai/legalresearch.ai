@@ -147,7 +147,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "How do I contact support?",
-    a: "You can reach our support team through the Help page by clicking 'Contact Support,' emailing support@jusconsultus.ai, or using the in-app feedback form. Our team typically responds within 24 hours on business days.",
+    a: "You can reach our support team through the Help page by clicking 'Contact Support,' emailing jusconsultus.ai@gmail.com, or using the in-app feedback form. Our team typically responds within 24 hours on business days.",
   },
   {
     q: "What browsers are supported?",
@@ -510,13 +510,13 @@ export default function HelpPage() {
                 <ExternalLink className="w-4 h-4 text-text-tertiary ml-auto" />
               </Link>
               <a
-                href="mailto:support@jusconsultus.ai"
+                href="mailto:jusconsultus.ai@gmail.com"
                 className="flex items-center gap-3 p-4 bg-white rounded-xl border border-border hover:shadow-md transition-all group"
               >
                 <Mail className="w-5 h-5 text-text-secondary" />
                 <div>
                   <p className="text-sm font-medium text-text-primary group-hover:text-primary-600">Email Support</p>
-                  <p className="text-xs text-text-secondary">support@jusconsultus.ai</p>
+                  <p className="text-xs text-text-secondary">jusconsultus.ai@gmail.com</p>
                 </div>
                 <ExternalLink className="w-4 h-4 text-text-tertiary ml-auto" />
               </a>

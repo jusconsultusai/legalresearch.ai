@@ -1,5 +1,8 @@
 # Caddy reverse proxy for JusConsultus AI
 # Automatic HTTPS via Let's Encrypt for jusconsultus.online
+{
+	email admin@jusconsultus.online
+}
 
 jusconsultus.online, www.jusconsultus.online {
 	# Reverse proxy to Next.js production server

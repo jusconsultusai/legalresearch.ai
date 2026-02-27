@@ -5,6 +5,7 @@
   "css.lint.unknownAtRules": "ignore",
   "files.associations": {
     "*.css": "tailwindcss",
-    "Caddyfile": "plaintext"
+    "Caddyfile": "plaintext",
+    "**/Caddyfile": "plaintext"
   }
 }
