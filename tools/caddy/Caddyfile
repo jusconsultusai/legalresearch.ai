@@ -4,7 +4,7 @@
 	email admin@jusconsultus.online
 }
 
-jusconsultus.online, www.jusconsultus.online {
+jusconsultus.online {
 	# ── ONLYOFFICE Document Server proxy ──────────────────────────────────────
 	# The browser cannot reach localhost:8000 directly; proxy through the domain.
 	route /onlyoffice/* {
@@ -36,11 +36,16 @@ jusconsultus.online, www.jusconsultus.online {
 
 	# Logging
 	log {
-		output file d:\JusConsultus.AI\logs\caddy-access.log {
+		output file D:/JusConsultus.AI/logs/caddy-access.log {
 			roll_size 50mb
 			roll_keep 3
 		}
 	}
+}
+
+# Redirect www to apex
+www.jusconsultus.online {
+	redir https://jusconsultus.online{uri} permanent
 }
 
 # DuckDNS subdomain (secondary)
