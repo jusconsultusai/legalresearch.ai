@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid planId' }, { status: 400 })
     }
 
-    if (!['gcash', 'bank_transfer'].includes(paymentMethod)) {
+    if (!['gcash', 'bank_transfer', 'checkout_com'].includes(paymentMethod)) {
       return NextResponse.json({ error: 'Invalid paymentMethod' }, { status: 400 })
     }
 
@@ -47,6 +47,20 @@ export async function POST(request: NextRequest) {
       PRICING.teamAnnual.displayTotal
     
     const reference = generateReference()
+
+    if (paymentMethod === 'checkout_com') {
+      // Redirect to Checkout.com payment flow
+      return NextResponse.json({
+        success: true,
+        paymentMethod: 'checkout_com',
+        reference,
+        amount,
+        amountDisplay,
+        planId,
+        redirectToCheckoutCom: true,
+        message: 'Redirecting to secure payment...',
+      })
+    }
 
     if (paymentMethod === 'gcash') {
       return NextResponse.json({

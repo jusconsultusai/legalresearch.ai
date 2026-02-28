@@ -169,7 +169,7 @@ Card.displayName = "Card";
 
 // Badge
 interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: "primary" | "accent" | "warning" | "danger" | "neutral" | "outline";
+  variant?: "primary" | "accent" | "warning" | "danger" | "neutral" | "outline" | "success" | "error";
 }
 
 export function Badge({ className, variant = "primary", children, ...props }: BadgeProps) {
@@ -180,6 +180,8 @@ export function Badge({ className, variant = "primary", children, ...props }: Ba
     danger: "bg-red-100 text-red-700",
     neutral: "bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300",
     outline: "border border-gray-300 text-gray-600 bg-transparent dark:border-slate-600 dark:text-slate-400",
+    success: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    error: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   };
 
   return (

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Card, Badge } from "@/components/ui";
-import { Check, Shield, Clock, HelpCircle, X, Smartphone, Building2, Copy, CheckCircle2 } from "lucide-react";
+import { Check, Shield, Clock, HelpCircle, X, Smartphone, Building2, Copy, CheckCircle2, CreditCard } from "lucide-react";
 import { PRICING } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 
@@ -42,7 +42,7 @@ const ENTERPRISE_FEATURES = [
   "Dedicated account manager",
 ];
 
-type PaymentMethod = "gcash" | "bank_transfer";
+type PaymentMethod = "gcash" | "bank_transfer" | "checkout_com";
 type BillingPeriod = "monthly" | "quarterly" | "semiannual" | "annual";
 type SelectedPlan = "proMonthly" | "proQuarterly" | "proSemiannual" | "proAnnual" | "teamMonthly" | "teamQuarterly" | "teamSemiannual" | "teamAnnual";
 
@@ -118,6 +118,22 @@ export default function UpgradePage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create checkout");
+      
+      // If using Checkout.com, redirect to hosted payment page
+      if (data.redirectToCheckoutCom) {
+        const checkoutRes = await fetch("/api/payments/checkout-com", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ planId: selectedPlan }),
+        });
+        const checkoutData = await checkoutRes.json();
+        if (!checkoutRes.ok) throw new Error(checkoutData.error || "Failed to create payment session");
+        
+        // Redirect to Checkout.com hosted payment page
+        window.location.href = checkoutData.redirectUrl;
+        return;
+      }
+      
       setCheckoutData(data);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -415,6 +431,24 @@ export default function UpgradePage() {
                       <div>
                         <p className="font-semibold text-text-primary">Bank Transfer</p>
                         <p className="text-xs text-text-secondary">Transfer via Security Bank</p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => setPaymentMethod("checkout_com")}
+                      className={cn(
+                        "w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left",
+                        paymentMethod === "checkout_com"
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                          : "border-border hover:border-border-strong"
+                      )}
+                    >
+                      <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
+                        <CreditCard className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-text-primary">Card Payment</p>
+                        <p className="text-xs text-text-secondary">Secure payment via Checkout.com</p>
                       </div>
                     </button>
                   </div>
