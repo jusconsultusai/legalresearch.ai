@@ -193,7 +193,11 @@ export function AppNavbar() {
           title="Account menu"
         >
           <Avatar name={user?.name} size="sm" />
-          {isPro && <BadgeCheck className="w-4 h-4 text-green-500" title="Pro Plan" />}
+          {isPro && (
+            <span title="Pro Plan">
+              <BadgeCheck className="w-4 h-4 text-green-500" />
+            </span>
+          )}
           <ChevronDown className="w-4 h-4 text-text-secondary" />
         </button>
 

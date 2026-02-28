@@ -6,8 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createCheckoutPaymentSession } from '@/lib/checkout';
 import { PRICING } from '@/lib/pricing';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/auth'
 
 function generateReference(): string {
   const timestamp = Date.now().toString(36).toUpperCase();
@@ -21,9 +20,9 @@ type PlanKey =
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const user = await getCurrentUser();
     
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -85,13 +84,13 @@ export async function POST(request: NextRequest) {
         },
       },
       customer: {
-        email: session.user.email || undefined,
-        name: session.user.name || undefined,
+        email: user.email || undefined,
+        name: user.name || undefined,
       },
       metadata: {
-        userId: session.user.id,
+        userId: user.id,
         planId: plan,
-        userEmail: session.user.email || '',
+        userEmail: user.email || '',
         planName: `${planName} (${billingPeriod})`,
       },
       success_url: `${baseUrl}/upgrade/success?reference=${reference}&session_id={payment_session_id}`,
