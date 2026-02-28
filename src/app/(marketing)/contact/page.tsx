@@ -33,7 +33,7 @@ export default async function ContactPage() {
             href="mailto:jusconsultus.ai@gmail.com"
             className="group p-6 rounded-2xl border border-border hover:border-primary-300 hover:shadow-md transition-all bg-surface"
           >
-            <div className="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center mb-4 group-hover:bg-primary-100 transition-colors">
+            <div className="w-12 h-12 rounded-xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center mb-4 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/50 transition-colors">
               <Mail className="w-6 h-6 text-primary-600" />
             </div>
             <h3 className="font-bold text-lg mb-1">Email Us</h3>
@@ -48,7 +48,7 @@ export default async function ContactPage() {
             href="tel:+639757477099"
             className="group p-6 rounded-2xl border border-border hover:border-primary-300 hover:shadow-md transition-all bg-surface"
           >
-            <div className="w-12 h-12 rounded-xl bg-accent-50 flex items-center justify-center mb-4 group-hover:bg-accent-100 transition-colors">
+            <div className="w-12 h-12 rounded-xl bg-accent-50 dark:bg-accent-700/20 flex items-center justify-center mb-4 group-hover:bg-accent-100 dark:group-hover:bg-accent-700/30 transition-colors">
               <Phone className="w-6 h-6 text-accent-600" />
             </div>
             <h3 className="font-bold text-lg mb-1">Call Us</h3>
@@ -58,7 +58,7 @@ export default async function ContactPage() {
 
           {/* Address */}
           <div className="group p-6 rounded-2xl border border-border hover:border-primary-300 hover:shadow-md transition-all bg-surface">
-            <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center mb-4 group-hover:bg-green-100 transition-colors">
+            <div className="w-12 h-12 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center mb-4 group-hover:bg-green-100 dark:group-hover:bg-green-900/30 transition-colors">
               <MapPin className="w-6 h-6 text-green-600" />
             </div>
             <h3 className="font-bold text-lg mb-1">Visit Us</h3>
@@ -74,7 +74,7 @@ export default async function ContactPage() {
           {/* Support Hours */}
           <div className="p-6 rounded-2xl border border-border bg-surface-secondary">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center">
                 <Clock className="w-5 h-5 text-primary-600" />
               </div>
               <h3 className="font-bold text-lg">Support Hours</h3>
@@ -101,7 +101,7 @@ export default async function ContactPage() {
           {/* Quick Support */}
           <div className="p-6 rounded-2xl border border-border bg-surface-secondary">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-accent-50 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-accent-50 dark:bg-accent-700/20 flex items-center justify-center">
                 <MessageSquare className="w-5 h-5 text-accent-600" />
               </div>
               <h3 className="font-bold text-lg">Quick Support</h3>
@@ -219,7 +219,7 @@ export default async function ContactPage() {
         </div>
 
         {/* CTA */}
-        <div className="text-center bg-linear-to-r from-primary-50 to-accent-50 rounded-2xl p-10">
+        <div className="text-center bg-linear-to-r from-primary-50 to-accent-50 dark:from-primary-900/30 dark:to-accent-700/20 rounded-2xl p-10">
           <h2 className="text-2xl font-bold mb-3">Ready to get started?</h2>
           <p className="text-text-secondary mb-6">
             Try JusConsultus AI free — no credit card required.

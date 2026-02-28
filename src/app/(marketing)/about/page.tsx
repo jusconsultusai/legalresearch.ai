@@ -64,7 +64,7 @@ export default async function AboutPage() {
         </div>
 
         {/* CTA */}
-        <div className="text-center bg-linear-to-r from-primary-50 to-accent-50 rounded-2xl p-10">
+        <div className="text-center bg-linear-to-r from-primary-50 to-accent-50 dark:from-primary-900/30 dark:to-accent-700/20 rounded-2xl p-10">
           <h2 className="text-2xl font-bold mb-3">Ready to transform your legal research?</h2>
           <p className="text-text-secondary mb-6 text-center">Start for free. No credit card required.</p>
           {user ? (

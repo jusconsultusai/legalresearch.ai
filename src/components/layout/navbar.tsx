@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button, Avatar } from "@/components/ui";
 import { useAuth } from "@/hooks";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Menu,
   X,
@@ -32,6 +32,9 @@ export function MarketingNavbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-border">
@@ -39,7 +42,7 @@ export function MarketingNavbar() {
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2">
             <Image src="/logo.png" alt="JusConsultus AI" width={32} height={32} className="rounded" />
-            <span className="font-bold text-lg text-primary-900">JusConsultus AI</span>
+            <span className="font-bold text-lg text-primary-900 dark:text-primary-200">JusConsultus AI</span>
           </Link>
 
           {/* Desktop Links */}
@@ -51,7 +54,7 @@ export function MarketingNavbar() {
                 className={cn(
                   "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
                   pathname === link.href
-                    ? "text-primary-700 bg-primary-50"
+                    ? "text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/30"
                     : "text-text-secondary hover:text-text-primary hover:bg-surface-tertiary"
                 )}
               >
@@ -61,6 +64,19 @@ export function MarketingNavbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
+            {mounted && (
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="p-2 rounded-lg hover:bg-surface-tertiary transition-colors"
+                title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {theme === "dark" ? (
+                  <Sun className="w-5 h-5 text-amber-400" />
+                ) : (
+                  <Moon className="w-5 h-5 text-text-secondary" />
+                )}
+              </button>
+            )}
             {user ? (
               <>
                 <Link href="/dashboard">

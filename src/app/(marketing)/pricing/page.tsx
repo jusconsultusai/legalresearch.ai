@@ -59,7 +59,7 @@ export default function PricingPage() {
                 className={cn(
                   "flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors relative",
                   billing === opt.id
-                    ? "bg-white text-text-primary shadow-sm"
+                    ? "bg-white dark:bg-surface-tertiary text-text-primary shadow-sm"
                     : "text-text-secondary hover:text-text-primary"
                 )}
               >

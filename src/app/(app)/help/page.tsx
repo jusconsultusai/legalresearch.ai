@@ -432,7 +432,7 @@ export default function HelpPage() {
 
           {/* Contact Support */}
           {!currentArticle && (
-            <div className="mt-12 bg-linear-to-r from-primary-50 to-primary-100 rounded-2xl border border-primary-200 p-8">
+            <div className="mt-12 bg-linear-to-r from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/20 rounded-2xl border border-primary-200 dark:border-primary-700/40 p-8">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-primary-600 text-white flex items-center justify-center shrink-0">
                   <Mail className="w-6 h-6" />
@@ -444,7 +444,7 @@ export default function HelpPage() {
                   </p>
 
                   {contactSent ? (
-                    <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-700 flex items-center gap-2">
+                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700/40 rounded-xl p-4 text-sm text-green-700 dark:text-green-300 flex items-center gap-2">
                       <span className="text-green-600">✓</span>
                       Your message has been sent! We&apos;ll respond within 24 hours.
                     </div>
@@ -511,7 +511,7 @@ export default function HelpPage() {
               </Link>
               <a
                 href="mailto:jusconsultus.ai@gmail.com"
-                className="flex items-center gap-3 p-4 bg-white rounded-xl border border-border hover:shadow-md transition-all group"
+                className="flex items-center gap-3 p-4 bg-surface rounded-xl border border-border hover:shadow-md transition-all group"
               >
                 <Mail className="w-5 h-5 text-text-secondary" />
                 <div>
