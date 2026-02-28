@@ -18,6 +18,8 @@ import {
   HelpCircle,
   Sun,
   Moon,
+  Crown,
+  BadgeCheck,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -141,6 +143,8 @@ export function AppNavbar() {
   const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const isFree = user?.plan === "free";
+  const isPro = user?.plan === "pro" || user?.plan === "team";
 
   return (
     <header className="h-14 border-b border-border bg-surface flex items-center px-4 gap-4 shrink-0 z-40">
@@ -150,6 +154,15 @@ export function AppNavbar() {
       </Link>
 
       <div className="flex-1" />
+
+      {/* Usage Display for Free Users */}
+      {isFree && (
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40">
+          <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+            {user?.searchesLeft || 0} searches left
+          </span>
+        </div>
+      )}
 
       <Link href="/upgrade" className="hidden sm:block">
         <Button variant="outline" size="sm">Upgrade</Button>
@@ -180,6 +193,7 @@ export function AppNavbar() {
           title="Account menu"
         >
           <Avatar name={user?.name} size="sm" />
+          {isPro && <BadgeCheck className="w-4 h-4 text-green-500" title="Pro Plan" />}
           <ChevronDown className="w-4 h-4 text-text-secondary" />
         </button>
 
@@ -188,8 +202,21 @@ export function AppNavbar() {
             <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
             <div className="absolute right-0 top-full mt-2 w-56 bg-surface rounded-xl border border-border shadow-lg z-50 py-1 animate-fade-in">
               <div className="px-4 py-3 border-b border-border">
-                <p className="text-sm font-medium">{user?.name}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium">{user?.name}</p>
+                  {isPro && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                      <Crown className="w-3 h-3" />
+                      {user?.plan === "team" ? "Team" : "Pro"}
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-text-secondary">{user?.email}</p>
+                {isFree && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                    {user?.searchesLeft || 0} searches remaining
+                  </p>
+                )}
               </div>
               <Link href="/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-surface-tertiary" onClick={() => setDropdownOpen(false)}>
                 <User className="w-4 h-4" /> Profile
