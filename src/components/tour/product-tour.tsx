@@ -89,7 +89,7 @@ export function ProductTour() {
       )}>
         {/* Header with gradient accent */}
         <div className="relative">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-primary-500 via-primary-600 to-primary-700" />
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700" />
           <div className="flex items-center justify-between px-6 pt-6 pb-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
@@ -110,7 +110,7 @@ export function ProductTour() {
         </div>
 
         {/* Content */}
-        <div className="px-6 py-5 bg-linear-to-b from-white to-gray-50/50 dark:from-surface dark:to-surface-secondary">
+        <div className="px-6 py-5 bg-gradient-to-b from-white to-gray-50/50 dark:from-surface dark:to-surface-secondary">
           <h3 className="text-xl font-bold text-text-primary mb-3 leading-tight">{step.title}</h3>
           <p className="text-sm text-text-secondary leading-relaxed">{step.content}</p>
         </div>

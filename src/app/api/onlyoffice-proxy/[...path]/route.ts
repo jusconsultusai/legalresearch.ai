@@ -10,30 +10,34 @@ const ONLYOFFICE_URL = process.env.ONLYOFFICE_SERVER_URL || "http://localhost:80
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
-  return proxyRequest(request, params.path);
+  const { path } = await params;
+  return proxyRequest(request, path);
 }
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
-  return proxyRequest(request, params.path);
+  const { path } = await params;
+  return proxyRequest(request, path);
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
-  return proxyRequest(request, params.path);
+  const { path } = await params;
+  return proxyRequest(request, path);
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
-  return proxyRequest(request, params.path);
+  const { path } = await params;
+  return proxyRequest(request, path);
 }
 
 async function proxyRequest(request: NextRequest, pathSegments: string[]) {

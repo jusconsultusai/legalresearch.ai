@@ -59,7 +59,8 @@ export async function GET(request: NextRequest) {
     };
 
     // Find or create user
-    let user = await prisma.user.findUnique({ where: { email: googleUser.email } });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let user = await prisma.user.findUnique({ where: { email: googleUser.email } }) as any;
 
     if (!user) {
       // Create new user — passwordHash set to a random unusable value
@@ -72,14 +73,17 @@ export async function GET(request: NextRequest) {
           lastName: googleUser.family_name ?? null,
           avatar: googleUser.picture ?? null,
           passwordHash: randomHash, // not usable for password login
+          googleId: googleUser.id,
         },
       });
-    } else if (!user.avatar && googleUser.picture) {
-      // Update avatar if not set
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: { avatar: googleUser.picture },
-      });
+    } else {
+      // Update googleId/avatar on existing user if not already set
+      const updates: Record<string, string> = {};
+      if (!user.googleId) updates.googleId = googleUser.id;
+      if (!user.avatar && googleUser.picture) updates.avatar = googleUser.picture;
+      if (Object.keys(updates).length > 0) {
+        user = await prisma.user.update({ where: { id: user.id }, data: updates });
+      }
     }
 
     const authUser: AuthUser = {
@@ -92,6 +96,8 @@ export async function GET(request: NextRequest) {
       plan: user.plan,
       searchesLeft: user.searchesLeft,
       avatar: user.avatar ?? undefined,
+      googleId: user.googleId ?? undefined,
+      hasPassword: user.passwordHash.startsWith("$2"),
     };
 
     const token = generateToken(authUser);

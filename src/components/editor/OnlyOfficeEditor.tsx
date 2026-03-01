@@ -68,6 +68,11 @@ export default function OnlyOfficeEditor({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // retryCount is incremented to force the useEffect to re-run on manual retry
+  const [retryCount, setRetryCount] = useState(0);
+  // autoRetryMsg shows a friendly countdown when auto-retrying
+  const [autoRetryMsg, setAutoRetryMsg] = useState<string | null>(null);
+  const autoRetryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const editorId = `onlyoffice-editor-${documentId}`;
 
   // NEXT_PUBLIC_ vars are inlined at build time — safe on server and client.
@@ -83,42 +88,26 @@ export default function OnlyOfficeEditor({
         return;
       }
 
-      const existingScript = window.document.getElementById("onlyoffice-api-script");
-
-      if (existingScript) {
-        // If the script element exists but is in a failed/stale state (e.g. a
-        // previous load attempt errored), remove it so we can retry cleanly.
-        if ((existingScript as HTMLScriptElement).src &&
-            !(existingScript as any)._ooLoaded) {
-          existingScript.remove();
-        } else {
-          // Script is still loading — piggyback on its events
-          existingScript.addEventListener("load", () => {
-            if (window.DocsAPI) resolve();
-            else reject(new Error("ONLYOFFICE API script loaded but DocsAPI is undefined. The Document Server may still be starting up — please retry."));
-          });
-          existingScript.addEventListener("error", () =>
-            reject(new Error(`Failed to load ONLYOFFICE API script from ${onlyofficeUrl}. Make sure ONLYOFFICE Document Server is running:\n\ndocker-compose up -d`))
-          );
-          return;
-        }
-      }
+      // Always remove any stale script element first.
+      // If we piggyback on a previously-failed element, its events already fired
+      // and we will never receive load/error — causing a silent hang.
+      const stale = window.document.getElementById("onlyoffice-api-script");
+      if (stale) stale.remove();
 
       const script = window.document.createElement("script");
       script.id = "onlyoffice-api-script";
       script.src = `${onlyofficeUrl}/web-apps/apps/api/documents/api.js`;
       script.async = true;
       script.onload = () => {
-        (script as any)._ooLoaded = true;
         if (window.DocsAPI) {
           resolve();
         } else {
-          // Script loaded but DocsAPI not defined — server still initializing.
+          script.remove();
           reject(new Error("ONLYOFFICE API script loaded but DocsAPI is undefined. The Document Server may still be starting up — please retry in a few seconds."));
         }
       };
       script.onerror = () => {
-        script.remove(); // Remove so next mount retries the download
+        script.remove();
         reject(
           new Error(
             `Failed to load ONLYOFFICE API from ${onlyofficeUrl}.\nMake sure ONLYOFFICE Document Server is running:\n\ndocker-compose up -d`
@@ -142,6 +131,10 @@ export default function OnlyOfficeEditor({
   // imperatively-appended child that we clean up ourselves.
   useEffect(() => {
     let destroyed = false;
+    // Clear any pending auto-retry timer from a previous run
+    if (autoRetryRef.current) { clearTimeout(autoRetryRef.current); autoRetryRef.current = null; }
+    setAutoRetryMsg(null);
+
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
 
@@ -204,9 +197,23 @@ export default function OnlyOfficeEditor({
       } catch (err: any) {
         if (!destroyed) {
           const msg = err?.message || "Failed to initialize ONLYOFFICE editor";
-          setError(msg);
-          setLoading(false);
-          onError?.(msg);
+          const isDocsAPIUndefined = msg.includes("DocsAPI is undefined");
+
+          // Auto-retry up to 3 times (with 3 / 6 / 9 s delays) when DocsAPI
+          // isn't ready yet — the Document Server is still warming up.
+          if (isDocsAPIUndefined && retryCount < 3) {
+            const delay = (retryCount + 1) * 3000;
+            const seconds = delay / 1000;
+            setAutoRetryMsg(`Document Server is starting up — retrying in ${seconds}s… (${retryCount + 1}/3)`);
+            setLoading(true);
+            autoRetryRef.current = setTimeout(() => {
+              if (!destroyed) setRetryCount((c) => c + 1);
+            }, delay);
+          } else {
+            setError(msg);
+            setLoading(false);
+            onError?.(msg);
+          }
         }
       }
     };
@@ -214,10 +221,9 @@ export default function OnlyOfficeEditor({
     initEditor();
 
     // Cleanup: destroy the editor, then remove the imperatively-created div.
-    // Because this div was never part of React's virtual DOM tree, React
-    // won't try to removeChild it — no more NotFoundError.
     return () => {
       destroyed = true;
+      if (autoRetryRef.current) { clearTimeout(autoRetryRef.current); autoRetryRef.current = null; }
       if (editorRef.current) {
         try {
           editorRef.current.destroyEditor();
@@ -242,6 +248,7 @@ export default function OnlyOfficeEditor({
     userName,
     editorId,
     loadScript,
+    retryCount,
   ]);
 
   if (error) {
@@ -256,7 +263,7 @@ export default function OnlyOfficeEditor({
         <h3 className="text-lg font-semibold text-text-primary mb-2">Editor Could Not Load</h3>
         <p className="text-sm text-text-secondary text-center max-w-md whitespace-pre-line mb-6">{error}</p>
         <button
-          onClick={() => { setError(null); setLoading(true); }}
+          onClick={() => { setError(null); setLoading(true); setRetryCount((c) => c + 1); }}
           className="px-5 py-2 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition-colors"
         >
           Retry
@@ -272,7 +279,7 @@ export default function OnlyOfficeEditor({
           <div className="text-center">
             <div className="w-8 h-8 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-3" />
             <p className="text-sm text-text-secondary">
-              Loading ONLYOFFICE Editor...
+              {autoRetryMsg || "Loading ONLYOFFICE Editor..."}
             </p>
           </div>
         </div>

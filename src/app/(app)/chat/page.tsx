@@ -63,14 +63,21 @@ const MODE_PREFIXES: Record<ChatMode, string> = {
   analyze: "Analyze: ",
 };
 
-const CONTEXT_VERSIONS: { id: ContextVersion; label: string; description: string; isNew?: boolean }[] = [
-  { id: "context_v1",   label: "Context Aware v1",              description: "Context-aware multi-turn conversations that remember prior exchanges for deeper analysis" },
-  { id: "standard_v2",  label: "Standard v2",      isNew: true,  description: "For maximum legal accuracy and clarity, powered by our upgraded system" },
-  { id: "standard",     label: "Standard",                       description: "Our classic JusConsultus experience — kept for those who prefer its original tone and flow. For maximum accuracy, try Standard v2" },
-  { id: "concise",      label: "Concise",                        description: "For lawyers and professionals needing ultra-efficient legal summaries" },
-  { id: "professional", label: "Professional",                   description: "For legal practitioners who need detailed legal analysis, risk assessments, and practical guidance" },
-  { id: "educational",  label: "Educational",                    description: "For law students, bar examinees, and legal scholars" },
-  { id: "simple",       label: "Simple English",                  description: "For non-lawyers, the general public, and individuals with limited legal knowledge" },
+const CONTEXT_VERSIONS: { id: ContextVersion; label: string; description: string; isNew?: boolean; icon: typeof Search; iconColor: string; iconBg: string }[] = [
+  { id: "standard_v2",  label: "Standard v2",      isNew: true,  icon: Sparkles,      iconColor: "text-primary-600 dark:text-primary-400",  iconBg: "bg-primary-100 dark:bg-primary-900/40",
+    description: "Maximum legal accuracy and clarity — precise citations, clear headings, and structured multi-part reasoning." },
+  { id: "context_v1",   label: "Context Aware",                  icon: MessageSquare, iconColor: "text-blue-600 dark:text-blue-400",       iconBg: "bg-blue-100 dark:bg-blue-900/40",
+    description: "Remembers every prior exchange in this chat — ideal for building a deeper, connected analysis across multiple turns." },
+  { id: "professional", label: "Professional",                   icon: BookOpen,      iconColor: "text-indigo-600 dark:text-indigo-400",   iconBg: "bg-indigo-100 dark:bg-indigo-900/40",
+    description: "For practitioners — risk assessment, litigation strategy, practical client advice, and authoritative statute and case citations." },
+  { id: "educational",  label: "Educational",                    icon: BookOpenCheck, iconColor: "text-emerald-600 dark:text-emerald-400", iconBg: "bg-emerald-100 dark:bg-emerald-900/40",
+    description: "For law students and bar examinees — step-by-step doctrinal reasoning, defined terms, and bar exam takeaways." },
+  { id: "concise",      label: "Concise",                        icon: ListChecks,    iconColor: "text-amber-600 dark:text-amber-400",    iconBg: "bg-amber-100 dark:bg-amber-900/40",
+    description: "Key legal points and pinpoint citations only. No preambles. Under 300 words. Ideal for quick professional reference." },
+  { id: "simple",       label: "Simple English",                 icon: Lightbulb,     iconColor: "text-orange-600 dark:text-orange-400",  iconBg: "bg-orange-100 dark:bg-orange-900/40",
+    description: "Plain everyday language for non-lawyers — no jargon, real-world analogies, and clear practical examples." },
+  { id: "standard",     label: "Standard (Classic)",             icon: Scale,         iconColor: "text-text-secondary",                   iconBg: "bg-surface-tertiary dark:bg-surface-secondary",
+    description: "Classic JusConsultus experience — balanced depth and readability with a natural professional tone." },
 ];
 
 type CapabilityAction =
@@ -268,7 +275,7 @@ const ChatInput = memo(function ChatInput({
             className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-800/40 text-purple-700 dark:text-purple-300 text-[10px] font-semibold hover:bg-purple-200 transition-colors shrink-0">
             <Sparkles className="w-3 h-3" /> Full Analysis
           </button>
-          <button onClick={() => { setAttachedFile(null); setFileError(""); }}>
+          <button onClick={() => { setAttachedFile(null); setFileError(""); }} title="Remove attachment" aria-label="Remove attachment">
             <X className="w-3.5 h-3.5 text-primary-400 hover:text-primary-600" />
           </button>
         </div>
@@ -277,7 +284,7 @@ const ChatInput = memo(function ChatInput({
         <div className="mx-3 mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/30">
           <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />
           <span className="text-xs text-red-600 dark:text-red-400 flex-1">{fileError}</span>
-          <button onClick={() => setFileError("")}><X className="w-3 h-3 text-red-400" /></button>
+          <button onClick={() => setFileError("")} title="Dismiss error" aria-label="Dismiss error"><X className="w-3 h-3 text-red-400" /></button>
         </div>
       )}
 
@@ -301,6 +308,7 @@ const ChatInput = memo(function ChatInput({
                 showContextDropdown
                   ? "bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-600 text-primary-700 dark:text-primary-300"
                   : "bg-surface-secondary border-border text-text-secondary hover:bg-surface-tertiary hover:text-text-primary")}>
+              {(() => { const cv = CONTEXT_VERSIONS.find((c) => c.id === contextVersion); return cv ? <cv.icon className="w-3 h-3 opacity-70 shrink-0" /> : null; })()}
               <span>{CONTEXT_VERSIONS.find((cv) => cv.id === contextVersion)?.label ?? "Standard v2"}</span>
               {CONTEXT_VERSIONS.find((cv) => cv.id === contextVersion)?.isNew && (
                 <span className="px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 text-[9px] font-bold leading-none">New</span>
@@ -308,24 +316,38 @@ const ChatInput = memo(function ChatInput({
               <ChevronDown className={cn("w-3 h-3 opacity-60 transition-transform", showContextDropdown && "rotate-180")} />
             </button>
             {showContextDropdown && (
-              <div className="absolute top-full mt-2 left-0 z-50 w-120 max-w-[90vw] bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden">
-                <div className="px-4 pt-3 pb-2 border-b border-border/50">
-                  <p className="text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">Response Style</p>
-                  <p className="text-[11px] text-text-tertiary mt-0.5">Choose how JusConsultus formats and delivers answers</p>
+              <div className="absolute top-full mt-2 left-0 z-50 w-[540px] max-w-[92vw] bg-surface border border-border rounded-2xl shadow-2xl overflow-hidden">
+                <div className="px-4 pt-3.5 pb-3 border-b border-border/50">
+                  <p className="text-xs font-bold text-text-primary">Response Style</p>
+                  <p className="text-[11px] text-text-tertiary mt-0.5">Choose how JusConsultus formats and delivers your answers</p>
                 </div>
-                <div className="grid grid-cols-2 gap-0 p-1">
+                <div className="p-2 space-y-0.5 max-h-[420px] overflow-y-auto">
                   {CONTEXT_VERSIONS.map((cv) => (
                     <button key={cv.id} onClick={() => { setContextVersion(cv.id); setShowContextDropdown(false); }}
-                      className={cn("relative text-left px-4 py-3.5 rounded-xl transition-all",
-                        contextVersion === cv.id ? "bg-primary-50 dark:bg-primary-900/20" : "hover:bg-surface-secondary")}>
-                      {contextVersion === cv.id && <Check className="absolute top-3 right-3 w-3.5 h-3.5 text-primary-600 dark:text-primary-400" />}
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className={cn("text-xs font-bold", contextVersion === cv.id ? "text-primary-700 dark:text-primary-300" : "text-text-primary")}>{cv.label}</p>
-                        {cv.isNew && <span className="px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 text-[9px] font-bold leading-none">New</span>}
+                      className={cn(
+                        "w-full flex items-start gap-3 px-3 py-2.5 rounded-xl transition-all text-left",
+                        contextVersion === cv.id
+                          ? "bg-primary-50 dark:bg-primary-900/20 ring-1 ring-inset ring-primary-200 dark:ring-primary-700/40"
+                          : "hover:bg-surface-secondary"
+                      )}>
+                      <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5", cv.iconBg)}>
+                        <cv.icon className={cn("w-3.5 h-3.5", cv.iconColor)} />
                       </div>
-                      <p className="text-[11px] text-text-tertiary leading-snug">{cv.description}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className={cn("text-xs font-semibold leading-tight", contextVersion === cv.id ? "text-primary-700 dark:text-primary-300" : "text-text-primary")}>{cv.label}</p>
+                          {cv.isNew && <span className="px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 text-[9px] font-bold leading-none">New</span>}
+                        </div>
+                        <p className="text-[11px] text-text-tertiary leading-snug">{cv.description}</p>
+                      </div>
+                      {contextVersion === cv.id && (
+                        <Check className="w-3.5 h-3.5 text-primary-500 dark:text-primary-400 shrink-0 mt-1" />
+                      )}
                     </button>
                   ))}
+                </div>
+                <div className="px-4 py-2.5 border-t border-border/50 bg-surface-secondary/60">
+                  <p className="text-[10px] text-text-tertiary">Style applies to all messages in this chat session</p>
                 </div>
               </div>
             )}
@@ -345,7 +367,7 @@ const ChatInput = memo(function ChatInput({
           {sending ? <><Loader2 className="w-4 h-4 animate-spin" /><span>Thinking...</span></> : <><Send className="w-4 h-4" /><span>Send</span></>}
         </button>
       </div>
-      <input ref={fileInputRef} type="file" className="hidden"
+      <input ref={fileInputRef} type="file" className="hidden" aria-label="Upload file"
         accept=".pdf,.doc,.docx,.txt,.html,.htm,.rtf,.jpg,.jpeg,.png,.gif,.webp,.tiff"
         onChange={(e) => { if (e.target.files?.[0]) handleFileSelect(e.target.files[0]); e.target.value = ""; }} />
     </div>
@@ -648,19 +670,19 @@ export default function ChatPage() {
     <div className="h-full flex bg-surface">
 
       {/* ===================== MAIN AREA ===================== */}
-      <div className={cn("flex flex-col min-w-0", selectedSource ? "w-1/2" : "flex-1")}>
+      <div className={cn("flex flex-col min-w-0 flex-1", selectedSource && "lg:w-1/2 lg:flex-none")}>
 
         {!hasMessages ? (
           /* =========== EMPTY / LANDING STATE =========== */
           <div className="flex-1 overflow-auto flex flex-col">
 
             {/* Hero + input: centered in the visible area */}
-            <div className="flex flex-col items-center justify-center flex-none px-4 pt-16 pb-10">
+            <div className="flex flex-col items-center justify-center flex-none px-3 sm:px-4 pt-10 sm:pt-16 pb-6 sm:pb-10">
               <div className="w-full max-w-2xl">
 
                 {/* Hero */}
                 <div className="text-center mb-8">
-                  <h1 className="text-2xl md:text-3xl font-bold text-text-primary mb-2 whitespace-nowrap">Ask and it will be given to you — <span className="text-primary-700 dark:text-primary-400">Ask&nbsp;JusConsultus</span></h1>
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-text-primary mb-2">Ask and it will be given to you — <span className="text-primary-700 dark:text-primary-400">Ask&nbsp;JusConsultus</span></h1>
                 </div>
 
                 {/* Main search box */}
@@ -704,22 +726,22 @@ export default function ChatPage() {
             </div>
 
             {/* Capabilities grid — scrolls below the chat input */}
-            <div className="px-4 pb-12">
+            <div className="px-3 sm:px-4 pb-8 sm:pb-12">
               <div className="max-w-2xl mx-auto">
                 <p className="text-xs font-semibold text-text-tertiary text-center uppercase tracking-wider mb-1">What JusConsultus can do for you</p>
-                <p className="text-xs text-text-tertiary text-center mb-6">AI-powered legal work — from research and drafting to analysis and citations</p>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <p className="text-xs text-text-tertiary text-center mb-4 sm:mb-6">AI-powered legal work — from research and drafting to analysis and citations</p>
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
                   {CAPABILITIES.map((cap) => (
-                    <button
+                  <button
                       key={cap.label}
                       onClick={() => handleCapabilityClick(cap.action)}
-                      className="flex flex-col gap-2 p-4 rounded-xl border border-border bg-surface hover:bg-surface-secondary hover:border-primary-300 hover:shadow-md transition-all text-left group cursor-pointer"
+                      className="flex flex-col gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-xl border border-border bg-surface hover:bg-surface-secondary hover:border-primary-300 hover:shadow-md transition-all text-left group cursor-pointer"
                     >
                       <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-110", cap.bg)}>
                         <cap.icon className={cn("w-4 h-4", cap.text)} />
                       </div>
-                      <p className="text-xs font-bold text-text-primary leading-snug group-hover:text-primary-700 dark:group-hover:text-primary-400 transition-colors text-left">{cap.label}</p>
-                      <p className="text-[11px] text-text-tertiary leading-relaxed">{cap.description}</p>
+                      <p className="text-[11px] sm:text-xs font-bold text-text-primary leading-snug group-hover:text-primary-700 dark:group-hover:text-primary-400 transition-colors text-left">{cap.label}</p>
+                      <p className="hidden sm:block text-[11px] text-text-tertiary leading-relaxed">{cap.description}</p>
                       <span className="text-[10px] font-semibold text-primary-600 dark:text-primary-400 flex items-center gap-1 mt-auto opacity-0 group-hover:opacity-100 transition-opacity">
                         {cap.action.type === "navigate" ? "Open" : cap.action.type === "upload" ? "Upload a file" : "Get started"}
                         <ArrowRight className="w-3 h-3" />
@@ -817,8 +839,8 @@ export default function ChatPage() {
                             )}
                             <div className="mt-5 pt-4 border-t border-border flex items-center gap-3">
                               <span className="text-xs text-text-tertiary">Was that helpful?</span>
-                              <button onClick={() => setFeedback((p) => ({ ...p, [msg.id]: "up" }))} className={cn("p-1.5 rounded-lg transition-colors", feedback[msg.id] === "up" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600" : "hover:bg-surface-secondary text-text-tertiary")}><ThumbsUp className="w-3.5 h-3.5" /></button>
-                              <button onClick={() => setFeedback((p) => ({ ...p, [msg.id]: "down" }))} className={cn("p-1.5 rounded-lg transition-colors", feedback[msg.id] === "down" ? "bg-red-100 dark:bg-red-900/30 text-red-600" : "hover:bg-surface-secondary text-text-tertiary")}><ThumbsDown className="w-3.5 h-3.5" /></button>
+                              <button onClick={() => setFeedback((p) => ({ ...p, [msg.id]: "up" }))} title="Helpful" aria-label="Helpful" className={cn("p-1.5 rounded-lg transition-colors", feedback[msg.id] === "up" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600" : "hover:bg-surface-secondary text-text-tertiary")}><ThumbsUp className="w-3.5 h-3.5" /></button>
+                              <button onClick={() => setFeedback((p) => ({ ...p, [msg.id]: "down" }))} title="Not helpful" aria-label="Not helpful" className={cn("p-1.5 rounded-lg transition-colors", feedback[msg.id] === "down" ? "bg-red-100 dark:bg-red-900/30 text-red-600" : "hover:bg-surface-secondary text-text-tertiary")}><ThumbsDown className="w-3.5 h-3.5" /></button>
                             </div>
                             {topics.length > 0 && (
                               <div className="mt-4">
@@ -895,7 +917,7 @@ export default function ChatPage() {
                         {deepThinkEnabled && <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium"><Brain className="w-2.5 h-2.5 animate-pulse" />Deep Think</span>}
                       </div>
                       <div className={cn("border border-border rounded-2xl rounded-tl-md px-5 py-4 bg-surface shadow-sm",
-                        deepThinkEnabled && "border-purple-200 dark:border-purple-700/30 bg-linear-to-br from-purple-50/50 to-surface dark:from-purple-900/10")}>
+                        deepThinkEnabled && "border-purple-200 dark:border-purple-700/30 bg-gradient-to-br from-purple-50/50 to-surface dark:from-purple-900/10")}>
                         <div className="space-y-3">
                           {([
                             { icon: Brain,      label: "Decomposing your query",   detail: "Breaking question into targeted sub-queries…",          color: "text-purple-500",  bg: "bg-purple-100 dark:bg-purple-900/30" },
@@ -955,14 +977,14 @@ export default function ChatPage() {
 
       {/* ===================== SOURCE DETAIL PANEL ===================== */}
       {selectedSource && (
-        <div className="w-1/2 flex flex-col border-l border-border bg-surface shrink-0 animate-fade-in">
+        <div className="fixed inset-0 top-14 z-30 flex flex-col bg-surface lg:relative lg:inset-auto lg:top-auto lg:z-auto lg:w-1/2 border-l border-border shrink-0 animate-fade-in">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
             <div className="min-w-0 flex-1">
               {selectedSource.number && <p className="text-[10px] text-primary-600 dark:text-primary-400 font-bold uppercase tracking-wide mb-0.5">{selectedSource.number}</p>}
               <h3 className="text-sm font-bold text-text-primary line-clamp-2">{selectedSource.title}</h3>
               {selectedSource.date && <p className="text-[10px] text-text-tertiary mt-0.5 flex items-center gap-1"><Clock className="w-2.5 h-2.5" />{selectedSource.date}</p>}
             </div>
-            <button onClick={() => setSelectedSource(null)} className="p-1.5 hover:bg-surface-tertiary rounded-lg text-text-tertiary shrink-0 ml-2"><X className="w-4 h-4" /></button>
+            <button onClick={() => setSelectedSource(null)} title="Close source panel" aria-label="Close source panel" className="p-1.5 hover:bg-surface-tertiary rounded-lg text-text-tertiary shrink-0 ml-2"><X className="w-4 h-4" /></button>
           </div>
           <div className="flex border-b border-border shrink-0">
             {(["fulltext", "summary"] as const).map((tab) => (

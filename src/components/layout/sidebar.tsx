@@ -40,11 +40,19 @@ const sidebarLinks = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { isOpen, toggle } = useSidebarStore();
+  const { isOpen, toggle, setOpen } = useSidebarStore();
   const { setActiveChatId, triggerRefresh, refreshKey } = useChatManagement();
   const activeChatId = useChatManagement((s) => s.activeChatId);
 
   const [recentChats, setRecentChats] = useState<SidebarChat[]>([]);
+  // Close sidebar by default on mobile screens
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setOpen(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [chatsExpanded, setChatsExpanded] = useState(true);
   const [chatsLoading, setChatsLoading] = useState(false);
   const [chatSummaries, setChatSummaries] = useState<Record<string, string>>({});
@@ -113,8 +121,13 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
+        // Mobile: fixed overlay below the 56px navbar; Desktop: part of flex flow
+        "fixed top-14 bottom-0 left-0 z-50",
+        "lg:relative lg:top-auto lg:bottom-auto lg:left-auto lg:z-auto",
         "border-r border-border bg-surface flex flex-col transition-all duration-300 shrink-0",
-        isOpen ? "w-60" : "w-16"
+        isOpen
+          ? "translate-x-0 w-72 lg:w-60"
+          : "-translate-x-full lg:translate-x-0 lg:w-16"
       )}
     >
       {/* New Chat + Toggle Row */}
@@ -130,12 +143,23 @@ export function Sidebar() {
           <Plus className="w-4 h-4 shrink-0" />
           {isOpen && "New Chat"}
         </Link>
+        {/* Collapse/expand toggle — desktop only */}
         <button
+          suppressHydrationWarning
           onClick={toggle}
-          className="p-1.5 rounded-full hover:bg-surface-tertiary transition-colors text-text-secondary shrink-0"
+          className="hidden lg:flex p-1.5 rounded-full hover:bg-surface-tertiary transition-colors text-text-secondary shrink-0 items-center justify-center"
           title={isOpen ? "Collapse sidebar" : "Expand sidebar"}
         >
           {isOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+        </button>
+        {/* Close button — mobile only */}
+        <button
+          suppressHydrationWarning
+          onClick={() => setOpen(false)}
+          className="flex lg:hidden p-1.5 rounded-full hover:bg-surface-tertiary transition-colors text-text-secondary shrink-0 items-center justify-center"
+          title="Close menu"
+        >
+          <X className="w-4 h-4" />
         </button>
       </div>
 

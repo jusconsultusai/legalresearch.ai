@@ -25,7 +25,7 @@ export default function BlogPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero */}
-      <section className="relative bg-linear-to-br from-primary-950 via-primary-900 to-primary-800 text-white py-24">
+      <section className="relative bg-gradient-to-br from-primary-950 via-primary-900 to-primary-800 text-white py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold mb-4">JusConsultus Blog</h1>
           <p className="text-lg text-primary-200 max-w-2xl mx-auto text-center">
@@ -46,7 +46,7 @@ export default function BlogPage() {
                 href={`/blog/${post.id}`}
                 className="group block rounded-xl border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow"
               >
-                <div className="h-48 bg-linear-to-br from-primary-100 to-primary-200 dark:from-primary-900 dark:to-primary-800 flex items-center justify-center">
+                <div className="h-48 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900 dark:to-primary-800 flex items-center justify-center">
                   <span className="text-4xl font-bold text-primary-600 dark:text-primary-300 opacity-30">
                     JC
                   </span>
@@ -130,7 +130,7 @@ export default function BlogPage() {
                   href={`/blog/${post.id}`}
                   className="group block rounded-xl border border-border bg-card overflow-hidden hover:shadow-md transition-shadow"
                 >
-                  <div className="h-32 bg-linear-to-br from-primary-50 to-primary-100 dark:from-primary-950 dark:to-primary-900 flex items-center justify-center">
+                  <div className="h-32 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-950 dark:to-primary-900 flex items-center justify-center">
                     <span className="text-2xl font-bold text-primary-400 opacity-20">JC</span>
                   </div>
                   <div className="p-5">
@@ -160,7 +160,7 @@ export default function BlogPage() {
         </section>
 
         {/* Newsletter CTA */}
-        <section className="mt-20 bg-linear-to-r from-primary-600 to-primary-700 rounded-2xl p-8 sm:p-12 text-white text-center">
+        <section className="mt-20 bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-8 sm:p-12 text-white text-center">
           <h2 className="text-2xl sm:text-3xl font-bold mb-3">Stay Updated</h2>
           <p className="text-primary-100 mb-6 max-w-lg mx-auto text-center">
             Get the latest insights on Philippine legal tech delivered straight to your inbox.

@@ -534,7 +534,7 @@ export default function DocumentAnalysisModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-linear-to-br from-cyan-500 to-blue-600 rounded-xl">
+            <div className="p-2 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl">
               <FileScan className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -646,17 +646,17 @@ export default function DocumentAnalysisModal({
 
               {/* Feature cards */}
               <div className="grid grid-cols-3 gap-4">
-                <div className="p-4 bg-linear-to-br from-blue-50 to-cyan-50 rounded-xl">
+                <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl">
                   <Scale className="w-5 h-5 text-blue-600 mb-2" />
                   <h4 className="text-sm font-medium text-text-primary">Legal Analysis</h4>
                   <p className="text-xs text-text-secondary mt-1">Deep review of legal content and compliance</p>
                 </div>
-                <div className="p-4 bg-linear-to-br from-purple-50 to-pink-50 rounded-xl">
+                <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl">
                   <Gavel className="w-5 h-5 text-purple-600 mb-2" />
                   <h4 className="text-sm font-medium text-text-primary">Jurisprudence</h4>
                   <p className="text-xs text-text-secondary mt-1">Relevant Supreme Court cases suggested</p>
                 </div>
-                <div className="p-4 bg-linear-to-br from-green-50 to-emerald-50 rounded-xl">
+                <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl">
                   <Lightbulb className="w-5 h-5 text-green-600 mb-2" />
                   <h4 className="text-sm font-medium text-text-primary">AI Suggestions</h4>
                   <p className="text-xs text-text-secondary mt-1">Auto-generated improvements for clarity</p>
@@ -670,7 +670,7 @@ export default function DocumentAnalysisModal({
                     <button
                       onClick={extractTextOnly}
                       disabled={isExtracting || isAnalyzing}
-                      className="flex items-center gap-2 px-6 py-2.5 bg-linear-to-r from-green-600 to-emerald-600 text-white rounded-xl text-sm font-medium hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-green-500/25"
+                      className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl text-sm font-medium hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-green-500/25"
                     >
                       {isExtracting ? (
                         <><Loader2 className="w-4 h-4 animate-spin" /> Extracting…</>
@@ -681,7 +681,7 @@ export default function DocumentAnalysisModal({
                     <button
                       onClick={() => analyzeDocument()}
                       disabled={isAnalyzing || isExtracting}
-                      className="flex items-center gap-2 px-6 py-2.5 bg-linear-to-r from-cyan-600 to-blue-600 text-white rounded-xl text-sm font-medium hover:from-cyan-700 hover:to-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-500/25"
+                      className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl text-sm font-medium hover:from-cyan-700 hover:to-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-500/25"
                     >
                       {isAnalyzing ? (
                         <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing with AI…</>
@@ -1117,7 +1117,7 @@ export default function DocumentAnalysisModal({
                     }
                     onClose();
                   }}
-                  className="flex items-center gap-1.5 px-4 py-2 text-xs bg-linear-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-medium hover:from-cyan-700 hover:to-blue-700 transition-all shadow-md"
+                  className="flex items-center gap-1.5 px-4 py-2 text-xs bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-medium hover:from-cyan-700 hover:to-blue-700 transition-all shadow-md"
                 >
                   <Sparkles className="w-3.5 h-3.5" /> Insert with Analysis
                 </button>

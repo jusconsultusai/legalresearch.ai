@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
-import { hybridSearch, buildUnifiedPrompt, type UnifiedSearchResult } from "@/lib/ai/unified-search";
+import { hybridSearch, buildUnifiedPrompt, type UnifiedSearchResult, type UnifiedSearchOptions } from "@/lib/ai/unified-search";
 import { generateCompletion } from "@/lib/ai/llm";
 
 // POST - Send message to existing chat (follow-up)
@@ -70,7 +70,7 @@ export async function POST(
   try {
     const strategy = deepThink ? "agentic" : "auto";
     const searchResult = await hybridSearch(message, {
-      mode: chat.mode,
+      mode: chat.mode as UnifiedSearchOptions["mode"],
       sourceFilters: sourceFilters.length > 0 ? sourceFilters : undefined,
       maxResults: deepThink ? 30 : 15,
       strategy,
@@ -82,7 +82,7 @@ export async function POST(
     if (searchResult.agenticAnswer) {
       answer = searchResult.agenticAnswer;
     } else {
-      const systemPrompt = buildUnifiedPrompt(searchResult, chat.mode);
+      const systemPrompt = buildUnifiedPrompt(searchResult, chat.mode as UnifiedSearchOptions["mode"]);
 
       // Build messages array including conversation history for context
       const messages: { role: "system" | "user" | "assistant"; content: string }[] = [

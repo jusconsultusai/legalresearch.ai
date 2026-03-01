@@ -41,7 +41,7 @@ export default function PricingPage() {
   const discount = currentOption.discount;
 
   return (
-    <div className="py-20">
+    <div className="py-12 sm:py-20">
       <div className="max-w-6xl mx-auto px-4">
         <div className="text-center mb-16">
           <Badge variant="accent" className="mb-3">Pricing</Badge>
@@ -51,7 +51,7 @@ export default function PricingPage() {
           </p>
 
           {/* Billing Period Selector */}
-          <div className="flex items-center justify-center gap-1 mt-8 bg-surface-secondary rounded-xl p-1 max-w-lg mx-auto">
+          <div className="flex flex-wrap items-center justify-center gap-1 mt-8 bg-surface-secondary rounded-xl p-1 max-w-xs sm:max-w-lg mx-auto">
             {BILLING_OPTIONS.map((opt) => (
               <button
                 key={opt.id}

@@ -15,6 +15,7 @@ model User {
   lastName      String?
   phone         String?
   passwordHash  String
+  googleId      String?   @unique  // set when user signed up via Google OAuth
   avatar        String?
   role          String    @default("user") // user, admin, team_admin
   purpose       String?   // legal_work, law_school, personal
@@ -311,3 +312,18 @@ model Payment {
   @@map("payments")
 }
 
+// -------------------------------------------------------------------
+// Password Reset Tokens
+// -------------------------------------------------------------------
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([userId])
+  @@map("password_reset_tokens")
+}

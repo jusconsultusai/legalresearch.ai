@@ -35,7 +35,7 @@ const HELP_CATEGORIES = [
       {
         id: "account-setup",
         title: "Setting Up Your Account",
-        content: `**Creating an Account**\n1. Click "Get Started Free" on the homepage\n2. Enter your email, name, and password\n3. Complete the onboarding questionnaire\n\n**Profile Settings**\nCustomize your profile at any time by clicking your avatar in the top-right corner and selecting "Profile."\n\n**Subscription Plans**\n- **Free**: 15 AI searches/month, basic database access\n- **Professional (₱888/mo)**: 500 searches, full database, unlimited documents — 20% off quarterly/semiannual, 30% off annual\n- **Team (₱2,999/mo)**: 2,000 searches, collaboration, team management — 20% off quarterly/semiannual, 30% off annual`,
+        content: `**Creating an Account**\n1. Click "Get Started Free" on the homepage\n2. Enter your email, name, and password\n3. Complete the onboarding questionnaire\n\n**Profile Settings**\nCustomize your profile at any time by clicking your avatar in the top-right corner and selecting "Profile."\n\n**Subscription Plans**\n- **Free**: 15 AI searches / 14-day trial, basic database access\n- **Professional (₱888/mo)**: Unlimited searches, full database, unlimited documents — 20% off quarterly/semiannual, 30% off annual\n- **Team (₱2,999/mo)**: Unlimited searches, collaboration, team management — 20% off quarterly/semiannual, 30% off annual`,
       },
       {
         id: "first-search",
@@ -139,7 +139,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What happens when I run out of free searches?",
-    a: "On the Free plan, you receive 15 AI searches per month. Once depleted, you can wait for the monthly reset or upgrade to a paid plan for more searches. Database browsing and document creation remain available.",
+    a: "On the Free plan, you receive 15 AI searches during your 14-day trial. Once depleted, you can upgrade to a paid plan for unlimited searches. Database browsing remains available at all times.",
   },
   {
     q: "Can I use JusConsultus AI for actual legal practice?",
@@ -187,7 +187,7 @@ export default function HelpPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-6 space-y-8">
+    <div className="max-w-7xl mx-auto py-4 sm:py-8 px-3 sm:px-6 space-y-6 sm:space-y-8">
       {/* Header */}
       <div className="text-center">
         <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary-100 flex items-center justify-center">
@@ -432,7 +432,7 @@ export default function HelpPage() {
 
           {/* Contact Support */}
           {!currentArticle && (
-            <div className="mt-12 bg-linear-to-r from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/20 rounded-2xl border border-primary-200 dark:border-primary-700/40 p-8">
+            <div className="mt-12 bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/20 rounded-2xl border border-primary-200 dark:border-primary-700/40 p-8">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-primary-600 text-white flex items-center justify-center shrink-0">
                   <Mail className="w-6 h-6" />

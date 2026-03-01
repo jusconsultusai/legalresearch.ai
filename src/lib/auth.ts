@@ -19,6 +19,9 @@ export interface AuthUser {
   subscriptionStartDate?: Date | null;
   subscriptionEndDate?: Date | null;
   paymentSetup?: boolean;
+  googleId?: string;
+  /** true when the user has a bcrypt password (not a Google-only account) */
+  hasPassword: boolean;
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -70,6 +73,8 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
         subscriptionStartDate: true,
         subscriptionEndDate: true,
         paymentSetup: true,
+        passwordHash: true,
+        googleId: true,
       },
     });
 
@@ -85,6 +90,8 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       subscriptionStartDate: user.subscriptionStartDate,
       subscriptionEndDate: user.subscriptionEndDate,
       paymentSetup: user.paymentSetup,
+      googleId: user.googleId ?? undefined,
+      hasPassword: user.passwordHash.startsWith("$2"),
     };
   } catch {
     return null;
@@ -156,6 +163,8 @@ export async function signIn(email: string, password: string) {
     subscriptionStartDate: user.subscriptionStartDate,
     subscriptionEndDate: user.subscriptionEndDate,
     paymentSetup: user.paymentSetup,
+    googleId: (user as { googleId?: string | null }).googleId ?? undefined,
+    hasPassword: user.passwordHash.startsWith("$2"),
   };
 
   const token = generateToken(authUser);

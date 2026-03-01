@@ -120,14 +120,14 @@ export default async function HomePage() {
   return (
     <div className="overflow-hidden">
       {/* Hero */}
-      <section className="relative min-h-[90vh] flex items-center justify-center bg-linear-to-br from-primary-950 via-primary-900 to-primary-800 text-white overflow-hidden">
+      <section className="relative min-h-[90vh] flex items-center justify-center bg-gradient-to-br from-primary-950 via-primary-900 to-primary-800 text-white overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-20 left-20 w-72 h-72 bg-primary-400 rounded-full blur-3xl" />
           <div className="absolute bottom-20 right-20 w-96 h-96 bg-accent-400 rounded-full blur-3xl" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-24 text-center">
           <Badge variant="accent" className="mb-6 px-4 py-1.5 text-sm">
             <Sparkles className="w-3.5 h-3.5 mr-1.5" />
             AI-Powered Legal Research
@@ -136,7 +136,7 @@ export default async function HomePage() {
           <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-6 leading-tight">
             Legal Research,
             <br />
-            <span className="text-transparent bg-clip-text bg-linear-to-r from-accent-300 to-primary-300">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-300 to-primary-300">
               Reimagined with AI
             </span>
           </h1>
@@ -190,7 +190,7 @@ export default async function HomePage() {
                 {/* Chat UI preview */}
                 <div className="p-6 text-left">
                   <div className="text-center mb-5">
-                    <h3 className="text-lg font-bold text-text-primary whitespace-nowrap">
+                    <h3 className="text-lg font-bold text-text-primary">
                       Ask and it will be given to you — <span className="text-primary-700">Ask&nbsp;JusConsultus</span>
                     </h3>
                   </div>
@@ -241,9 +241,9 @@ export default async function HomePage() {
       </section>
 
       {/* Features */}
-      <section className="py-24 bg-surface" id="features">
+      <section className="py-16 sm:py-24 bg-surface" id="features">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10 sm:mb-16">
             <Badge variant="primary" className="mb-4">Features</Badge>
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
               Everything You Need for Legal Research
@@ -270,9 +270,9 @@ export default async function HomePage() {
       </section>
 
       {/* Database */}
-      <section className="py-24 bg-surface-secondary">
+      <section className="py-16 sm:py-24 bg-surface-secondary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
             <div>
               <Badge variant="accent" className="mb-4">Legal Database</Badge>
               <h2 className="text-3xl sm:text-4xl font-bold mb-6">
@@ -323,9 +323,9 @@ export default async function HomePage() {
       </section>
 
       {/* Pricing */}
-      <section className="py-24 bg-surface" id="pricing">
+      <section className="py-16 sm:py-24 bg-surface" id="pricing">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10 sm:mb-16">
             <Badge variant="primary" className="mb-4">Pricing</Badge>
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
               Simple, Transparent Pricing
@@ -341,7 +341,7 @@ export default async function HomePage() {
                 key={i}
                 className={cn(
                   "relative",
-                  plan.popular && "border-primary-500 ring-2 ring-primary-500/20 scale-105"
+                  plan.popular && "border-primary-500 ring-2 ring-primary-500/20 sm:scale-105"
                 )}
               >
                 {plan.popular && (
@@ -384,7 +384,7 @@ export default async function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="py-24 bg-linear-to-r from-primary-900 to-primary-800 text-white">
+      <section className="py-16 sm:py-24 bg-gradient-to-r from-primary-900 to-primary-800 text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold mb-6">
             Ready to Transform Your Legal Research?

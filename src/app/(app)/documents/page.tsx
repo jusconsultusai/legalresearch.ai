@@ -89,19 +89,20 @@ export default function DocumentsPage() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-6 space-y-6" id="tour-documents">
+    <div className="max-w-7xl mx-auto py-4 sm:py-8 px-3 sm:px-6 space-y-4 sm:space-y-6" id="tour-documents">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">Documents</h1>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Documents</h1>
           <p className="text-sm text-text-secondary mt-1">Create and manage your legal documents</p>
         </div>
         <Link
           href="/documents/new"
-          className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors"
+          className="flex items-center gap-2 bg-primary-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors shrink-0"
         >
           <Plus className="w-4 h-4" />
-          New Document
+          <span className="hidden sm:inline">New Document</span>
+          <span className="sm:hidden">New</span>
         </Link>
       </div>
 

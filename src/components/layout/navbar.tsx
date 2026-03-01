@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button, Avatar } from "@/components/ui";
 import { useAuth } from "@/hooks";
 import { useState, useEffect } from "react";
+import { useSidebarStore } from "@/stores";
 import {
   Menu,
   X,
@@ -141,13 +142,24 @@ export function MarketingNavbar() {
 
 export function AppNavbar() {
   const { user, logout } = useAuth();
+  const { toggle } = useSidebarStore();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const isFree = user?.plan === "free";
   const isPro = user?.plan === "pro" || user?.plan === "team";
 
   return (
-    <header className="h-14 border-b border-border bg-surface flex items-center px-4 gap-4 shrink-0 z-40">
+    <header className="h-14 border-b border-border bg-surface flex items-center px-3 sm:px-4 gap-2 sm:gap-4 shrink-0 z-40">
+      {/* Hamburger — mobile only */}
+      <button
+        suppressHydrationWarning
+        className="lg:hidden p-2 rounded-lg hover:bg-surface-tertiary transition-colors"
+        onClick={toggle}
+        title="Toggle menu"
+      >
+        <Menu className="w-5 h-5 text-text-secondary" />
+      </button>
+
       <Link href="/chat" className="flex items-center gap-2">
         <Image src="/logo.png" alt="JusConsultus AI" width={28} height={28} className="rounded" />
             <span className="font-bold text-primary-900 dark:text-primary-200 hidden sm:block">JusConsultus AI</span>
@@ -174,6 +186,7 @@ export function AppNavbar() {
 
       {/* Theme Toggle */}
       <button
+        suppressHydrationWarning
         onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         className="p-2 rounded-lg hover:bg-surface-tertiary transition-colors"
         title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
@@ -188,6 +201,7 @@ export function AppNavbar() {
       {/* User Menu */}
       <div className="relative">
         <button
+          suppressHydrationWarning
           onClick={() => setDropdownOpen(!dropdownOpen)}
           className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-surface-tertiary transition-colors"
           title="Account menu"

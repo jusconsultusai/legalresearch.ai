@@ -159,7 +159,7 @@ export default function UpgradePage() {
   );
 
   return (
-    <div className="max-w-5xl mx-auto py-10 px-6 space-y-10">
+    <div className="max-w-5xl mx-auto py-6 sm:py-10 px-3 sm:px-6 space-y-8 sm:space-y-10">
       {/* Header */}
       <div className="text-center">
         <Badge variant="accent" className="mb-3">Upgrade</Badge>

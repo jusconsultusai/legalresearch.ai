@@ -270,30 +270,31 @@ export default function MyFilesPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-6 space-y-6" id="tour-myfiles">
+    <div className="max-w-7xl mx-auto py-4 sm:py-8 px-3 sm:px-6 space-y-4 sm:space-y-6" id="tour-myfiles">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">My Files</h1>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-text-primary">My Files</h1>
           <p className="text-sm text-text-secondary mt-1">
             Your personal legal documents stored locally in your browser
           </p>
         </div>
         <button
           onClick={() => setShowUploadModal(true)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors"
+          className="flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors shrink-0"
         >
           <Upload className="w-4 h-4" />
-          Upload Files
+          <span className="hidden sm:inline">Upload Files</span>
+          <span className="sm:hidden">Upload</span>
         </button>
       </div>
 
       {/* Important Disclaimer */}
-      <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
-        <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-xl p-4">
+        <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-medium text-amber-800">Local Storage Only</p>
-          <p className="text-xs text-amber-700 mt-0.5">
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Local Storage Only</p>
+          <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
             All files uploaded here are saved <strong>only in your browser&apos;s local storage</strong>.
             They are <strong>not uploaded to JusConsultus servers</strong>. Clearing your browser
             data will permanently delete these files. We recommend keeping backup copies of important documents.
@@ -489,7 +490,9 @@ export default function MyFilesPage() {
                 ) : (
                   <button
                     onClick={() => setDeleteConfirm(file.id)}
-                  className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-text-tertiary hover:text-red-500 transition-colors"
+                    title="Delete file"
+                    aria-label="Delete file"
+                    className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-text-tertiary hover:text-red-500 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -615,7 +618,7 @@ export default function MyFilesPage() {
                 className={cn(
                   "border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer",
                   dragActive
-                    ? "border-primary-500 bg-primary-50"
+                    ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
                     : "border-border hover:border-primary-300"
                 )}
                 onClick={() => fileInputRef.current?.click()}
@@ -638,9 +641,9 @@ export default function MyFilesPage() {
                 />
               </div>
 
-              <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                <p className="text-xs text-blue-700">
+              <div className="flex items-start gap-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/40 rounded-lg p-3">
+                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-blue-700 dark:text-blue-400">
                   Files are stored in your browser&apos;s local storage only. They are never uploaded
                   to our servers. Storage is limited to approximately 5 MB.
                 </p>

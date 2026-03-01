@@ -63,19 +63,32 @@ export async function generateCompletion(
       const isReasoner = model.toLowerCase().includes("reasoner");
       const effectiveTemperature = isReasoner ? 1 : temperature;
 
-      const response = await fetch(`${baseUrl}/v1/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature: effectiveTemperature,
-          max_tokens: maxTokens,
-        }),
-      });
+      // 90-second timeout prevents 524 gateway errors from Cloudflare
+      const controller = new AbortController();
+      const timeoutId = setTimeout(
+        () => controller.abort(new DOMException("LLM request timed out after 90 seconds", "AbortError")),
+        90_000
+      );
+
+      let response: Response;
+      try {
+        response = await fetch(`${baseUrl}/v1/chat/completions`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            messages,
+            temperature: effectiveTemperature,
+            max_tokens: maxTokens,
+          }),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       // Handle non-OK responses from the LLM API
       if (!response.ok) {
@@ -110,7 +123,11 @@ export async function generateCompletion(
 
       return content;
     } catch (error) {
-      console.error("LLM API error:", error);
+      if (error instanceof Error && error.name === "AbortError") {
+        console.error("LLM API request timed out after 90 seconds");
+      } else {
+        console.error("LLM API error:", error);
+      }
       return generateMockResponse(lastUserMessage);
     }
   }
@@ -135,20 +152,33 @@ export async function* generateStreamingCompletion(
       // deepseek-reasoner does not support custom temperatures — must use 1
       const effectiveTemperature = model.toLowerCase().includes("reasoner") ? 1 : temperature;
 
-      const response = await fetch(`${baseUrl}/v1/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature: effectiveTemperature,
-          max_tokens: maxTokens,
-          stream: true,
-        }),
-      });
+      // 90-second timeout guard
+      const streamController = new AbortController();
+      const streamTimeoutId = setTimeout(
+        () => streamController.abort(new DOMException("LLM streaming request timed out", "AbortError")),
+        90_000
+      );
+
+      let response: Response;
+      try {
+        response = await fetch(`${baseUrl}/v1/chat/completions`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            messages,
+            temperature: effectiveTemperature,
+            max_tokens: maxTokens,
+            stream: true,
+          }),
+          signal: streamController.signal,
+        });
+      } finally {
+        clearTimeout(streamTimeoutId);
+      }
 
       // Handle non-OK responses
       if (!response.ok) {

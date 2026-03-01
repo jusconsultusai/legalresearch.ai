@@ -158,7 +158,7 @@ export default function DatabasePage() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-6 space-y-8" id="tour-database">
+    <div className="max-w-7xl mx-auto py-4 sm:py-8 px-3 sm:px-6 space-y-6 sm:space-y-8" id="tour-database">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-text-primary">Legal Database</h1>
@@ -167,11 +167,11 @@ export default function DatabasePage() {
         </p>
       </div>
 
-      {/* AI-Powered Research — side-by-side layout */}
-      <div className="flex gap-5 items-start">
+      {/* AI-Powered Research — stacks on mobile, side-by-side on lg */}
+      <div className="flex flex-col lg:flex-row gap-5 items-start">
         {/* Left: AI Research Panel */}
         <div className={cn("shrink-0 transition-all", selectedAISource ? "w-105" : "max-w-2xl w-full")}>
-        <div className="rounded-2xl border border-purple-200 dark:border-purple-700/40 bg-linear-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 p-5">
+        <div className="rounded-2xl border border-purple-200 dark:border-purple-700/40 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 p-5">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center">
               <Sparkles className="w-4 h-4" />
@@ -181,7 +181,7 @@ export default function DatabasePage() {
               <p className="text-[11px] text-purple-700 dark:text-purple-400">Ask a question — AI searches the entire database</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
               value={aiQuery}
@@ -193,7 +193,7 @@ export default function DatabasePage() {
             <button
               onClick={handleAISearch}
               disabled={!aiQuery.trim() || aiLoading}
-              className="px-4 py-2 bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors flex items-center gap-2 shrink-0"
+              className="w-full sm:w-auto px-4 py-2 bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 shrink-0"
             >
               {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Brain className="w-4 h-4" />}
               Research
@@ -360,7 +360,7 @@ export default function DatabasePage() {
             className={cn(
               "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap border transition-all",
               activeCategory === key
-                ? `bg-linear-to-r ${CATEGORY_COLORS[key]} shadow-sm`
+                ? `bg-gradient-to-r ${CATEGORY_COLORS[key]} shadow-sm`
                 : "border-transparent hover:bg-surface-secondary text-text-secondary"
             )}
           >
@@ -371,7 +371,7 @@ export default function DatabasePage() {
       </div>
 
       {/* Category Overview */}
-      <Card className={cn("p-6 bg-linear-to-r border", CATEGORY_COLORS[activeCategory])}>
+      <Card className={cn("p-6 bg-gradient-to-r border", CATEGORY_COLORS[activeCategory])}>
         <div className="flex items-center gap-3 mb-2">
           {CATEGORY_ICONS[activeCategory]}
           <h2 className="text-xl font-bold">{currentCategory?.label}</h2>

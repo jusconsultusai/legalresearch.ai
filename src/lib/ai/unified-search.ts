@@ -72,7 +72,7 @@ export interface UnifiedSearchOptions {
   /** Override strategy selection */
   strategy?: "exact" | "research" | "quick" | "agentic" | "auto";
   /** Response mode for LLM prompt building */
-  mode?: "standard_v2" | "concise" | "professional" | "educational" | "simple_english";
+  mode?: "standard_v2" | "standard" | "context_v1" | "concise" | "professional" | "educational" | "simple" | "simple_english";
   /** Maximum wait time for KAG layer (ms) */
   kagTimeout?: number;
   /** Maximum wait time for DeepSearcher layer (ms) */

@@ -705,11 +705,22 @@ export function buildKAGPrompt(
   mode: string = "standard_v2"
 ): string {
   const modeInstructions: Record<string, string> = {
-    standard_v2:   "Provide a comprehensive, well-structured legal analysis with formal Philippine legal writing style.",
-    concise:       "Be extremely concise. Key legal points and citations only.",
-    professional:  "Detailed legal analysis for practitioners. Include risk assessment, practical implications, strategic considerations.",
-    educational:   "Explain for law students. Define terms, explain reasoning, include learning points.",
-    simple_english: "Explain in everyday language. Avoid legal jargon. Use analogies.",
+    standard_v2:
+      "Provide a comprehensive, well-structured legal analysis with formal Philippine legal writing style. Use precise citations, clear headings, and structured multi-part reasoning. Prioritize accuracy and completeness.",
+    standard:
+      "Provide a clear, thorough legal analysis in JusConsultus classic style. Balance depth with readability. Integrate citations naturally within your prose and maintain a professional yet approachable tone.",
+    context_v1:
+      "Provide a context-aware legal analysis that explicitly builds on the full conversation history provided. Reference previous questions and answers where relevant to ensure coherence and deepen the analysis across multiple turns. Connect new information to what was already established.",
+    concise:
+      "Be extremely concise. Deliver only the essential legal points, the controlling citations, and a clear bottom-line answer. Use numbered lists and bullet points. Omit all preambles, pleasantries, and filler language. Target under 300 words.",
+    professional:
+      "Provide an advanced legal analysis for practitioners. Cover: doctrinal foundation, key risks and liabilities, potential counterarguments, litigation or compliance strategy, and practical client implications. Cite the most authoritative statutes and Supreme Court decisions with full G.R. numbers and dates. Use precise legal terminology throughout.",
+    educational:
+      "Structure your response as a law school tutorial. Define all key legal concepts in plain terms before analysing them. Walk through the doctrinal reasoning step by step, connect the answer to foundational legal principles, and end with a concise summary of what a law student should remember — especially anything relevant to the Philippine bar examinations.",
+    simple:
+      "Write in plain, everyday language that a non-lawyer can fully understand. Translate every legal term into ordinary words, and if you must use a legal term, define it immediately in parentheses. Use real-world analogies, relatable examples, and short sentences. Focus on what the law means practically for the person asking.",
+    simple_english:
+      "Write in plain, everyday language that a non-lawyer can fully understand. Translate every legal term into ordinary words, and if you must use a legal term, define it immediately in parentheses. Use real-world analogies, relatable examples, and short sentences. Focus on what the law means practically for the person asking.",
   };
 
   const entitySection = logicalForm.entities.length > 0

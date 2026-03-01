@@ -64,7 +64,7 @@ export default function BookmarksPage() {
   });
 
   return (
-    <div className="max-w-5xl mx-auto py-8 px-6 space-y-6" id="tour-bookmarks">
+    <div className="max-w-5xl mx-auto py-4 sm:py-8 px-3 sm:px-6 space-y-4 sm:space-y-6" id="tour-bookmarks">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-text-primary flex items-center gap-2">

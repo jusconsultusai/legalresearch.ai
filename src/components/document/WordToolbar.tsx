@@ -427,7 +427,7 @@ export default function WordToolbar({
 
       {/* AI Tools Tab */}
       {activeTab === 'ai' && (
-        <div className="flex items-center gap-1 px-2 py-1.5 flex-wrap bg-linear-to-r from-purple-50/50 to-indigo-50/50 dark:from-purple-900/10 dark:to-indigo-900/10">
+        <div className="flex items-center gap-1 px-2 py-1.5 flex-wrap bg-gradient-to-r from-purple-50/50 to-indigo-50/50 dark:from-purple-900/10 dark:to-indigo-900/10">
           <div className="flex items-center gap-0.5 px-2 py-1 border-r border-gray-200 dark:border-white/10">
             <button onClick={onAIAssistant} className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors ${isAIAssistantOpen ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 ring-1 ring-primary-300' : 'hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-400'}`} title="Toggle AI Assistant Panel">
               <Sparkles className="w-6 h-6" /><span className="text-[10px] font-medium">AI Assistant</span>

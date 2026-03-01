@@ -7,8 +7,8 @@ export default async function AboutPage() {
   const user = await getCurrentUser();
   
   return (
-    <div className="py-20">
-      <div className="max-w-4xl mx-auto px-4 space-y-16">
+    <div className="py-12 sm:py-20">
+      <div className="max-w-4xl mx-auto px-4 space-y-10 sm:space-y-16">
         {/* Hero */}
         <div className="text-center">
           <Badge variant="accent" className="mb-4">About Us</Badge>
@@ -64,7 +64,7 @@ export default async function AboutPage() {
         </div>
 
         {/* CTA */}
-        <div className="text-center bg-linear-to-r from-primary-50 to-accent-50 dark:from-primary-900/30 dark:to-accent-700/20 rounded-2xl p-10">
+        <div className="text-center bg-gradient-to-r from-primary-50 to-accent-50 dark:from-primary-900/30 dark:to-accent-700/20 rounded-2xl p-6 sm:p-10">
           <h2 className="text-2xl font-bold mb-3">Ready to transform your legal research?</h2>
           <p className="text-text-secondary mb-6 text-center">Start for free. No credit card required.</p>
           {user ? (

@@ -12,7 +12,7 @@ export default function MarketingLayout({
       {/* Footer */}
       <footer className="border-t border-border bg-primary-950 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <img src="/logo.png" alt="JusConsultus AI" className="w-8 h-8 rounded" />

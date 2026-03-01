@@ -97,7 +97,7 @@ export default async function BlogArticlePage({ params }: PageProps) {
       </div>
 
       {/* Hero */}
-      <div className="bg-linear-to-br from-primary-950 via-primary-900 to-primary-800 text-white pt-12 pb-16">
+      <div className="bg-gradient-to-br from-primary-950 via-primary-900 to-primary-800 text-white pt-12 pb-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Link
             href="/blog"
@@ -214,7 +214,7 @@ export default async function BlogArticlePage({ params }: PageProps) {
             </div>
 
             {/* Ask JusConsultus CTA */}
-            <div className="mt-8 bg-linear-to-r from-primary-600 to-primary-700 rounded-xl p-6 text-white">
+            <div className="mt-8 bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl p-6 text-white">
               <div className="flex items-start gap-4">
                 <div className="bg-white/20 rounded-full p-3 shrink-0">
                   <MessageSquare className="w-6 h-6" />
@@ -332,7 +332,7 @@ export default async function BlogArticlePage({ params }: PageProps) {
                   href={`/blog/${relPost.id}`}
                   className="group block rounded-xl border border-border bg-card overflow-hidden hover:shadow-md transition-shadow"
                 >
-                  <div className="h-28 bg-linear-to-br from-primary-50 to-primary-100 dark:from-primary-950 dark:to-primary-900 flex items-center justify-center">
+                  <div className="h-28 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-950 dark:to-primary-900 flex items-center justify-center">
                     <span className="text-2xl font-bold text-primary-400 opacity-20">JC</span>
                   </div>
                   <div className="p-5">

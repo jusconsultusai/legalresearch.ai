@@ -586,11 +586,12 @@ export default function DocumentEditorPage() {
         type="file"
         accept=".pdf,.docx,.doc,.txt,.html,.htm"
         className="hidden"
+        aria-label="Import document file"
         onChange={handleImportFile}
       />
 
       {/* Top Bar: Back + Title + Save Status + Side-panel toggles */}
-      <div className="flex items-center gap-3 px-4 py-2 bg-white border-b border-border shrink-0">
+      <div className="flex items-center gap-3 px-4 py-2 bg-surface border-b border-border shrink-0">
         <button onClick={() => router.push("/documents")} className="p-2 hover:bg-surface-tertiary rounded-lg transition-colors" title="Back to documents">
           <ArrowLeft className="w-4 h-4" />
         </button>
@@ -614,38 +615,38 @@ export default function DocumentEditorPage() {
 
         {/* AI Processing Indicator */}
         {aiProcessing && (
-          <div className="flex flex-col items-start px-3 py-1.5 rounded-xl bg-purple-100 text-purple-700 text-xs font-medium animate-pulse">
+          <div className="flex flex-col items-start px-3 py-1.5 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-medium animate-pulse">
             <div className="flex items-center gap-1.5">
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
               AI Processing…
             </div>
-            <span className="text-[10px] text-purple-500 font-normal mt-0.5 pl-5">This may take a few minutes</span>
+            <span className="text-[10px] text-purple-500 dark:text-purple-400 font-normal mt-0.5 pl-5">This may take a few minutes</span>
           </div>
         )}
 
         <div className="flex items-center gap-1 border-l border-border pl-3">
           {/* Analysis */}
-          <button onClick={runAnalysis} className={cn("p-2 rounded-lg transition-colors", sidePanel === "analysis" ? "bg-primary-50 text-primary-600" : "hover:bg-surface-tertiary text-text-secondary")} title="Document Analysis">
+          <button onClick={runAnalysis} className={cn("p-2 rounded-lg transition-colors", sidePanel === "analysis" ? "bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400" : "hover:bg-surface-tertiary text-text-secondary")} title="Document Analysis">
             <Lightbulb className="w-4 h-4" />
           </button>
 
           {/* Research */}
-          <button onClick={() => toggleSidePanel("research")} className={cn("p-2 rounded-lg transition-colors", sidePanel === "research" ? "bg-primary-50 text-primary-600" : "hover:bg-surface-tertiary text-text-secondary")} title="Legal Research">
+          <button onClick={() => toggleSidePanel("research")} className={cn("p-2 rounded-lg transition-colors", sidePanel === "research" ? "bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400" : "hover:bg-surface-tertiary text-text-secondary")} title="Legal Research">
             <Search className="w-4 h-4" />
           </button>
 
           {/* Precedent Library */}
-          <button onClick={() => toggleSidePanel("precedent")} className={cn("p-2 rounded-lg transition-colors", sidePanel === "precedent" ? "bg-primary-50 text-primary-600" : "hover:bg-surface-tertiary text-text-secondary")} title="Precedent Library">
+          <button onClick={() => toggleSidePanel("precedent")} className={cn("p-2 rounded-lg transition-colors", sidePanel === "precedent" ? "bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400" : "hover:bg-surface-tertiary text-text-secondary")} title="Precedent Library">
             <FolderOpen className="w-4 h-4" />
           </button>
 
           {/* Redlines Toggle */}
-          <button onClick={() => setShowRedlines(!showRedlines)} className={cn("p-2 rounded-lg transition-colors", showRedlines ? "bg-red-50 text-red-600" : "hover:bg-surface-tertiary text-text-secondary")} title="Redline / Track Changes">
+          <button onClick={() => setShowRedlines(!showRedlines)} className={cn("p-2 rounded-lg transition-colors", showRedlines ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400" : "hover:bg-surface-tertiary text-text-secondary")} title="Redline / Track Changes">
             <GitCompare className="w-4 h-4" />
           </button>
 
           {/* Metadata */}
-          <button onClick={() => toggleSidePanel("metadata")} className={cn("p-2 rounded-lg transition-colors", sidePanel === "metadata" ? "bg-primary-50 text-primary-600" : "hover:bg-surface-tertiary text-text-secondary")} title="Document Metadata">
+          <button onClick={() => toggleSidePanel("metadata")} className={cn("p-2 rounded-lg transition-colors", sidePanel === "metadata" ? "bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400" : "hover:bg-surface-tertiary text-text-secondary")} title="Document Metadata">
             <Tag className="w-4 h-4" />
           </button>
 
@@ -656,7 +657,7 @@ export default function DocumentEditorPage() {
       </div>
 
       {/* Toolbar: AI + Builder + Import + Download */}
-      <div className="flex items-center gap-2 px-4 py-2 bg-white border-b border-border shrink-0">
+      <div className="flex items-center gap-2 px-4 py-2 bg-surface border-b border-border shrink-0">
         {/* AI Generate */}
         <button
           onClick={() => setShowAiModal(true)}
@@ -691,7 +692,7 @@ export default function DocumentEditorPage() {
         {/* Document Analysis */}
         <button
           onClick={() => setShowAnalysisModal(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-cyan-50 border border-cyan-200 text-cyan-700 hover:bg-cyan-100 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-700/40 text-cyan-700 dark:text-cyan-400 hover:bg-cyan-100 dark:hover:bg-cyan-900/30 transition-colors"
         >
           <FileScan className="w-3.5 h-3.5" />
           Analyze
@@ -722,7 +723,7 @@ export default function DocumentEditorPage() {
             <Download className="w-3.5 h-3.5" />
             Download
           </button>
-          <div className="absolute left-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-border z-50 py-1 hidden group-hover:block">
+          <div className="absolute left-0 top-full mt-1 w-40 bg-surface rounded-lg shadow-lg border border-border z-50 py-1 hidden group-hover:block">
             <button onClick={() => handleDownload("docx")} className="w-full text-left px-3 py-2 text-xs hover:bg-surface-secondary">DOCX</button>
             <button onClick={() => handleDownload("html")} className="w-full text-left px-3 py-2 text-xs hover:bg-surface-secondary">HTML</button>
             <button onClick={() => handleDownload("txt")} className="w-full text-left px-3 py-2 text-xs hover:bg-surface-secondary">Plain Text</button>
@@ -743,24 +744,24 @@ export default function DocumentEditorPage() {
       {toast && (
         <div className={cn(
           "flex items-center gap-2 px-4 py-2 text-xs font-medium border-b shrink-0 animate-fade-in",
-          toast.type === "success" && "bg-green-50 border-green-200 text-green-700",
-          toast.type === "error" && "bg-red-50 border-red-200 text-red-700",
-          toast.type === "info" && "bg-blue-50 border-blue-200 text-blue-700",
+          toast.type === "success" && "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700/40 text-green-700 dark:text-green-400",
+          toast.type === "error" && "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700/40 text-red-700 dark:text-red-400",
+          toast.type === "info" && "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700/40 text-blue-700 dark:text-blue-400",
         )}>
           {toast.type === "success" && <Check className="w-3.5 h-3.5 shrink-0" />}
           {toast.type === "error" && <AlertCircle className="w-3.5 h-3.5 shrink-0" />}
           {toast.type === "info" && <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" />}
           <span className="flex-1">{toast.text}</span>
-          <button onClick={() => setToast(null)}><X className="w-3.5 h-3.5" /></button>
+          <button onClick={() => setToast(null)} title="Dismiss" aria-label="Dismiss notification"><X className="w-3.5 h-3.5" /></button>
         </div>
       )}
 
       {/* Redline Bar */}
       {showRedlines && (
-        <div className="bg-red-50 border-b border-red-200 px-4 py-2 flex items-center gap-3 animate-fade-in shrink-0">
-          <GitCompare className="w-4 h-4 text-red-600" />
-          <span className="text-xs font-medium text-red-700">Redline Mode Active</span>
-          <span className="text-xs text-red-600">Changes since last save are tracked</span>
+        <div className="bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-700/40 px-4 py-2 flex items-center gap-3 animate-fade-in shrink-0">
+          <GitCompare className="w-4 h-4 text-red-600 dark:text-red-400" />
+          <span className="text-xs font-medium text-red-700 dark:text-red-400">Redline Mode Active</span>
+          <span className="text-xs text-red-600 dark:text-red-500">Changes since last save are tracked</span>
           <button onClick={() => { setOriginalContent(content); }} className="ml-auto text-xs text-red-600 hover:text-red-800 font-medium flex items-center gap-1">
             <Check className="w-3 h-3" />
             Accept All Changes
@@ -800,7 +801,7 @@ export default function DocumentEditorPage() {
 
         {/* Side Panel */}
         {sidePanel && (
-          <div className="w-80 bg-white border-l border-border flex flex-col animate-slide-in overflow-hidden">
+          <div className="w-80 bg-surface border-l border-border flex flex-col animate-slide-in overflow-hidden">
             {/* Panel Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
@@ -936,16 +937,16 @@ export default function DocumentEditorPage() {
                     {analysisResult.riskAreas.length > 0 ? (
                       <div className="space-y-2">
                         {analysisResult.riskAreas.map((risk, i) => (
-                          <div key={i} className="flex items-start gap-2 text-xs bg-amber-50 border border-amber-200 rounded-lg p-2.5">
-                            <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
-                            <span className="text-amber-700">{risk}</span>
+                          <div key={i} className="flex items-start gap-2 text-xs bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-lg p-2.5">
+                            <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                            <span className="text-amber-700 dark:text-amber-400">{risk}</span>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 text-xs bg-green-50 border border-green-200 rounded-lg p-2.5">
-                        <Check className="w-3.5 h-3.5 text-green-600" />
-                        <span className="text-green-700">No risk areas identified</span>
+                      <div className="flex items-center gap-2 text-xs bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700/40 rounded-lg p-2.5">
+                        <Check className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
+                        <span className="text-green-700 dark:text-green-400">No risk areas identified</span>
                       </div>
                     )}
                   </div>
@@ -1018,7 +1019,7 @@ export default function DocumentEditorPage() {
               {/* Precedent Library Panel */}
               {sidePanel === "precedent" && (
                 <div className="space-y-4">
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-700 flex items-start gap-2">
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-lg p-3 text-xs text-amber-700 dark:text-amber-400 flex items-start gap-2">
                     <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                     <span>Your personal files from My Files. Click to insert content into your document.</span>
                   </div>
@@ -1197,8 +1198,8 @@ export default function DocumentEditorPage() {
       {/* Empty Document Warning Dialog */}
       {emptyDocWarning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setEmptyDocWarning(null)} />
-          <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 flex flex-col items-center text-center">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setEmptyDocWarning(null)} />
+          <div className="relative w-full max-w-sm bg-surface rounded-2xl shadow-2xl p-6 flex flex-col items-center text-center">
             {/* Icon */}
             <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mb-4">
               <AlertCircle className="w-8 h-8 text-amber-500" />
@@ -1218,8 +1219,8 @@ export default function DocumentEditorPage() {
             </p>
 
             {/* Info tip */}
-            <div className="w-full bg-blue-50 border border-blue-200 rounded-xl p-3 mb-5 text-left">
-              <p className="text-xs text-blue-700 flex items-start gap-2">
+            <div className="w-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/40 rounded-xl p-3 mb-5 text-left">
+              <p className="text-xs text-blue-700 dark:text-blue-400 flex items-start gap-2">
                 <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-blue-500" />
                 <span>
                   You can use <strong>AI Draft</strong> to generate a new document from scratch,

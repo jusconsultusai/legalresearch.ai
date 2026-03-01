@@ -4,8 +4,12 @@
 // See: https://api.onlyoffice.com/docs/document-builder/builder-framework/
 
 import { NextRequest, NextResponse } from "next/server";
+import { writeFile, unlink, mkdir } from "fs/promises";
+import path from "path";
+import { randomUUID } from "crypto";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { htmlToDocxBuffer } from "@/lib/docspace";
 
 /**
  * Generate a Document Builder script for creating documents
@@ -269,9 +273,80 @@ builder.CloseFile();`;
   }
 }
 
+// ─── HTML template generators (used by the DocSpace / html-to-docx primary path) ────
+
+function generateTemplateHtml(options: {
+  templateId?: string;
+  title?: string;
+  content?: string;
+  data?: Record<string, any>;
+}): string {
+  const { templateId, title = "Document", content = "", data = {} } = options;
+
+  switch (templateId) {
+    case "legal-pleading":
+      return `
+<div style="font-family: 'Times New Roman', serif; font-size: 12pt; margin: 1in;">
+  <p style="text-align:center; font-weight:bold; font-size:14pt;">REPUBLIC OF THE PHILIPPINES</p>
+  <p style="text-align:center; font-weight:bold;">${data.court || "REGIONAL TRIAL COURT"}</p>
+  <p style="text-align:center;">${data.branch || "Branch ___"}</p>
+  <br/>
+  <p>${data.plaintiff || "[PLAINTIFF NAME]"},</p>
+  <p style="text-align:center; font-style:italic;">— versus —</p>
+  <p>${data.defendant || "[DEFENDANT NAME]"},</p>
+  <p style="text-align:right; font-weight:bold;">${data.caseNumber || "Civil Case No. ___"}</p>
+  <p style="text-align:center;">x - - - - - - - - - - - - - - - x</p>
+  <p style="text-align:center; font-weight:bold; font-size:14pt;">${title}</p>
+  <br/>
+  ${content ? `<p>${content.replace(/\n/g, "</p><p>")}</p>` : "<p>[Body of the pleading]</p>"}
+  <br/>
+  <p style="font-weight:bold; text-align:center;">PRAYER</p>
+  <p>WHEREFORE, premises considered, it is respectfully prayed that this Honorable Court:</p>
+  <br/><br/>
+  <p style="text-align:right;">Respectfully submitted,</p>
+  <p style="text-align:right; font-weight:bold;">${data.counsel || "[COUNSEL NAME]"}</p>
+</div>`;
+
+    case "contract":
+      return `
+<div style="font-family: 'Times New Roman', serif; font-size: 12pt; margin: 1in;">
+  <p style="text-align:center; font-weight:bold; font-size:16pt;">${title}</p>
+  <br/>
+  <p><strong>KNOW ALL MEN BY THESE PRESENTS:</strong></p>
+  <p>This ${title} is entered into this ${data.date || "_____ day of __________, 20__"}, by and between:</p>
+  <p>${data.party1 || "[FIRST PARTY]"} (hereinafter referred to as the &quot;First Party&quot;)</p>
+  <p style="text-align:center; font-style:italic;">— and —</p>
+  <p>${data.party2 || "[SECOND PARTY]"} (hereinafter referred to as the &quot;Second Party&quot;)</p>
+  <br/>
+  ${content
+    ? `<p>${content.replace(/\n/g, "</p><p>")}</p>`
+    : `<p><strong>WITNESSETH: That —</strong></p>
+       <p>WHEREAS, [recitals];</p>
+       <p>NOW, THEREFORE, for and in consideration of the foregoing premises and the mutual covenants herein contained, the parties agree as follows:</p>`}
+  <br/>
+  <p>IN WITNESS WHEREOF, the parties have hereunto set their hands this _____ day of __________, 20__, at ___________, Philippines.</p>
+</div>`;
+
+    case "export-pdf":
+    case "blank-document":
+    default:
+      return `
+<div style="font-family: 'Times New Roman', serif; font-size: 12pt; margin: 1in;">
+  <p style="text-align:center; font-weight:bold; font-size:14pt;">${title}</p>
+  <br/>
+  ${content ? `<p>${content.replace(/\n/g, "</p><p>")}</p>` : "<p></p>"}
+</div>`;
+  }
+}
+
 /**
  * POST /api/onlyoffice/builder
- * Generate a document using ONLYOFFICE Document Builder
+ * Generate a document using DocSpace (primary) or Docker Document Server (fallback).
+ *
+ * Priority order:
+ *  1. DocSpace — convert HTML → DOCX via html-to-docx (no Docker required, always available)
+ *  2. Docker Document Builder — POST /docbuilder with a .docbuilder script URL
+ *  3. Minimal OOXML fallback
  */
 export async function POST(req: NextRequest) {
   try {
@@ -289,9 +364,10 @@ export async function POST(req: NextRequest) {
       builderScript: customScript,
     } = body;
 
-    // If documentId is provided, fetch document content
+    // Fetch document content from DB if documentId provided
     let title = data.title || "Document";
-    let content = "";
+    let rawHtml = "";
+    let plainContent = "";
 
     if (documentId) {
       const document = await prisma.document.findFirst({
@@ -299,79 +375,108 @@ export async function POST(req: NextRequest) {
       });
       if (document) {
         title = document.title || title;
-        // Strip HTML tags for plain text insertion into builder
-        content = (document.content || "").replace(/<[^>]*>/g, "");
+        rawHtml = document.content || "";
+        plainContent = rawHtml.replace(/<[^>]*>/g, "");
       }
     }
 
-    // Generate the builder script
+    const contentTypeMap: Record<string, string> = {
+      docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      pdf: "application/pdf",
+      odt: "application/vnd.oasis.opendocument.text",
+    };
+
+    // ── 1. PRIMARY: DocSpace html-to-docx ─────────────────────────────────────
+    // Works without Docker. Converts an HTML template (or raw document HTML) to
+    // a properly-formatted .docx buffer and returns it for download.
+    if (!customScript && outputType === "docx") {
+      try {
+        // If we have the real HTML from the DB, use it directly;
+        // otherwise generate a template-specific HTML structure.
+        const htmlSource = rawHtml.trim()
+          ? rawHtml
+          : generateTemplateHtml({ templateId, title, content: plainContent, data });
+
+        const docxBuf = await htmlToDocxBuffer(htmlSource, title);
+
+        return new NextResponse(docxBuf, {
+          status: 200,
+          headers: {
+            "Content-Type": contentTypeMap.docx,
+            "Content-Disposition": `attachment; filename="${title}.docx"`,
+            "X-Generator": "docspace",
+          },
+        });
+      } catch (docspaceErr) {
+        console.warn("[builder] DocSpace html-to-docx failed, falling back to Docker:", docspaceErr);
+      }
+    }
+
+    // ── 2. FALLBACK: Docker Document Server /docbuilder ───────────────────────
+    const builderUrl = process.env.ONLYOFFICE_BUILDER_URL || process.env.ONLYOFFICE_SERVER_URL || "http://localhost:8000";
+    const hostUrl = process.env.ONLYOFFICE_HOST_URL || "http://host.docker.internal:3000";
+
     const script = customScript || generateBuilderScript({
       templateId,
       title,
-      content,
+      content: plainContent,
       outputType,
       data,
     });
 
-    // Try to use the ONLYOFFICE Document Builder service
-    const builderUrl = process.env.ONLYOFFICE_BUILDER_URL || process.env.ONLYOFFICE_SERVER_URL || "http://localhost:8000";
+    const scriptId = randomUUID();
+    const scriptFilename = `builder-${scriptId}.docbuilder`;
+    const tempDir = path.join(process.cwd(), "public", "temp");
+    const scriptPath = path.join(tempDir, scriptFilename);
+    const scriptUrl = `${hostUrl}/temp/${scriptFilename}`;
 
     try {
-      // Attempt server-side document generation via Document Builder service
+      await mkdir(tempDir, { recursive: true });
+      await writeFile(scriptPath, script, "utf-8");
+
       const response = await fetch(`${builderUrl}/docbuilder`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          async: false,
-          url: script,
-        }),
+        body: JSON.stringify({ async: false, url: scriptUrl }),
+        signal: AbortSignal.timeout(30_000),
       });
 
       if (response.ok) {
         const result = await response.json();
         if (result.urls) {
-          // Download the generated file
           const fileUrl = Object.values(result.urls)[0] as string;
           const fileRes = await fetch(fileUrl);
           if (fileRes.ok) {
             const arrayBuffer = await fileRes.arrayBuffer();
-            const contentTypeMap: Record<string, string> = {
-              docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-              xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-              pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-              pdf: "application/pdf",
-              odt: "application/vnd.oasis.opendocument.text",
-            };
-
             return new NextResponse(arrayBuffer, {
               status: 200,
               headers: {
                 "Content-Type": contentTypeMap[outputType] || "application/octet-stream",
                 "Content-Disposition": `attachment; filename="${title}.${outputType}"`,
+                "X-Generator": "docker-builder",
               },
             });
           }
         }
       }
-    } catch {
-      // Document Builder service not available, fall back to direct generation
+    } catch (dockerErr) {
+      console.warn("[builder] Docker docbuilder failed, using minimal DOCX fallback:", dockerErr);
+    } finally {
+      unlink(scriptPath).catch(() => {});
     }
 
-    // Fallback: Generate a basic DOCX using a minimal template
-    // This creates a valid OOXML document without the Document Builder service
-    const strippedContent = content || title;
+    // ── 3. LAST RESORT: minimal OOXML ─────────────────────────────────────────
+    const strippedContent = plainContent || title;
     const docxml = generateMinimalDocx(title, strippedContent);
-
-    const contentTypeMap: Record<string, string> = {
-      docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      pdf: "application/pdf",
-    };
 
     return new NextResponse(Buffer.from(docxml, "utf-8"), {
       status: 200,
       headers: {
         "Content-Type": contentTypeMap[outputType] || "application/octet-stream",
         "Content-Disposition": `attachment; filename="${title}.${outputType}"`,
+        "X-Generator": "minimal-fallback",
       },
     });
   } catch (error) {

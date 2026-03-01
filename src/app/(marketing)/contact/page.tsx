@@ -12,8 +12,8 @@ export default async function ContactPage() {
   const user = await getCurrentUser();
 
   return (
-    <div className="py-20">
-      <div className="max-w-4xl mx-auto px-4 space-y-16">
+    <div className="py-12 sm:py-20">
+      <div className="max-w-4xl mx-auto px-4 space-y-10 sm:space-y-16">
 
         {/* Hero */}
         <div className="text-center">
@@ -211,7 +211,7 @@ export default async function ContactPage() {
             src="https://maps.google.com/maps?q=Pengue,+Tuguegarao+City,+Cagayan,+Philippines&z=14&output=embed"
             width="100%"
             height="320"
-            style={{ border: 0 }}
+            className="border-0"
             allowFullScreen
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
@@ -219,7 +219,7 @@ export default async function ContactPage() {
         </div>
 
         {/* CTA */}
-        <div className="text-center bg-linear-to-r from-primary-50 to-accent-50 dark:from-primary-900/30 dark:to-accent-700/20 rounded-2xl p-10">
+        <div className="text-center bg-gradient-to-r from-primary-50 to-accent-50 dark:from-primary-900/30 dark:to-accent-700/20 rounded-2xl p-6 sm:p-10">
           <h2 className="text-2xl font-bold mb-3">Ready to get started?</h2>
           <p className="text-text-secondary mb-6">
             Try JusConsultus AI free — no credit card required.
