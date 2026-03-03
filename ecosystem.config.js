@@ -18,13 +18,14 @@ module.exports = {
     {
       name: "jusconsultus",
       script: "node_modules/next/dist/bin/next",
-      args: "start",
+      args: "dev",
       cwd: "d:\\JusConsultus.AI",
       exec_mode: "fork",
       env: {
-        NODE_ENV: "production",
+        NODE_ENV: "development",
         PORT: 3000,
         NODE_OPTIONS: "--max-old-space-size=4096",
+        TURBOPACK: "",
       },
       env_development: {
         NODE_ENV: "development",
