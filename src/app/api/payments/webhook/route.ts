@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/prisma'
 import { getSubscriptionEndDate } from '@/lib/pricing'
+import { createHmac } from 'crypto'
 
 // PayMongo webhook signature verification
 function verifyWebhookSignature(
@@ -9,8 +10,7 @@ function verifyWebhookSignature(
   secret: string
 ): boolean {
   try {
-    const crypto = require('crypto')
-    const hmac = crypto.createHmac('sha256', secret)
+    const hmac = createHmac('sha256', secret)
     hmac.update(payload)
     const digest = hmac.digest('hex')
     return digest === signature
@@ -25,13 +25,18 @@ export async function POST(request: NextRequest) {
     const signature = request.headers.get('paymongo-signature') ?? ''
     const webhookSecret = process.env.PAYMONGO_WEBHOOK_SECRET ?? ''
 
-    // Verify signature if secret is configured
-    if (webhookSecret && signature) {
-      const isValid = verifyWebhookSignature(rawBody, signature, webhookSecret)
-      if (!isValid) {
-        console.error('Invalid webhook signature')
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
-      }
+    // Verify signature — reject if secret is not configured or signature is missing
+    if (!webhookSecret) {
+      console.error('PAYMONGO_WEBHOOK_SECRET not configured — rejecting webhook')
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
+    }
+    if (!signature) {
+      return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
+    }
+    const isValid = verifyWebhookSignature(rawBody, signature, webhookSecret)
+    if (!isValid) {
+      console.error('Invalid webhook signature')
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
     }
 
     const event = JSON.parse(rawBody)

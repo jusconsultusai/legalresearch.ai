@@ -7,6 +7,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const ONLYOFFICE_URL = process.env.ONLYOFFICE_SERVER_URL || "http://localhost:8000";
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+  : ["http://localhost:3000", "https://jusconsultus.ai", "https://www.jusconsultus.ai"];
+
+function getAllowedOrigin(request: NextRequest): string {
+  const origin = request.headers.get("origin") || request.headers.get("referer");
+  if (origin) {
+    for (const allowed of ALLOWED_ORIGINS) {
+      if (origin.startsWith(allowed)) return allowed;
+    }
+  }
+  // For same-origin requests (no origin header), allow
+  return ALLOWED_ORIGINS[0];
+}
 
 export async function GET(
   request: NextRequest,
@@ -51,13 +65,17 @@ async function proxyRequest(request: NextRequest, pathSegments: string[]) {
     const headers = new Headers();
     
     // Forward relevant headers
+    // NOTE: Do NOT forward accept-encoding — Node's fetch() auto-decompresses
+    // responses, so forwarding "gzip" would cause the upstream to send compressed
+    // data that fetch decompresses, but the proxy would still copy the
+    // content-encoding header, making the browser try to decompress plain text
+    // → SyntaxError "Invalid or unexpected token" on JS files.
     const headersToForward = [
       "content-type",
       "authorization",
       "cookie",
       "user-agent",
       "accept",
-      "accept-encoding",
       "accept-language",
     ];
 
@@ -74,6 +92,10 @@ async function proxyRequest(request: NextRequest, pathSegments: string[]) {
     const options: RequestInit = {
       method: request.method,
       headers,
+      // Prevent Node from following redirects — we need to proxy them as-is
+      redirect: "manual" as RequestRedirect,
+      // Abort if ONLYOFFICE doesn't respond within 30 seconds
+      signal: AbortSignal.timeout(30_000),
     };
 
     // Add body for POST/PUT requests
@@ -83,18 +105,25 @@ async function proxyRequest(request: NextRequest, pathSegments: string[]) {
 
     const response = await fetch(targetUrl, options);
 
+    // ── Buffer the response body instead of streaming ──
+    // Passing response.body (ReadableStream) directly to NextResponse can hang
+    // in Next.js 15+/Turbopack because the stream is not properly consumed.
+    // Buffering avoids this and also lets us set an accurate content-length.
+    const responseBuffer = await response.arrayBuffer();
+
     // Forward the response
     const responseHeaders = new Headers();
     
     // Copy relevant response headers
+    // NOTE: Do NOT forward content-encoding — Node's fetch() transparently
+    // decompresses the body, so that header no longer matches reality.
     const responseHeadersToForward = [
       "content-type",
-      "content-length",
-      "content-encoding",
       "cache-control",
       "expires",
       "last-modified",
       "etag",
+      "location",
     ];
 
     responseHeadersToForward.forEach((header) => {
@@ -104,12 +133,16 @@ async function proxyRequest(request: NextRequest, pathSegments: string[]) {
       }
     });
 
-    // Allow CORS for ONLYOFFICE editor
-    responseHeaders.set("access-control-allow-origin", "*");
+    // Set accurate content-length from the buffered body
+    responseHeaders.set("content-length", String(responseBuffer.byteLength));
+
+    // Allow CORS for ONLYOFFICE editor (restricted to allowed origins)
+    const allowedOrigin = getAllowedOrigin(request);
+    responseHeaders.set("access-control-allow-origin", allowedOrigin);
     responseHeaders.set("access-control-allow-methods", "GET, POST, PUT, DELETE, OPTIONS");
     responseHeaders.set("access-control-allow-headers", "*");
 
-    return new NextResponse(response.body, {
+    return new NextResponse(responseBuffer, {
       status: response.status,
       statusText: response.statusText,
       headers: responseHeaders,
@@ -125,10 +158,11 @@ async function proxyRequest(request: NextRequest, pathSegments: string[]) {
 
 // Handle OPTIONS for CORS preflight
 export async function OPTIONS(request: NextRequest) {
+  const allowedOrigin = getAllowedOrigin(request);
   return new NextResponse(null, {
     status: 200,
     headers: {
-      "access-control-allow-origin": "*",
+      "access-control-allow-origin": allowedOrigin,
       "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
       "access-control-allow-headers": "*",
     },

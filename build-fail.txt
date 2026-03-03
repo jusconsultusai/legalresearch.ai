@@ -1,6 +1,13 @@
-Γû▓ Next.js 16.1.6 (Turbopack)
+STDOUT:
+▲ Next.js 16.1.6 (webpack)
 - Environments: .env.local, .env
 - Experiments (use with caution):
-  ┬╖ optimizePackageImports
+  · optimizePackageImports
 
   Creating an optimized production build ...
+
+
+STDERR:
+
+
+STATUS: null

@@ -17,12 +17,11 @@ export async function POST(request: NextRequest) {
     // Verify webhook signature
     const webhookSecret = process.env.CHECKOUT_WEBHOOK_SECRET || ''
     if (!webhookSecret) {
-      console.error('CHECKOUT_WEBHOOK_SECRET not configured')
-      // In development/testing, we might skip signature verification
-      // In production, this should return 401
+      console.error('CHECKOUT_WEBHOOK_SECRET not configured — rejecting webhook')
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
     }
     
-    const isValid = webhookSecret ? verifyCheckoutWebhookSignature(body, signature, webhookSecret) : true
+    const isValid = verifyCheckoutWebhookSignature(body, signature, webhookSecret)
     if (!isValid) {
       return NextResponse.json(
         { error: 'Invalid signature' },

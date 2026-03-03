@@ -139,6 +139,7 @@ model Message {
 
   chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
 
+  @@index([chatId])
   @@map("messages")
 }
 
@@ -153,6 +154,7 @@ model Bookmark {
 
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("bookmarks")
 }
 

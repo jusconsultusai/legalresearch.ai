@@ -3,6 +3,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { generateCompletion } from "@/lib/ai/llm";
 import { prisma } from "@/lib/db/prisma";
+import { getCurrentUser } from "@/lib/auth";
 
 const LEGAL_DB_ROOT = path.join(process.cwd(), "data", "legal-database");
 
@@ -22,7 +23,18 @@ function htmlToText(html: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  // Require authentication — AI summarization consumes API credits
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
+  let body: any;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
   const relPath: string = body.path || "";
   const title: string = body.title || "Legal Document";
   const number: string = body.number || "";

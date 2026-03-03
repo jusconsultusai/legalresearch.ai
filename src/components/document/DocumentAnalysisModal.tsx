@@ -510,11 +510,11 @@ export default function DocumentAnalysisModal({
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-5xl max-h-[92vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+      <div className="relative w-full max-w-5xl max-h-[92vh] bg-white dark:bg-surface rounded-2xl shadow-2xl overflow-hidden flex flex-col">
 
         {/* Extraction loading overlay */}
         {isExtracting && (
-          <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-white/95 dark:bg-surface/95 backdrop-blur-sm z-50 flex items-center justify-center">
             <div className="flex flex-col items-center gap-4 p-8">
               <div className="relative">
                 <Loader2 className="w-14 h-14 text-green-600 animate-spin" />
@@ -548,7 +548,7 @@ export default function DocumentAnalysisModal({
                 <Trash2 className="w-4 h-4" />
               </button>
             )}
-            <button onClick={onClose} className="p-1.5 hover:bg-surface-secondary rounded-lg transition-colors">
+            <button onClick={onClose} className="p-1.5 hover:bg-surface-secondary rounded-lg transition-colors" title="Close">
               <X className="w-4 h-4 text-text-tertiary" />
             </button>
           </div>
@@ -607,7 +607,7 @@ export default function DocumentAnalysisModal({
                   dragActive
                     ? "border-primary-500 bg-primary-50"
                     : file
-                    ? "border-green-500 bg-green-50"
+                    ? "border-green-500 bg-green-50 dark:bg-green-900/20 dark:border-green-600"
                     : "border-border hover:border-primary-400 hover:bg-surface-secondary"
                 }`}
               >
@@ -617,6 +617,7 @@ export default function DocumentAnalysisModal({
                   onChange={handleFileInput}
                   accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt"
                   className="hidden"
+                  title="Upload document"
                 />
                 {file ? (
                   <div className="space-y-3">
@@ -646,17 +647,17 @@ export default function DocumentAnalysisModal({
 
               {/* Feature cards */}
               <div className="grid grid-cols-3 gap-4">
-                <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl">
+                <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl">
                   <Scale className="w-5 h-5 text-blue-600 mb-2" />
                   <h4 className="text-sm font-medium text-text-primary">Legal Analysis</h4>
                   <p className="text-xs text-text-secondary mt-1">Deep review of legal content and compliance</p>
                 </div>
-                <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl">
+                <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl">
                   <Gavel className="w-5 h-5 text-purple-600 mb-2" />
                   <h4 className="text-sm font-medium text-text-primary">Jurisprudence</h4>
                   <p className="text-xs text-text-secondary mt-1">Relevant Supreme Court cases suggested</p>
                 </div>
-                <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl">
+                <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl">
                   <Lightbulb className="w-5 h-5 text-green-600 mb-2" />
                   <h4 className="text-sm font-medium text-text-primary">AI Suggestions</h4>
                   <p className="text-xs text-text-secondary mt-1">Auto-generated improvements for clarity</p>
@@ -690,7 +691,7 @@ export default function DocumentAnalysisModal({
                       )}
                     </button>
                   </div>
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700 flex items-start gap-2">
+                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/40 rounded-lg text-xs text-blue-700 dark:text-blue-300 flex items-start gap-2">
                     <Info className="w-4 h-4 mt-0.5 shrink-0" />
                     <div>
                       <strong>Extract Text Only</strong> — fast, no AI, inserts raw text into editor. &nbsp;
@@ -774,7 +775,7 @@ export default function DocumentAnalysisModal({
 
                   {/* Issues */}
                   {analysisResult.issues?.length > 0 && (
-                    <div className="bg-white rounded-xl border border-border">
+                    <div className="bg-white dark:bg-surface-secondary rounded-xl border border-border">
                       <button onClick={() => toggleSection("issues")} className="w-full flex items-center justify-between p-4">
                         <div className="flex items-center gap-2">
                           <AlertCircle className="w-4 h-4 text-orange-500" />
@@ -793,16 +794,16 @@ export default function DocumentAnalysisModal({
                                   <p className="text-sm font-medium">{issue.category}</p>
                                   <p className="text-xs mt-1 opacity-80">{issue.description}</p>
                                   {issue.location && <p className="text-[10px] mt-1 opacity-60">📍 {issue.location}</p>}
-                                  <div className="mt-3 p-3 bg-white/60 rounded-lg">
+                                  <div className="mt-3 p-3 bg-white/60 dark:bg-surface/60 rounded-lg">
                                     <p className="text-xs font-medium text-green-700 mb-1">💡 Suggestion:</p>
                                     <p className="text-xs">{issue.suggestion}</p>
                                     {issue.originalText && issue.suggestedText && (
                                       <div className="mt-2 grid grid-cols-2 gap-2">
-                                        <div className="p-2 bg-red-50 rounded text-xs">
-                                          <span className="text-red-600 font-medium">Original:</span>
+                                        <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded text-xs">
+                                          <span className="text-red-600 dark:text-red-400 font-medium">Original:</span>
                                           <p className="mt-1 wrap-break-word">{issue.originalText}</p>
                                         </div>
-                                        <div className="p-2 bg-green-50 rounded text-xs">
+                                        <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded text-xs">
                                           <span className="text-green-600 font-medium">Suggested:</span>
                                           <p className="mt-1 wrap-break-word">{issue.suggestedText}</p>
                                         </div>
@@ -820,7 +821,7 @@ export default function DocumentAnalysisModal({
 
                   {/* AI Suggestions */}
                   {(analysisResult.aiSuggestions?.length ?? 0) > 0 && (
-                    <div className="bg-white rounded-xl border border-border">
+                    <div className="bg-white dark:bg-surface-secondary rounded-xl border border-border">
                       <div className="flex flex-col gap-2 p-4 border-b border-border">
                         <div className="flex items-center justify-between gap-3">
                           <button onClick={() => toggleSection("aiSuggestions")} className="flex items-center gap-2">
@@ -834,7 +835,8 @@ export default function DocumentAnalysisModal({
                             <select
                               value={suggestionFilter}
                               onChange={(e) => setSuggestionFilter(e.target.value as SuggestionFilterType)}
-                              className="text-xs px-3 py-1.5 bg-white border border-border rounded-lg text-text-secondary"
+                              className="text-xs px-3 py-1.5 bg-white dark:bg-surface border border-border rounded-lg text-text-secondary"
+                              title="Filter suggestions by type"
                             >
                               <option value="all">All</option>
                               <option value="grammar">Grammar & Style</option>
@@ -856,8 +858,8 @@ export default function DocumentAnalysisModal({
                             <span className="font-semibold text-green-700">{acceptedCount}</span> of {getFilteredSuggestions().length} accepted for editor export
                           </span>
                           <div className="flex gap-2">
-                            <button onClick={acceptAllVisible} className="px-2.5 py-1 rounded-lg border border-green-300 text-green-700 bg-green-50 hover:bg-green-100 transition-colors font-medium">Accept All</button>
-                            <button onClick={rejectAllVisible} className="px-2.5 py-1 rounded-lg border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors font-medium">Reject All</button>
+                            <button onClick={acceptAllVisible} className="px-2.5 py-1 rounded-lg border border-green-300 dark:border-green-600 text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors font-medium">Accept All</button>
+                            <button onClick={rejectAllVisible} className="px-2.5 py-1 rounded-lg border border-red-200 dark:border-red-600 text-red-600 dark:text-red-300 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors font-medium">Reject All</button>
                           </div>
                         </div>
                       </div>
@@ -868,7 +870,7 @@ export default function DocumentAnalysisModal({
                             return (
                               <div
                                 key={s.id}
-                                className={`rounded-xl p-4 border-2 transition-colors ${accepted ? "bg-green-50 border-green-300" : "bg-surface-secondary border-border opacity-60"}`}
+                                className={`rounded-xl p-4 border-2 transition-colors ${accepted ? "bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-600" : "bg-surface-secondary border-border opacity-60"}`}
                               >
                                 {/* Type + severity badges + accept toggle */}
                                 <div className="flex items-start justify-between gap-2 mb-2">
@@ -882,7 +884,7 @@ export default function DocumentAnalysisModal({
                                     className={`shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
                                       accepted
                                         ? "bg-green-600 text-white border-green-600 hover:bg-green-700"
-                                        : "bg-white text-text-secondary border-border hover:border-green-400 hover:text-green-600"
+                                        : "bg-white dark:bg-surface text-text-secondary border-border hover:border-green-400 hover:text-green-600"
                                     }`}
                                   >
                                     {accepted ? <><Check className="w-3 h-3" /> Accepted</> : <><X className="w-3 h-3" /> Rejected</>}
@@ -894,7 +896,7 @@ export default function DocumentAnalysisModal({
                                 {s.original && s.suggested && (
                                   <div className="mt-3 space-y-2">
                                     <div className="grid grid-cols-2 gap-2">
-                                      <div className="p-2 bg-white rounded border border-red-200 text-xs relative">
+                                      <div className="p-2 bg-white dark:bg-surface rounded border border-red-200 dark:border-red-700/40 text-xs relative">
                                         <span className="text-red-600 font-medium">Original:</span>
                                         <p className="mt-1 wrap-break-word">{s.original}</p>
                                         <button
@@ -905,7 +907,7 @@ export default function DocumentAnalysisModal({
                                           {copiedId === `orig-${s.id}` ? <CheckCheck className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
                                         </button>
                                       </div>
-                                      <div className="p-2 bg-white rounded border border-green-300 text-xs relative">
+                                      <div className="p-2 bg-white dark:bg-surface rounded border border-green-300 dark:border-green-700/40 text-xs relative">
                                         <span className="text-green-600 font-medium">Suggested:</span>
                                         <p className="mt-1 wrap-break-word">{s.suggested}</p>
                                         <button
@@ -930,7 +932,7 @@ export default function DocumentAnalysisModal({
                                       )}
                                       <button
                                         onClick={() => copyToClipboard(s.suggested, `copy-full-${s.id}`)}
-                                        className="px-3 py-1.5 text-xs border border-border text-text-secondary rounded-lg hover:bg-white transition-colors flex items-center gap-1"
+                                        className="px-3 py-1.5 text-xs border border-border text-text-secondary rounded-lg hover:bg-white dark:hover:bg-surface transition-colors flex items-center gap-1"
                                       >
                                         {copiedId === `copy-full-${s.id}` ? <><CheckCheck className="w-3 h-3 text-green-500" /> Copied!</> : <><Copy className="w-3 h-3" /> Copy Suggestion</>}
                                       </button>
@@ -968,7 +970,7 @@ export default function DocumentAnalysisModal({
                   </h3>
                   <div className="space-y-3">
                     {analysisResult.jurisprudenceSuggestions.map((j, i) => (
-                      <div key={i} className="bg-purple-50 rounded-xl p-4 border border-purple-200">
+                      <div key={i} className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-700/40">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex gap-2 flex-wrap">
@@ -990,7 +992,7 @@ export default function DocumentAnalysisModal({
                           </div>
                           <button
                             onClick={() => copyToClipboard(`${j.caseName}, ${j.citation}`, `juris-${i}`)}
-                            className="p-2 hover:bg-white/60 rounded-lg transition-colors shrink-0"
+                            className="p-2 hover:bg-white/60 dark:hover:bg-surface/60 rounded-lg transition-colors shrink-0"
                           >
                             {copiedId === `juris-${i}` ? <CheckCheck className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-text-tertiary" />}
                           </button>
@@ -1008,7 +1010,7 @@ export default function DocumentAnalysisModal({
                   </h3>
                   <div className="space-y-3">
                     {analysisResult.legalReferences.map((ref, i) => (
-                      <div key={i} className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                      <div key={i} className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-700/40">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-blue-200 text-blue-700">{ref.type}</span>
@@ -1018,7 +1020,7 @@ export default function DocumentAnalysisModal({
                           </div>
                           <button
                             onClick={() => copyToClipboard(ref.fullCitation || ref.citation, `ref-${i}`)}
-                            className="p-2 hover:bg-white/60 rounded-lg transition-colors shrink-0"
+                            className="p-2 hover:bg-white/60 dark:hover:bg-surface/60 rounded-lg transition-colors shrink-0"
                           >
                             {copiedId === `ref-${i}` ? <CheckCheck className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-text-tertiary" />}
                           </button>
@@ -1080,7 +1082,7 @@ export default function DocumentAnalysisModal({
           <div className="flex items-center justify-between gap-2">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-xs text-text-secondary border border-border rounded-xl hover:bg-white transition-colors"
+              className="px-4 py-2 text-xs text-text-secondary border border-border rounded-xl hover:bg-white dark:hover:bg-surface transition-colors"
             >
               Close
             </button>
@@ -1089,7 +1091,7 @@ export default function DocumentAnalysisModal({
                 <button
                   onClick={() => { onInsertText(extractedText); onClose(); }}
                   title="Insert the original extracted text into the editor without any AI changes"
-                  className="flex items-center gap-1.5 px-4 py-2 text-xs bg-surface-tertiary text-text-primary rounded-xl font-medium hover:bg-white transition-all border border-border"
+                  className="flex items-center gap-1.5 px-4 py-2 text-xs bg-surface-tertiary text-text-primary rounded-xl font-medium hover:bg-white dark:hover:bg-surface transition-all border border-border"
                 >
                   <FileText className="w-3.5 h-3.5" /> Export Original
                 </button>

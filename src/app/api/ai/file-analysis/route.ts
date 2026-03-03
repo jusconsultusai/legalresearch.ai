@@ -61,7 +61,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { fileId, content, name: inlineName, mimeType, action = "summary", question } = await request.json();
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  const { fileId, content, name: inlineName, mimeType, action = "summary", question } = body;
 
   if (!fileId && !content) {
     return NextResponse.json({ error: "fileId or content is required" }, { status: 400 });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/db/prisma";
 import { hybridSearch, buildUnifiedPrompt } from "@/lib/ai/unified-search";
 import { generateCompletion } from "@/lib/ai/llm";
 
@@ -20,7 +21,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
   const {
     action = "draft",
     instruction,
@@ -31,6 +37,11 @@ export async function POST(request: NextRequest) {
 
   if (!instruction) {
     return NextResponse.json({ error: "Instruction is required" }, { status: 400 });
+  }
+
+  // Enforce search quota
+  if (user.searchesLeft <= 0) {
+    return NextResponse.json({ error: "No searches remaining. Please upgrade your plan." }, { status: 403 });
   }
 
   try {
@@ -76,6 +87,8 @@ Rules:
         { temperature: 0.3, maxTokens: 4096 }
       );
 
+      await prisma.user.update({ where: { id: user.id }, data: { searchesLeft: { decrement: 1 } } });
+
       return NextResponse.json({
         content: draftContent,
         sources: searchResult.results.slice(0, 8),
@@ -93,6 +106,8 @@ Rules:
       });
 
       const answer = searchResult.agenticAnswer || "Research sources found (see sources below).";
+
+      await prisma.user.update({ where: { id: user.id }, data: { searchesLeft: { decrement: 1 } } });
 
       return NextResponse.json({
         answer,
@@ -115,6 +130,8 @@ Rules:
         { temperature: 0.3, maxTokens: 1000 }
       );
 
+      await prisma.user.update({ where: { id: user.id }, data: { searchesLeft: { decrement: 1 } } });
+
       return NextResponse.json({ explanation });
     }
 
@@ -128,6 +145,8 @@ Rules:
       });
 
       const answer = searchResult.agenticAnswer || "Citations found (see sources below).";
+
+      await prisma.user.update({ where: { id: user.id }, data: { searchesLeft: { decrement: 1 } } });
 
       return NextResponse.json({
         sources: searchResult.results,

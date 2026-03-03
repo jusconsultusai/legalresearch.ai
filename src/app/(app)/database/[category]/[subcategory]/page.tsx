@@ -289,6 +289,7 @@ export default function SubcategoryPage() {
                 </div>
                 <button
                   onClick={() => setSelectionPopup(null)}
+                  aria-label="Close"
                   className="text-slate-400 hover:text-white transition-colors shrink-0"
                 >
                   <X className="w-4 h-4" />
@@ -367,6 +368,7 @@ export default function SubcategoryPage() {
             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-tertiary pointer-events-none" />
             <select
               value={yearFilter}
+              aria-label="Filter by year"
               onChange={(e) => {
                 setYearFilter(e.target.value);
                 setPagination((p) => ({ ...p, page: 1 }));

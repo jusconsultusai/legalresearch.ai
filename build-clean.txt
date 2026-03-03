@@ -1,0 +1,53 @@
+Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local, .env
+- Experiments (use with caution):
+  ┬╖ optimizePackageImports
+
+  Creating an optimized production build ...
+memory allocation of 1179648 bytes failed
+
+-----
+FATAL: An unexpected Turbopack error occurred. A panic log has been written to C:\Users\KENETH~1\AppData\Local\Temp\next-panic-7430cf644536085464a4cbf083fd7730.log.
+
+To help make Turbopack better, report this error by clicking here.
+-----
+
+
+> Build error occurred
+Error [TurbopackInternalError]: Failed to write app endpoint /_not-found/page
+
+Caused by:
+- [project]/src/app/globals.css [app-client] (css)
+- failed to receive message
+- reading packet length
+- An existing connection was forcibly closed by the remote host. (os error 10054)
+
+Debug info:
+- Execution of get_all_written_entrypoints_with_issues_operation failed
+- Execution of EntrypointsOperation::new failed
+- Execution of all_entrypoints_write_to_disk_operation failed
+- Execution of Project::emit_all_output_assets failed
+- Execution of *emit_assets failed
+- Execution of all_assets_from_entries_operation failed
+- Execution of *all_assets_from_entries failed
+- Execution of output_assets_operation failed
+- Execution of <AppEndpoint as Endpoint>::output failed
+- Failed to write app endpoint /_not-found/page
+- Execution of AppEndpoint::output failed
+- Execution of whole_app_module_graph_operation failed
+- Execution of *ModuleGraph::from_single_graph failed
+- Execution of SingleModuleGraph::new_with_entries failed
+- [project]/src/app/globals.css [app-client] (css)
+- Execution of primary_chunkable_referenced_modules failed
+- Execution of <CssModuleAsset as Module>::references failed
+- Execution of parse_css failed
+- Execution of <PostCssTransformedAsset as Asset>::content failed
+- Execution of PostCssTransformedAsset::process failed
+- Execution of evaluate_webpack_loader failed
+- failed to receive message
+- reading packet length
+- An existing connection was forcibly closed by the remote host. (os error 10054)
+    at <unknown> (TurbopackInternalError: Failed to write app endpoint /_not-found/page) {
+  type: 'TurbopackInternalError',
+  location: undefined
+}

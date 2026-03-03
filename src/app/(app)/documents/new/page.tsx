@@ -400,7 +400,7 @@ export default function NewDocumentPage() {
               {creating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FolderOpen className="w-3.5 h-3.5" />}
               Open in Editor
             </button>
-            <button onClick={clearImport} className="p-1.5 hover:bg-amber-100 rounded-lg transition-colors">
+            <button onClick={clearImport} title="Clear import" aria-label="Clear import" className="p-1.5 hover:bg-amber-100 rounded-lg transition-colors">
               <X className="w-3.5 h-3.5 text-amber-600" />
             </button>
           </div>
@@ -434,6 +434,8 @@ export default function NewDocumentPage() {
             </div>
             <button
               onClick={() => setPendingAnalysis(null)}
+              title="Dismiss analysis"
+              aria-label="Dismiss analysis"
               className="p-1.5 hover:bg-violet-100 rounded-lg transition-colors shrink-0"
             >
               <X className="w-3.5 h-3.5 text-violet-500" />
@@ -937,7 +939,7 @@ export default function NewDocumentPage() {
             <div className="flex items-center gap-3 px-4 py-3 bg-primary-50 border border-primary-200 rounded-xl">
               <Loader2 className="w-4 h-4 text-primary-600 animate-spin shrink-0" />
               <div>
-                <p className="text-sm font-medium text-primary-700">DeepSeek is drafting your document…</p>
+                <p className="text-sm font-medium text-primary-700">Your document is being drafted…</p>
                 <p className="text-xs text-primary-600 mt-0.5">This usually takes 15–30 seconds. Don&apos;t close the page.</p>
               </div>
             </div>

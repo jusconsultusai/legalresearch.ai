@@ -6,16 +6,21 @@ import { generateCompletion } from "@/lib/ai/llm";
 
 // GET - List chats for current user
 export async function GET() {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const chats = await prisma.chat.findMany({
-    where: { userId: user.id },
-    orderBy: { updatedAt: "desc" },
-    include: { messages: { take: 1, orderBy: { createdAt: "desc" } } },
-  });
+    const chats = await prisma.chat.findMany({
+      where: { userId: user.id },
+      orderBy: { updatedAt: "desc" },
+      include: { messages: { take: 1, orderBy: { createdAt: "desc" } } },
+    });
 
-  return NextResponse.json({ chats });
+    return NextResponse.json({ chats });
+  } catch (error) {
+    console.error("Chat GET error:", error);
+    return NextResponse.json({ error: "Failed to fetch chats" }, { status: 500 });
+  }
 }
 
 // POST - Create new chat and send first message
@@ -23,7 +28,14 @@ export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { message, mode = "standard_v2", sources = "law,jurisprudence", chatMode, deepThink = false } = await request.json();
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  const { message, mode = "standard_v2", sources = "law,jurisprudence", chatMode, deepThink = false } = body;
 
   if (!message) {
     return NextResponse.json({ error: "Message is required" }, { status: 400 });
@@ -136,16 +148,21 @@ export async function POST(request: NextRequest) {
 
 // DELETE - Clear all chats for current user
 export async function DELETE() {
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Delete all messages first (foreign key), then chats
-  await prisma.message.deleteMany({
-    where: { chat: { userId: user.id } },
-  });
-  await prisma.chat.deleteMany({
-    where: { userId: user.id },
-  });
+    // Delete all messages first (foreign key), then chats
+    await prisma.message.deleteMany({
+      where: { chat: { userId: user.id } },
+    });
+    await prisma.chat.deleteMany({
+      where: { userId: user.id },
+    });
 
-  return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Chat DELETE error:", error);
+    return NextResponse.json({ error: "Failed to delete chats" }, { status: 500 });
+  }
 }

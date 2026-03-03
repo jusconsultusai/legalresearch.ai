@@ -34,14 +34,15 @@ if (-not (Test-DockerRunning)) {
         Start-Process $dockerDesktop
     }
     $waited = 0
-    while ($waited -lt 60) {
+    # Wait up to 3 minutes for Docker Desktop Linux engine to start
+    while ($waited -lt 180) {
         Start-Sleep 5
         $waited += 5
         if (Test-DockerRunning) {
             Write-Host "[OnlyOffice] Docker daemon ready after ${waited}s"
             break
         }
-        Write-Host "[OnlyOffice] Waiting for Docker daemon... (${waited}/60 s)"
+        Write-Host "[OnlyOffice] Waiting for Docker daemon... (${waited}/180 s)"
     }
     if (-not (Test-DockerRunning)) {
         Write-Host "[OnlyOffice] ERROR: Docker daemon did not start in time — aborting." -ForegroundColor Red
@@ -49,10 +50,17 @@ if (-not (Test-DockerRunning)) {
     }
 }
 
-# ── 3. Start the container via docker-compose ─────────────────────────────────
-Write-Host "[OnlyOffice] Running docker-compose up..."
+# ── 3. Start the container via docker compose (v2 syntax) ─────────────────────
+Write-Host "[OnlyOffice] Running docker compose up..."
 Set-Location "D:\JusConsultus.AI"
-docker-compose -f $composeFile up -d --remove-orphans 2>&1 | Write-Host
+# Try v2 syntax first, fall back to v1 hyphenated
+$composeOut = docker compose -f $composeFile up -d --remove-orphans 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[OnlyOffice] docker compose (v2) failed, trying docker-compose (v1)..."
+    docker-compose -f $composeFile up -d --remove-orphans 2>&1 | Write-Host
+} else {
+    $composeOut | Write-Host
+}
 
 # ── 4. Wait for ONLYOFFICE to become healthy ──────────────────────────────────
 $maxWait = 120
@@ -79,6 +87,6 @@ while ($true) {
     $status = docker inspect $container --format "{{.State.Status}}" 2>&1
     if ($LASTEXITCODE -ne 0 -or ($status -ne "running")) {
         Write-Host "[OnlyOffice] Container not running (status: $status) — attempting restart..."
-        docker-compose -f $composeFile up -d 2>&1 | Write-Host
+        docker compose -f $composeFile up -d 2>&1 | Write-Host
     }
 }

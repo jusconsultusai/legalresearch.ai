@@ -13,6 +13,12 @@ import { generateEditorConfig, DocumentType, generateFileKey } from "@/lib/onlyo
 const ONLYOFFICE_HOST_URL =
   process.env.ONLYOFFICE_HOST_URL || "http://host.docker.internal:3000";
 
+// Public URL the BROWSER uses to reach the ONLYOFFICE Document Server.
+// Must match NEXT_PUBLIC_ONLYOFFICE_URL so the DocEditor loads resources
+// from the correct server.
+const ONLYOFFICE_PUBLIC_URL =
+  process.env.NEXT_PUBLIC_ONLYOFFICE_URL || "http://localhost:8000";
+
 const JWT_SECRET = process.env.ONLYOFFICE_JWT_SECRET || "";
 
 /**
@@ -99,6 +105,10 @@ export async function POST(req: NextRequest) {
         comment: true,
       },
     });
+
+    // Tell the DocEditor where the Document Server proxy lives so it can
+    // resolve its iframe / resource URLs correctly when loaded via proxy.
+    (config as any).documentServerUrl = ONLYOFFICE_PUBLIC_URL + "/";
 
     return NextResponse.json(config);
   } catch (error) {

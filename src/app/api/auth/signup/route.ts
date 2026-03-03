@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
     const token = generateToken({
       ...user,
       searchesLeft: user.searchesLeft,
+      hasPassword: true,
     });
 
     const response = NextResponse.json({ user });

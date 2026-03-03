@@ -48,6 +48,10 @@ const FOLDER_MAP: Record<string, Record<string, string>> = {
     bilateral: "Treaties/Bilateral",
     regional: "Treaties/Regional ~ Multilateral",
   },
+  international_laws: {
+    agreements: "International Laws",
+    annexes: "International Laws",
+  },
 };
 
 interface FileEntry {

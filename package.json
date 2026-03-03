@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev --webpack",
-    "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build --webpack",
+    "dev": "next dev",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build",
     "start": "next start",
     "lint": "next lint",
     "db:push": "npx prisma db push",

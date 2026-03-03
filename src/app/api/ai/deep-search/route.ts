@@ -18,7 +18,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
   const {
     query,
     mode = "standard_v2",
@@ -118,7 +123,8 @@ export async function GET(request: NextRequest) {
   }
 
   const q = request.nextUrl.searchParams.get("q");
-  const limit = parseInt(request.nextUrl.searchParams.get("limit") || "10");
+  const limitRaw = parseInt(request.nextUrl.searchParams.get("limit") || "10");
+  const limit = Number.isNaN(limitRaw) ? 10 : limitRaw;
   const sources = request.nextUrl.searchParams.get("sources");
 
   if (!q) {

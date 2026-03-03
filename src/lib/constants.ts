@@ -62,6 +62,14 @@ export const LEGAL_DATABASE_STRUCTURE = {
       regional: { label: "Regional", icon: "Globe2" },
     },
   },
+  international_laws: {
+    label: "International Laws",
+    icon: "Globe",
+    subcategories: {
+      agreements: { label: "International Agreements", icon: "Handshake" },
+      annexes: { label: "Annexes", icon: "FileText" },
+    },
+  },
 } as const;
 
 export type CategoryKey = keyof typeof LEGAL_DATABASE_STRUCTURE;

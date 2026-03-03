@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PRICING } from '@/lib/pricing'
+import { getCurrentUser } from '@/lib/auth'
 
 function generateReference(): string {
   const timestamp = Date.now().toString(36).toUpperCase()
@@ -8,6 +9,12 @@ function generateReference(): string {
 }
 
 export async function POST(request: NextRequest) {
+  // Require authentication to create checkout sessions
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
   try {
     const { planId, paymentMethod } = await request.json()
 

@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuthStore } from "@/stores";
 
 export function useAuth() {
-  const { user, isLoading, setUser, setLoading, logout } = useAuthStore();
+  const { user, isLoading, setUser, logout } = useAuthStore();
 
   useEffect(() => {
     async function loadUser() {
@@ -21,7 +21,7 @@ export function useAuth() {
       }
     }
     loadUser();
-  }, [setUser, setLoading]);
+  }, [setUser]);
 
   return { user, isLoading, logout };
 }
@@ -71,11 +71,11 @@ export function useMediaQuery(query: string): boolean {
 
   useEffect(() => {
     const media = window.matchMedia(query);
-    if (media.matches !== matches) setMatches(media.matches);
-    const listener = () => setMatches(media.matches);
+    setMatches(media.matches);
+    const listener = (e: MediaQueryListEvent) => setMatches(e.matches);
     media.addEventListener("change", listener);
     return () => media.removeEventListener("change", listener);
-  }, [matches, query]);
+  }, [query]);
 
   return matches;
 }

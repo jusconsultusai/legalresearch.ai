@@ -16,7 +16,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { files } = await request.json();
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  const { files } = body;
 
   if (!Array.isArray(files)) {
     return NextResponse.json({ error: "files must be an array" }, { status: 400 });

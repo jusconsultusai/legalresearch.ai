@@ -139,6 +139,7 @@ export async function signUp(data: {
     role: user.role,
     plan: user.plan,
     searchesLeft: user.searchesLeft,
+    hasPassword: true,
   };
 }
 

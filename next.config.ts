@@ -12,12 +12,25 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ["pdf-parse", "tesseract.js"],
   async rewrites() {
-    return [
-      {
-        source: "/etherpad/:path*",
-        destination: "http://localhost:9001/:path*",
-      },
-    ];
+    return {
+      // beforeFiles rewrites run BEFORE API routes/pages, so this intercepts
+      // the ONLYOFFICE proxy path before the App Router API handler.
+      // Next.js handles the HTTP proxying natively (streaming, websockets, etc.)
+      // which is far more reliable than manually buffering in an API route.
+      beforeFiles: [
+        {
+          source: "/api/onlyoffice-proxy/:path*",
+          destination: "http://localhost:8000/:path*",
+        },
+      ],
+      afterFiles: [],
+      fallback: [
+        {
+          source: "/etherpad/:path*",
+          destination: "http://localhost:9001/:path*",
+        },
+      ],
+    };
   },
   experimental: {
     optimizePackageImports: [

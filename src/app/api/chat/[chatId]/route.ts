@@ -168,7 +168,7 @@ export async function GET(
       ...chat,
       messages: chat.messages.map((m) => ({
         ...m,
-        sources: m.sources ? JSON.parse(m.sources) : [],
+        sources: (() => { try { return m.sources ? JSON.parse(m.sources) : []; } catch { return []; } })(),
         createdAt: m.createdAt.toISOString(),
       })),
     },

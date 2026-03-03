@@ -401,7 +401,7 @@ export async function POST(req: NextRequest) {
 
         const docxBuf = await htmlToDocxBuffer(htmlSource, title);
 
-        return new NextResponse(docxBuf, {
+        return new NextResponse(new Uint8Array(docxBuf), {
           status: 200,
           headers: {
             "Content-Type": contentTypeMap.docx,
@@ -410,11 +410,14 @@ export async function POST(req: NextRequest) {
           },
         });
       } catch (docspaceErr) {
-        console.warn("[builder] DocSpace html-to-docx failed, falling back to Docker:", docspaceErr);
+        console.warn("[builder] html-to-docx failed, falling back to Docker:", docspaceErr);
       }
     }
 
     // ── 2. FALLBACK: Docker Document Server /docbuilder ───────────────────────
+    // The OnlyOffice Document Server includes Document Builder which can execute
+    // .docbuilder scripts via POST /docbuilder. See:
+    // https://api.onlyoffice.com/docs/document-builder/overview/
     const builderUrl = process.env.ONLYOFFICE_BUILDER_URL || process.env.ONLYOFFICE_SERVER_URL || "http://localhost:8000";
     const hostUrl = process.env.ONLYOFFICE_HOST_URL || "http://host.docker.internal:3000";
 

@@ -87,6 +87,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   executive_issuances: "from-purple-50 to-violet-50 border-purple-200 text-purple-700",
   references: "from-amber-50 to-yellow-50 border-amber-200 text-amber-700",
   treaties: "from-rose-50 to-pink-50 border-rose-200 text-rose-700",
+  international_laws: "from-cyan-50 to-sky-50 border-cyan-200 text-cyan-700",
 };
 
 export default function DatabasePage() {
@@ -158,7 +159,10 @@ export default function DatabasePage() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto py-4 sm:py-8 px-3 sm:px-6 space-y-6 sm:space-y-8" id="tour-database">
+    <div className="flex h-full">
+      {/* Main content — scrollable */}
+      <div className={cn("flex-1 min-w-0 overflow-auto transition-all", selectedAISource ? "lg:mr-0" : "")}>
+        <div className="max-w-7xl mx-auto py-4 sm:py-8 px-3 sm:px-6 space-y-6 sm:space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-text-primary">Legal Database</h1>
@@ -167,10 +171,8 @@ export default function DatabasePage() {
         </p>
       </div>
 
-      {/* AI-Powered Research — stacks on mobile, side-by-side on lg */}
-      <div className="flex flex-col lg:flex-row gap-5 items-start">
-        {/* Left: AI Research Panel */}
-        <div className={cn("shrink-0 transition-all", selectedAISource ? "w-105" : "max-w-2xl w-full")}>
+      {/* AI-Powered Research */}
+      <div className="max-w-3xl">
         <div className="rounded-2xl border border-purple-200 dark:border-purple-700/40 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 p-5">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center">
@@ -218,7 +220,7 @@ export default function DatabasePage() {
                     <div className="space-y-3">
                       <p className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Sources Found ({aiResult.sources.length})</p>
 
-                      {/* Source badges — always visible */}
+                      {/* Source badges */}
                       <div className="flex flex-wrap gap-1.5">
                         {aiResult.sources.map((s, i) => (
                           <button
@@ -230,7 +232,7 @@ export default function DatabasePage() {
                                 ? "border-purple-500 bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200 dark:border-purple-400 shadow-sm ring-1 ring-purple-300 dark:ring-purple-600"
                                 : "border-purple-200 dark:border-purple-700/40 bg-white dark:bg-surface text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 hover:shadow-sm"
                             )}
-                            title={`${s.title}${s.number ? ` — ${s.number}` : ""}${s.date ? ` (${s.date})` : ""}\nClick to view document with highlights`}
+                            title={`${s.title}${s.number ? ` — ${s.number}` : ""}${s.date ? ` (${s.date})` : ""}\nClick to view document`}
                           >
                             <span className="w-4 h-4 rounded-full bg-purple-200 dark:bg-purple-700 text-purple-700 dark:text-purple-200 flex items-center justify-center text-[9px] font-bold shrink-0">
                               {i + 1}
@@ -243,7 +245,7 @@ export default function DatabasePage() {
                       </div>
 
                       {/* Detailed source list */}
-                      <div className="space-y-1.5">
+                      <div className="space-y-1.5 max-h-72 overflow-auto">
                         {aiResult.sources.map((s, i) => (
                           <button
                             key={i}
@@ -275,7 +277,7 @@ export default function DatabasePage() {
                               )}>
                                 {s.category === "supreme_court" ? "Jurisprudence" : "Law"}
                               </span>
-                              <ExternalLink className="w-3.5 h-3.5 text-purple-400 opacity-0 group-hover/src:opacity-100 transition-opacity" />
+                              <Eye className="w-3.5 h-3.5 text-purple-400 opacity-0 group-hover/src:opacity-100 transition-opacity" />
                             </div>
                           </button>
                         ))}
@@ -296,59 +298,6 @@ export default function DatabasePage() {
             </div>
           )}
         </div>
-        </div>
-
-        {/* Right: Document Viewer Panel (appears when a source is selected) */}
-        {selectedAISource && (
-          <div className="flex-1 min-w-0 sticky top-4">
-            {selectedAISource.relativePath ? (
-              <div className="rounded-xl border-2 border-purple-300 dark:border-purple-600/60 overflow-hidden shadow-lg bg-white dark:bg-surface">
-                <div className="flex items-center justify-between px-4 py-2.5 bg-purple-100 dark:bg-purple-900/30 border-b border-purple-200 dark:border-purple-700/40">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Eye className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0" />
-                    <p className="text-xs font-bold text-purple-900 dark:text-purple-200 truncate">{selectedAISource.title}</p>
-                    {selectedAISource.number && <span className="text-[10px] text-purple-600 dark:text-purple-400 shrink-0">({selectedAISource.number})</span>}
-                  </div>
-                  <button
-                    onClick={() => setSelectedAISource(null)}
-                    className="ml-3 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-200 dark:bg-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-300 dark:hover:bg-purple-700 transition-colors shrink-0 text-[11px] font-medium"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                    Close
-                  </button>
-                </div>
-                {selectedAISource.relevantText && (
-                  <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-purple-200 dark:border-purple-700/40 flex items-center gap-2">
-                    <Search className="w-3 h-3 text-amber-600 shrink-0" />
-                    <p className="text-[10px] text-amber-700 dark:text-amber-400">Highlighted: <span className="font-semibold">&ldquo;{selectedAISource.relevantText}&rdquo;</span></p>
-                  </div>
-                )}
-                <iframe
-                  src={`/api/legal-files/serve?path=${encodeURIComponent(selectedAISource.relativePath)}${selectedAISource.relevantText ? `&highlight=${encodeURIComponent(selectedAISource.relevantText)}` : ""}`}
-                  className="w-full h-[calc(100vh-220px)] min-h-96 border-0"
-                  title={selectedAISource.title}
-                  sandbox="allow-same-origin allow-scripts"
-                />
-              </div>
-            ) : (
-              <div className="rounded-xl border border-amber-200 dark:border-amber-700/40 bg-amber-50 dark:bg-amber-900/20 p-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  <p className="text-xs text-amber-700 dark:text-amber-300">
-                    <span className="font-semibold">{selectedAISource.title}</span> — Document not available for inline viewing.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setSelectedAISource(null)}
-                  className="ml-3 flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-200 dark:bg-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-300 dark:hover:bg-amber-700 transition-colors shrink-0 text-[11px] font-medium"
-                >
-                  <X className="w-3.5 h-3.5" />
-                  Close
-                </button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Category Tabs */}
@@ -425,6 +374,91 @@ export default function DatabasePage() {
           </div>
         )}
       </div>
+        </div>
+      </div>
+
+      {/* Right-side document viewer panel */}
+      {selectedAISource && (
+        <div className="hidden lg:flex w-[480px] shrink-0 border-l border-border flex-col h-full bg-surface">
+          {/* Viewer header */}
+          <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border bg-surface-secondary shrink-0">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-text-primary truncate">{selectedAISource.title}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                {selectedAISource.number && <span className="text-xs text-text-tertiary">{selectedAISource.number}</span>}
+                {selectedAISource.date && (
+                  <span className="flex items-center gap-0.5 text-xs text-text-tertiary">
+                    <Calendar className="w-3 h-3" />
+                    {selectedAISource.date}
+                  </span>
+                )}
+                <span
+                  className={cn(
+                    "inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium",
+                    selectedAISource.category === "supreme_court"
+                      ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                      : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                  )}
+                >
+                  {selectedAISource.category === "supreme_court" ? "Jurisprudence" : "Law"}
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => setSelectedAISource(null)}
+              className="p-1.5 hover:bg-surface-tertiary rounded-lg transition-colors shrink-0"
+              title="Close viewer"
+            >
+              <X className="w-4 h-4 text-text-tertiary" />
+            </button>
+          </div>
+
+          {/* Relevant text snippet */}
+          {selectedAISource.relevantText && (
+            <div className="px-4 py-3 border-b border-border bg-purple-50/50 dark:bg-purple-900/10">
+              <p className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider mb-1">Relevant Excerpt</p>
+              <p className="text-xs text-text-secondary leading-relaxed italic">&ldquo;{selectedAISource.relevantText}&rdquo;</p>
+            </div>
+          )}
+
+          {/* Document content */}
+          {selectedAISource.relativePath ? (
+            <iframe
+              src={`/api/legal-files/serve?path=${encodeURIComponent(selectedAISource.relativePath)}${selectedAISource.relevantText ? `&highlight=${encodeURIComponent(selectedAISource.relevantText)}` : ""}`}
+              className="flex-1 w-full border-0"
+              title={selectedAISource.title}
+            />
+          ) : (
+            <div className="flex-1 flex items-center justify-center p-6">
+              <div className="text-center">
+                <FileText className="w-10 h-10 text-text-tertiary mx-auto mb-3" />
+                <p className="text-sm text-text-secondary">Document preview not available</p>
+                <p className="text-xs text-text-tertiary mt-1">Full document path not found in search results</p>
+              </div>
+            </div>
+          )}
+
+          {/* Viewer footer */}
+          {selectedAISource.relativePath && (
+            <div className="shrink-0 border-t border-border px-4 py-2 flex items-center justify-end gap-2 bg-surface-secondary">
+              <button
+                onClick={() => {
+                  if (selectedAISource.relativePath) {
+                    window.open(
+                      `/api/legal-files/serve?path=${encodeURIComponent(selectedAISource.relativePath)}`,
+                      "_blank"
+                    );
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-text-secondary hover:text-text-primary border border-border rounded-lg hover:bg-surface transition-colors"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Open in New Tab
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

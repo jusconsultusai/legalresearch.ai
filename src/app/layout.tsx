@@ -22,6 +22,28 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@300;400;700&display=swap"
           rel="stylesheet"
         />
+        {/*
+          Blocking script: apply the saved theme class to <html> BEFORE the
+          browser paints, eliminating the light→dark (or vice-versa) flash.
+          Also blocks CSS transitions during initial load so nothing animates.
+        */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){
+            try {
+              var t = localStorage.getItem('theme') || 'light';
+              document.documentElement.classList.toggle('dark', t === 'dark');
+              document.documentElement.style.colorScheme = t;
+            } catch(e) {}
+            document.documentElement.classList.add('no-transitions');
+            window.addEventListener('DOMContentLoaded', function() {
+              requestAnimationFrame(function() {
+                requestAnimationFrame(function() {
+                  document.documentElement.classList.remove('no-transitions');
+                });
+              });
+            });
+          })();
+        ` }} />
         {/* Suppress MetaMask / Web3 extension auto-connect errors — this app does not use Web3 */}
         <script dangerouslySetInnerHTML={{ __html: `
           window.addEventListener('unhandledrejection', function(e) {

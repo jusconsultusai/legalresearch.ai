@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/prisma'
+import { getCurrentUser } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
+  // Require authentication — users can only verify their own subscription
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(request.url)
     const reference = searchParams.get('reference')
-    const userId = searchParams.get('userId')
-
-    if (!reference && !userId) {
-      return NextResponse.json(
-        { error: 'reference or userId is required' },
-        { status: 400 }
-      )
-    }
 
     if (reference) {
       const payment = await prisma.payment.findUnique({
@@ -26,6 +25,11 @@ export async function GET(request: NextRequest) {
 
       if (!payment) {
         return NextResponse.json({ found: false, message: 'Payment not found' })
+      }
+
+      // Only allow users to see their own payment data (or admin)
+      if (payment.userId !== currentUser.id && currentUser.role !== 'admin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
 
       return NextResponse.json({
@@ -43,9 +47,9 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // By userId — check current subscription status
+    // Check current user's own subscription status
     const user = await prisma.user.findUnique({
-      where: { id: userId! },
+      where: { id: currentUser.id },
       select: {
         id: true,
         email: true,

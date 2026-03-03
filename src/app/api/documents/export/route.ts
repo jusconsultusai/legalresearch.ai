@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
+  // Require authentication to prevent abuse as anonymous conversion service
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
   try {
     const { html, title, format } = await req.json();
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card, Badge, Skeleton, EmptyState } from "@/components/ui";
+import { useDebounce } from "@/hooks";
 import { cn } from "@/lib/utils";
 import {
   Plus,
@@ -40,20 +41,22 @@ export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [filterCategory, setFilterCategory] = useState("all");
   const [showDeleteId, setShowDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDocuments();
-  }, [filterCategory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterCategory, debouncedSearch]);
 
   const fetchDocuments = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (filterCategory !== "all") params.set("category", filterCategory);
-      if (searchQuery) params.set("search", searchQuery);
+      if (debouncedSearch) params.set("search", debouncedSearch);
 
       const res = await fetch(`/api/documents?${params}`);
       if (res.ok) {

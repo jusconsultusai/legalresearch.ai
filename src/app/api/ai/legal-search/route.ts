@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/db/prisma";
 import { hybridSearch, buildUnifiedPrompt } from "@/lib/ai/unified-search";
 import { generateCompletion } from "@/lib/ai/llm";
 
@@ -17,10 +18,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { query, mode = "standard_v2", sourceFilters = [], deep = false } = await request.json();
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  const { query, mode = "standard_v2", sourceFilters = [], deep = false } = body;
 
   if (!query || typeof query !== "string") {
     return NextResponse.json({ error: "Query is required" }, { status: 400 });
+  }
+
+  // Enforce search quota
+  if (user.searchesLeft <= 0) {
+    return NextResponse.json({ error: "No searches remaining. Please upgrade your plan." }, { status: 403 });
   }
 
   try {
@@ -56,6 +69,12 @@ export async function POST(request: NextRequest) {
       relevantText: r.relevantText,
       relativePath: r.relativePath,
     }));
+
+    // Decrement search quota
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { searchesLeft: { decrement: 1 } },
+    }).catch(() => {});
 
     return NextResponse.json({
       answer,

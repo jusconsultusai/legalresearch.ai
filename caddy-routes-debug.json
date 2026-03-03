@@ -1,0 +1,165 @@
+[
+  {
+    "handle": [
+      {
+        "handler": "subroute",
+        "routes": [
+          {
+            "handle": [
+              {
+                "encodings": {
+                  "gzip": {},
+                  "zstd": {}
+                },
+                "handler": "encode",
+                "prefer": [
+                  "gzip",
+                  "zstd"
+                ]
+              },
+              {
+                "handler": "reverse_proxy",
+                "upstreams": [
+                  {
+                    "dial": "localhost:3000"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "match": [
+      {
+        "host": [
+          "jusconsultusai.duckdns.org"
+        ]
+      }
+    ],
+    "terminal": true
+  },
+  {
+    "handle": [
+      {
+        "handler": "subroute",
+        "routes": [
+          {
+            "handle": [
+              {
+                "handler": "static_response",
+                "headers": {
+                  "Location": [
+                    "https://jusconsultus.online{http.request.uri}"
+                  ]
+                },
+                "status_code": 301
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "match": [
+      {
+        "host": [
+          "www.jusconsultus.online"
+        ]
+      }
+    ],
+    "terminal": true
+  },
+  {
+    "handle": [
+      {
+        "handler": "subroute",
+        "routes": [
+          {
+            "handle": [
+              {
+                "handler": "headers",
+                "response": {
+                  "deferred": true,
+                  "delete": [
+                    "Server"
+                  ],
+                  "set": {
+                    "Referrer-Policy": [
+                      "strict-origin-when-cross-origin"
+                    ],
+                    "Strict-Transport-Security": [
+                      "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "X-Content-Type-Options": [
+                      "nosniff"
+                    ],
+                    "X-Frame-Options": [
+                      "SAMEORIGIN"
+                    ]
+                  }
+                }
+              },
+              {
+                "encodings": {
+                  "gzip": {},
+                  "zstd": {}
+                },
+                "handler": "encode",
+                "prefer": [
+                  "gzip",
+                  "zstd"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "group4",
+            "handle": [
+              {
+                "handler": "subroute",
+                "routes": [
+                  {
+                    "handle": [
+                      "@{handler=rewrite; strip_path_prefix=/onlyoffice}",
+                      "@{handler=reverse_proxy; upstreams=System.Object[]}"
+                    ]
+                  }
+                ]
+              }
+            ],
+            "match": [
+              {
+                "path": [
+                  "/onlyoffice*"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "group4",
+            "handle": [
+              {
+                "handler": "subroute",
+                "routes": [
+                  {
+                    "handle": [
+                      "@{handler=reverse_proxy; upstreams=System.Object[]}"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "match": [
+      {
+        "host": [
+          "jusconsultus.online"
+        ]
+      }
+    ],
+    "terminal": true
+  }
+]
