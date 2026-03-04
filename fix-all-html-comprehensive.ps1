@@ -64,8 +64,6 @@ $comprehensiveStyle = @'
     p {
       margin: 0.6em 0;
       text-align: justify;
-      orphans: 2;
-      widows: 2;
     }
 
     /* Class: center-bold (.cb) */
@@ -253,6 +251,8 @@ $stats = @{
     StrayTableRemoved = 0
     StrayDivRemoved = 0
     FontFamilyFixed = 0
+    ViewportAdded = 0
+    OrphansWidowsRemoved = 0
 }
 
 # Get all HTML files
@@ -275,8 +275,8 @@ foreach ($file in $htmlFiles) {
         $original = $content
         $modified = $false
         
-        # Skip files already fully fixed
-        if ($content -match 'Class: center-bold' -and $content -match 'lang="en"' -and $content -notmatch 'http-equiv="Content-Type"') {
+        # Skip files already fully fixed (has comprehensive CSS, lang, no old charset, has viewport, no orphans/widows)
+        if ($content -match 'Class: center-bold' -and $content -match 'lang="en"' -and $content -notmatch 'http-equiv="Content-Type"' -and $content -match 'name="viewport"' -and $content -notmatch 'orphans') {
             $stats.Skipped++
             continue
         }
@@ -288,6 +288,34 @@ foreach ($file in $htmlFiles) {
             $stats.LangAdded++
         }
         
+        # ── Fix 1b: Add viewport meta tag if missing ──
+        if ($content -notmatch '(?i)name=["'']viewport["'']') {
+            # Insert after charset meta or after first meta tag
+            if ($content -match '(?i)(<meta\s+charset=[^>]*/>)') {
+                $content = $content -replace '(?i)(<meta\s+charset=[^>]*/>)', "`$1`r`n  <meta name=`"viewport`" content=`"width=device-width, initial-scale=1.0`" />"
+                $modified = $true
+                $stats.ViewportAdded++
+            }
+            elseif ($content -match '(?i)(<meta[^>]*/>)') {
+                $content = $content -replace '(?i)(<meta[^>]*/>)', "`$1`r`n  <meta name=`"viewport`" content=`"width=device-width, initial-scale=1.0`" />"
+                $modified = $true
+                $stats.ViewportAdded++
+            }
+            elseif ($content -match '(?i)(<head[^>]*>)') {
+                $content = $content -replace '(?i)(<head[^>]*>)', "`$1`r`n  <meta name=`"viewport`" content=`"width=device-width, initial-scale=1.0`" />"
+                $modified = $true
+                $stats.ViewportAdded++
+            }
+        }
+
+        # ── Fix 1c: Remove orphans/widows CSS properties (Firefox incompatible) ──
+        if ($content -match 'orphans:\s*\d+;') {
+            $content = $content -replace '\s*orphans:\s*\d+;', ''
+            $content = $content -replace '\s*widows:\s*\d+;', ''
+            $modified = $true
+            $stats.OrphansWidowsRemoved++
+        }
+
         # ── Fix 2: Modernize charset meta tag ──
         if ($content -match '(?i)<meta\s+http-equiv="Content-Type"\s+content="text/html;\s*charset=UTF-8"\s*/?>') {
             $content = $content -replace '(?i)<meta\s+http-equiv="Content-Type"\s+content="text/html;\s*charset=UTF-8"\s*/?>', '<meta charset="utf-8" />'
@@ -398,5 +426,7 @@ Write-Host "  CSS upgraded:            $($stats.CSSUpgraded)" -ForegroundColor G
 Write-Host "  Stray </table> removed:  $($stats.StrayTableRemoved)" -ForegroundColor Green
 Write-Host "  Stray </div> removed:    $($stats.StrayDivRemoved)" -ForegroundColor Green
 Write-Host "  font-family fixed:       $($stats.FontFamilyFixed)" -ForegroundColor Green
+Write-Host "  Viewport meta added:     $($stats.ViewportAdded)" -ForegroundColor Green
+Write-Host "  orphans/widows removed:  $($stats.OrphansWidowsRemoved)" -ForegroundColor Green
 Write-Host "" -ForegroundColor White
 Write-Host "Duration: $($duration.ToString())" -ForegroundColor Cyan
