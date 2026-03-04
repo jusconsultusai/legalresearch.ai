@@ -164,7 +164,7 @@ export default function UpgradePage() {
       <div className="text-center">
         <Badge variant="accent" className="mb-3">Upgrade</Badge>
         <h1 className="text-3xl font-bold text-text-primary mb-3">Choose Your Plan</h1>
-        <p className="text-text-secondary max-w-lg mx-auto">
+        <p className="text-text-secondary max-w-lg mx-auto text-center">
           Get unlimited access to Philippine legal research tools, AI-powered document drafting, and more.
         </p>
       </div>

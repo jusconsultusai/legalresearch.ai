@@ -194,7 +194,7 @@ export default function HelpPage() {
           <HelpCircle className="w-8 h-8 text-primary-600" />
         </div>
         <h1 className="text-3xl font-bold text-text-primary">Help Center</h1>
-        <p className="text-text-secondary mt-2 max-w-lg mx-auto">
+        <p className="text-text-secondary mt-2 max-w-lg mx-auto text-center">
           Find answers, learn about features, and get support for JusConsultus AI
         </p>
       </div>

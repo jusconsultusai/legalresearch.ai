@@ -15,7 +15,7 @@ export default async function AboutPage() {
           <h1 className="text-4xl font-bold text-text-primary mb-4">
             Making Philippine Law <span className="text-primary-600">Accessible to Everyone</span>
           </h1>
-          <p className="text-lg text-text-secondary max-w-2xl mx-auto">
+          <p className="text-lg text-text-secondary max-w-2xl mx-auto text-center">
             JusConsultus AI is an AI-powered legal research platform designed specifically for the Philippine Justice System — bringing the power of modern AI to lawyers, students, and citizens alike.
           </p>
         </div>

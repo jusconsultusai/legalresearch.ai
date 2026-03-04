@@ -31,7 +31,7 @@ export default function TermsPage() {
         </section>
         <section>
           <h2 className="text-xl font-bold text-text-primary mb-3">7. Contact</h2>
-          <p>For questions about these Terms, contact us at legal@jusconsultus.ai</p>
+          <p>For questions about these Terms, contact us at jusconsultus.ai@gmail.com</p>
         </section>
       </div>
     </div>

@@ -21,7 +21,7 @@ export default async function ContactPage() {
           <h1 className="text-4xl font-bold text-text-primary mb-4">
             Get in <span className="text-primary-600">Touch</span>
           </h1>
-          <p className="text-lg text-text-secondary max-w-2xl mx-auto">
+          <p className="text-lg text-text-secondary max-w-2xl mx-auto text-center">
             Have questions about JusConsultus AI? We&apos;d love to hear from you. Reach out through any of the channels below and we&apos;ll get back to you as soon as possible.
           </p>
         </div>
@@ -221,7 +221,7 @@ export default async function ContactPage() {
         {/* CTA */}
         <div className="text-center bg-gradient-to-r from-primary-50 to-accent-50 dark:from-primary-900/30 dark:to-accent-700/20 rounded-2xl p-6 sm:p-10">
           <h2 className="text-2xl font-bold mb-3">Ready to get started?</h2>
-          <p className="text-text-secondary mb-6">
+          <p className="text-text-secondary mb-6 text-center">
             Try JusConsultus AI free — no credit card required.
           </p>
           {user ? (

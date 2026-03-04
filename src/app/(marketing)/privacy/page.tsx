@@ -23,7 +23,7 @@ export default function PrivacyPage() {
         </section>
         <section>
           <h2 className="text-xl font-bold text-text-primary mb-3">5. Your Rights</h2>
-          <p>You have the right to access, correct, or delete your personal data. You can manage your data from your account settings or by contacting us at privacy@jusconsultus.ai.</p>
+          <p>You have the right to access, correct, or delete your personal data. You can manage your data from your account settings or by contacting us at admin@jusconsultus.online.</p>
         </section>
         <section>
           <h2 className="text-xl font-bold text-text-primary mb-3">6. Cookies</h2>
@@ -31,7 +31,7 @@ export default function PrivacyPage() {
         </section>
         <section>
           <h2 className="text-xl font-bold text-text-primary mb-3">7. Contact</h2>
-          <p>For privacy questions or requests, contact: privacy@jusconsultus.ai</p>
+          <p>For privacy questions or requests, contact: admin@jusconsultus.online</p>
         </section>
       </div>
     </div>

@@ -183,7 +183,7 @@ export default async function HomePage() {
                   <div className="w-3 h-3 rounded-full bg-green-400" />
                   <div className="flex-1 mx-4">
                     <div className="bg-surface border border-border rounded-full h-5 w-48 mx-auto flex items-center px-3">
-                      <span className="text-[9px] text-text-tertiary truncate">jusconsultus.ai/chat</span>
+                      <span className="text-[9px] text-text-tertiary truncate">jusconsultus.online/chat</span>
                     </div>
                   </div>
                 </div>
