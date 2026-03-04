@@ -213,9 +213,9 @@ export default function DatabasePage() {
               )}
               {!aiLoading && aiResult && (
                 <>
-                  <div className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap bg-white/70 dark:bg-surface/70 rounded-xl p-4 border border-purple-100 dark:border-purple-700/30 max-h-64 overflow-auto">
-                    {aiResult.answer}
-                  </div>
+                  {(!aiResult.sources || aiResult.sources.length === 0) && (
+                    <p className="text-sm text-text-tertiary italic">No sources found. Try a different query or get a full AI analysis in Chat.</p>
+                  )}
                   {aiResult.sources && aiResult.sources.length > 0 && (
                     <div className="space-y-3">
                       <p className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Sources Found ({aiResult.sources.length})</p>

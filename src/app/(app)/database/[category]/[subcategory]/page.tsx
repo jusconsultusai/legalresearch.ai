@@ -459,7 +459,7 @@ export default function SubcategoryPage() {
       {/* Content: List + Detail */}
       <div className="flex-1 flex overflow-hidden">
         {/* Document List */}
-        <div className={cn("overflow-auto border-r border-border", selectedFile ? "w-1/2" : "w-full")}>
+        <div className={cn("overflow-auto border-r border-border transition-all duration-300", selectedFile && !listOpen ? "w-0 min-w-0 overflow-hidden border-r-0" : selectedFile ? "w-1/2" : "w-full")}>
           {loading ? (
             <div className="p-4 space-y-3">
               {Array.from({ length: 10 }).map((_, i) => (
@@ -527,6 +527,17 @@ export default function SubcategoryPage() {
         {selectedFile && (
           <div className="flex-1 flex overflow-hidden animate-fade-in">
 
+            {/* Toggle list visibility */}
+            {!listOpen && (
+              <button
+                onClick={() => setListOpen(true)}
+                className="shrink-0 flex items-center justify-center w-8 border-r border-border bg-surface-secondary hover:bg-surface-tertiary transition-colors group"
+                title="Show document list"
+              >
+                <ChevronRight className="w-4 h-4 text-text-tertiary group-hover:text-text-primary transition-colors" />
+              </button>
+            )}
+
             {/* Left Panel: AI Summary + Metadata */}
             <div className="w-1/2 shrink-0 flex flex-col overflow-hidden border-r border-border bg-white">
 
@@ -534,13 +545,24 @@ export default function SubcategoryPage() {
               <div className="px-4 py-3 border-b border-border bg-surface-secondary shrink-0">
                 <div className="flex items-center justify-between mb-2">
                   <Badge variant="accent" className="text-xs">{categoryData?.label || category}</Badge>
-                  <button
-                    onClick={() => setSelectedFile(null)}
-                    className="p-1 hover:bg-surface-tertiary rounded-lg transition-colors text-text-tertiary"
-                    title="Close"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    {listOpen && (
+                      <button
+                        onClick={() => setListOpen(false)}
+                        className="p-1 hover:bg-surface-tertiary rounded-lg transition-colors text-text-tertiary"
+                        title="Hide document list"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => { setSelectedFile(null); setListOpen(true); }}
+                      className="p-1 hover:bg-surface-tertiary rounded-lg transition-colors text-text-tertiary"
+                      title="Close"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 {selectedFile.number && (
                   <p className="text-xs text-text-tertiary font-semibold uppercase tracking-wide mb-1">
