@@ -43,7 +43,7 @@ import { Badge, Tabs, Skeleton } from "@/components/ui";
 import { useLocalStorage } from "@/hooks";
 import AIDraftingModal, { GenerationParams } from "@/components/ui/AIDraftingModal";
 import OnlyOfficeDocBuilderButton from "@/components/OnlyOfficeDocBuilderButton";
-import DocumentAnalysisModal from "@/components/document/DocumentAnalysisModal";
+import DocumentAnalysisModal, { type AISuggestion } from "@/components/document/DocumentAnalysisModal";
 
 const OnlyOfficeEditor = dynamic(() => import("@/components/editor/OnlyOfficeEditor"), { ssr: false, loading: () => (
   <div className="flex-1 bg-surface flex items-center justify-center">
@@ -1411,6 +1411,42 @@ builder.CloseFile()`;
           } catch {
             showToast("Failed to apply suggestion", "error");
           }
+        }}
+        onApplyAllCorrections={async (suggestions: AISuggestion[]) => {
+          try {
+            let latest = await fetchLatestContent();
+            let applied = 0;
+            for (const s of suggestions) {
+              if (!s.original || !s.suggested) continue;
+              const before = latest;
+              latest = latest.replace(s.original, s.suggested);
+              if (latest !== before) applied++;
+            }
+            if (applied > 0) {
+              await pushContentAndReload(latest);
+              showToast(`Applied ${applied} of ${suggestions.length} correction(s) to document`, "success");
+            } else {
+              showToast("Could not locate any of the suggested texts in the document — try copying manually", "error");
+            }
+          } catch {
+            showToast("Failed to apply corrections", "error");
+          }
+        }}
+        onSendToBuilder={(suggestions: AISuggestion[]) => {
+          // Build a .docbuilder script that performs find-and-replace for each correction
+          const replaceLines = suggestions.map((s) => {
+            const esc = (str: string) => str.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
+            return `oDocument.SearchAndReplace({"searchString": "${esc(s.original)}", "replaceString": "${esc(s.suggested)}"});`;
+          });
+          const script = [
+            `// Auto-generated corrections from Document Analysis`,
+            `// ${suggestions.length} suggestion(s)`,
+            `var oDocument = Api.GetDocument();`,
+            ...replaceLines,
+          ].join("\n");
+          setBuilderScript(script);
+          setSidePanel("builder");
+          showToast(`${suggestions.length} correction(s) loaded into Document Builder`, "success");
         }}
         onInsertAnalysis={async (analysis) => {
           const summary = [

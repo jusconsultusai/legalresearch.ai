@@ -27,6 +27,9 @@ import {
   Check,
   Zap,
   FileEdit,
+  Download,
+  Send,
+  ClipboardList,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -121,6 +124,10 @@ export interface DocumentAnalysisModalProps {
   onInsertAnalysis?: (analysis: AnalysisResult) => void;
   /** Send the edited document (with accepted AI suggestions applied) to the editor */
   onInsertEdited?: (editedText: string) => void;
+  /** Apply all accepted suggestions as targeted find/replace in the editor */
+  onApplyAllCorrections?: (suggestions: AISuggestion[]) => void;
+  /** Send accepted suggestions to the Document Builder panel */
+  onSendToBuilder?: (suggestions: AISuggestion[]) => void;
   /** Called immediately when analysis finishes successfully — use for post-analysis side-effects like redirects */
   onAnalysisComplete?: (analysis: AnalysisResult, extractedText: string) => void;
   /** Toast callback aligned with the editor page's built-in toast */
@@ -139,6 +146,8 @@ export default function DocumentAnalysisModal({
   onApplySuggestion,
   onInsertAnalysis,
   onInsertEdited,
+  onApplyAllCorrections,
+  onSendToBuilder,
   onAnalysisComplete,
   showToast,
   initialFile,
@@ -500,6 +509,105 @@ export default function DocumentAnalysisModal({
     }
     return doc;
   };
+
+  /** Download the full analysis report as a text file */
+  const exportAnalysisReport = () => {
+    if (!analysisResult) return;
+    const r = analysisResult;
+    const lines: string[] = [
+      "═══════════════════════════════════════════════════",
+      "  DOCUMENT ANALYSIS REPORT — JusConsultus AI",
+      "═══════════════════════════════════════════════════",
+      "",
+      `Document Type:     ${r.documentType}`,
+      `Category:          ${r.documentCategory}`,
+      `Quality Score:     ${r.overallScore}/100`,
+      `Word Count:        ${r.metadata?.wordCount?.toLocaleString() ?? "—"}`,
+      `Language:          ${r.metadata?.language ?? "—"}`,
+      "",
+      "─── SUMMARY ───",
+      r.summary,
+      "",
+    ];
+
+    if (r.issues?.length) {
+      lines.push("─── ISSUES ───");
+      r.issues.forEach((iss, i) => {
+        lines.push(`${i + 1}. [${iss.severity.toUpperCase()}] ${iss.category}`);
+        lines.push(`   ${iss.description}`);
+        if (iss.suggestion) lines.push(`   ➜ ${iss.suggestion}`);
+        if (iss.originalText && iss.suggestedText) {
+          lines.push(`   Original:  "${iss.originalText}"`);
+          lines.push(`   Suggested: "${iss.suggestedText}"`);
+        }
+        lines.push("");
+      });
+    }
+
+    if (r.improvements?.length) {
+      lines.push("─── IMPROVEMENTS ───");
+      r.improvements.forEach((imp, i) => {
+        lines.push(`${i + 1}. [${imp.priority.toUpperCase()}] ${imp.area}`);
+        lines.push(`   ${imp.recommendation}`);
+        lines.push("");
+      });
+    }
+
+    if (r.aiSuggestions?.length) {
+      lines.push("─── AI SUGGESTIONS ───");
+      r.aiSuggestions.forEach((s, i) => {
+        const status = acceptedSuggestionIds.has(s.id) ? "✓ ACCEPTED" : "✗ REJECTED";
+        lines.push(`${i + 1}. [${s.type.toUpperCase()} / ${s.severity}] ${status}`);
+        lines.push(`   Reason: ${s.reason}`);
+        if (s.original && s.suggested) {
+          lines.push(`   Original:  "${s.original}"`);
+          lines.push(`   Suggested: "${s.suggested}"`);
+        }
+        lines.push("");
+      });
+    }
+
+    if (r.legalReferences?.length) {
+      lines.push("─── LEGAL REFERENCES ───");
+      r.legalReferences.forEach((ref, i) => {
+        lines.push(`${i + 1}. [${ref.type}] ${ref.fullCitation || ref.citation}`);
+        lines.push(`   ${ref.relevance}`);
+        lines.push("");
+      });
+    }
+
+    if (r.jurisprudenceSuggestions?.length) {
+      lines.push("─── SUGGESTED JURISPRUDENCE ───");
+      r.jurisprudenceSuggestions.forEach((j, i) => {
+        lines.push(`${i + 1}. ${j.caseName} — ${j.citation}`);
+        lines.push(`   Court: ${j.court} (${j.year}) · Confidence: ${j.confidence}`);
+        lines.push(`   Principle: ${j.relevantPrinciple}`);
+        lines.push(`   Application: ${j.howToApply}`);
+        lines.push("");
+      });
+    }
+
+    if (r.keyTerms?.length) {
+      lines.push("─── KEY TERMS ───");
+      lines.push(r.keyTerms.join(", "));
+      lines.push("");
+    }
+
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = window.document.createElement("a");
+    a.href = url;
+    a.download = `analysis-report-${file?.name?.replace(/\.[^.]+$/, "") || "document"}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    notify("Analysis report downloaded.", "success");
+  };
+
+  /** Get accepted suggestions that have both original and suggested text */
+  const getAcceptedReplacements = (): AISuggestion[] =>
+    (analysisResult?.aiSuggestions ?? []).filter(
+      (s) => acceptedSuggestionIds.has(s.id) && s.original && s.suggested
+    );
 
   const acceptedCount = getFilteredSuggestions().filter((s) => acceptedSuggestionIds.has(s.id)).length;
 
@@ -940,7 +1048,7 @@ export default function DocumentAnalysisModal({
                                       </div>
                                     </div>
                                     {/* Action buttons row */}
-                                    <div className="flex gap-2 justify-end">
+                                    <div className="flex gap-2 justify-end flex-wrap">
                                       {onApplySuggestion && (
                                         <button
                                           onClick={() => handleApplySuggestion(s)}
@@ -948,6 +1056,18 @@ export default function DocumentAnalysisModal({
                                           className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-1"
                                         >
                                           <Zap className="w-3 h-3" /> Apply to Editor
+                                        </button>
+                                      )}
+                                      {onSendToBuilder && (
+                                        <button
+                                          onClick={() => {
+                                            onSendToBuilder([s]);
+                                            notify("Suggestion sent to Document Builder.", "success");
+                                          }}
+                                          title="Send this correction to the Document Builder"
+                                          className="px-3 py-1.5 text-xs bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-1"
+                                        >
+                                          <Send className="w-3 h-3" /> To Builder
                                         </button>
                                       )}
                                       <button
@@ -1100,13 +1220,53 @@ export default function DocumentAnalysisModal({
         {/* Footer */}
         <div className="shrink-0 border-t border-border bg-surface-secondary px-4 py-3">
           <div className="flex items-center justify-between gap-2">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-xs text-text-secondary border border-border rounded-xl hover:bg-white dark:hover:bg-surface transition-colors"
-            >
-              Close
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 text-xs text-text-secondary border border-border rounded-xl hover:bg-white dark:hover:bg-surface transition-colors"
+              >
+                Close
+              </button>
+              {/* Download analysis report */}
+              {analysisResult && (
+                <button
+                  onClick={exportAnalysisReport}
+                  title="Download the full analysis report as a text file"
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs text-text-secondary border border-border rounded-xl hover:bg-white dark:hover:bg-surface transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" /> Export Report
+                </button>
+              )}
+            </div>
             <div className="flex items-center gap-2 flex-wrap justify-end">
+              {/* Send accepted suggestions to Document Builder */}
+              {onSendToBuilder && (analysisResult?.aiSuggestions?.length ?? 0) > 0 && getAcceptedReplacements().length > 0 && (
+                <button
+                  onClick={() => {
+                    onSendToBuilder(getAcceptedReplacements());
+                    notify(`${getAcceptedReplacements().length} suggestion(s) sent to Document Builder.`, "success");
+                  }}
+                  title="Generate a Document Builder script with the accepted corrections"
+                  className="flex items-center gap-1.5 px-4 py-2 text-xs bg-orange-600 text-white rounded-xl font-medium hover:bg-orange-700 transition-all shadow-md"
+                >
+                  <Send className="w-3.5 h-3.5" /> Send to Builder ({getAcceptedReplacements().length})
+                </button>
+              )}
+              {/* Apply all accepted corrections as targeted replacements in editor */}
+              {onApplyAllCorrections && (analysisResult?.aiSuggestions?.length ?? 0) > 0 && getAcceptedReplacements().length > 0 && (
+                <button
+                  onClick={() => {
+                    const replacements = getAcceptedReplacements();
+                    onApplyAllCorrections(replacements);
+                    notify(`Applying ${replacements.length} correction(s) to editor…`, "info");
+                    onClose();
+                  }}
+                  title={`Apply ${getAcceptedReplacements().length} accepted correction(s) directly in the editor`}
+                  className="flex items-center gap-1.5 px-4 py-2 text-xs bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-all shadow-md"
+                >
+                  <ClipboardList className="w-3.5 h-3.5" /> Apply Corrections ({getAcceptedReplacements().length})
+                </button>
+              )}
               {extractedText && onInsertText && (
                 <button
                   onClick={() => { onInsertText(extractedText); onClose(); }}
