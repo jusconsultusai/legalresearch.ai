@@ -252,7 +252,16 @@ export default function DocumentAnalysisModal({
       fd.append("extractText", "true");
       fd.append("analyzeContent", "true");
 
-      const res = await fetch("/api/ai/analyze-document", { method: "POST", body: fd });
+      // 95-second timeout — slightly under Cloudflare's ~100s limit
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 95_000);
+
+      let res: Response;
+      try {
+        res = await fetch("/api/ai/analyze-document", { method: "POST", body: fd, signal: controller.signal });
+      } finally {
+        clearTimeout(timeoutId);
+      }
       if (!res.ok) {
         let errMsg = `Server error (${res.status})`;
         try {
@@ -294,8 +303,11 @@ export default function DocumentAnalysisModal({
         throw new Error(data.error || "Analysis failed");
       }
     } catch (err: any) {
-      setAnalysisError(err.message || "Analysis failed. Please try again.");
-      notify(`Analysis failed: ${err.message}`, "error");
+      const msg = err?.name === "AbortError"
+        ? "Analysis timed out. Try a smaller file or a text-based document (PDF/DOCX)."
+        : err.message || "Analysis failed. Please try again.";
+      setAnalysisError(msg);
+      notify(`Analysis failed: ${msg}`, "error");
     } finally {
       setIsAnalyzing(false);
     }
@@ -312,7 +324,15 @@ export default function DocumentAnalysisModal({
       fd.append("extractText", "true");
       fd.append("analyzeContent", "false");
 
-      const res = await fetch("/api/ai/analyze-document", { method: "POST", body: fd });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60_000);
+
+      let res: Response;
+      try {
+        res = await fetch("/api/ai/analyze-document", { method: "POST", body: fd, signal: controller.signal });
+      } finally {
+        clearTimeout(timeoutId);
+      }
       if (!res.ok) {
         let errMsg = `Server error (${res.status})`;
         try {

@@ -67,14 +67,14 @@ interface FileEntry {
 }
 
 /**
- * Read only the first 600 bytes of an HTML file and extract the
+ * Read only the first 1200 bytes of an HTML file and extract the
  * jusconsultus:title meta tag value.  Falls back to null if not found.
  */
 async function extractMetaTitle(fileAbs: string): Promise<string | null> {
   try {
     const handle = await fs.open(fileAbs, "r");
-    const buf = Buffer.alloc(600);
-    const { bytesRead } = await handle.read(buf, 0, 600, 0);
+    const buf = Buffer.alloc(1200);
+    const { bytesRead } = await handle.read(buf, 0, 1200, 0);
     await handle.close();
     const chunk = buf.slice(0, bytesRead).toString("utf8");
     // Handle both attribute orders: name first or content first

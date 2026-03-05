@@ -25,10 +25,22 @@ async function extractFromImage(buffer: ArrayBuffer, mimeType: string): Promise<
   const Tesseract = await import("tesseract.js");
   const buf = Buffer.from(buffer);
   const base64 = `data:${mimeType};base64,${buf.toString("base64")}`;
-  const result = await Tesseract.recognize(base64, "eng+fil", {
+
+  // 25-second timeout prevents OCR from consuming the entire request budget
+  const ocrPromise = Tesseract.recognize(base64, "eng+fil", {
     logger: () => {},
   });
-  return result.data.text ?? "";
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error("OCR timed out after 25 seconds")), 25_000)
+  );
+
+  try {
+    const result = await Promise.race([ocrPromise, timeout]);
+    return result.data.text ?? "";
+  } catch (err) {
+    console.warn("[analyze-document] OCR failed or timed out:", (err as Error).message);
+    return "[OCR extraction failed — document may be a scanned image. Please try a text-based PDF or DOCX instead.]";
+  }
 }
 
 async function extractText(file: File): Promise<{ text: string; ocrConfidence?: number }> {
@@ -191,7 +203,7 @@ async function buildFallbackAnalysis(text: string, fileName: string): Promise<ob
 
 async function analyzeWithAI(text: string, fileName: string): Promise<object> {
   const wordCount = text.trim().split(/\s+/).length;
-  const truncated = text.length > 12000 ? text.slice(0, 12000) + "\n\n[... document truncated for analysis ...]" : text;
+  const truncated = text.length > 8000 ? text.slice(0, 8000) + "\n\n[... document truncated for analysis ...]" : text;
 
   // Check if an API key is actually configured
   const apiKey = process.env.LLM_API_KEY || process.env.OPENAI_API_KEY;
@@ -209,7 +221,7 @@ async function analyzeWithAI(text: string, fileName: string): Promise<object> {
 
   let raw = "";
   try {
-    raw = await generateCompletion(messages, { temperature: 0.2, maxTokens: 8192 });
+    raw = await generateCompletion(messages, { temperature: 0.2, maxTokens: 4096 });
   } catch (err) {
     console.error("[analyze-document] LLM call failed:", err);
     return buildFallbackAnalysis(text, fileName);
@@ -334,3 +346,4 @@ export async function POST(req: NextRequest) {
 // File uploads require Node.js runtime (pdf-parse, mammoth, tesseract.js) and dynamic rendering
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 120;
