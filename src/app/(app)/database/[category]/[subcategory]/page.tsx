@@ -634,39 +634,7 @@ export default function SubcategoryPage() {
                   </div>
                 </div>
 
-                {/* Metadata */}
-                <div className="px-4 py-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Info className="w-4 h-4 text-text-tertiary shrink-0" />
-                    <span className="text-xs font-semibold text-text-primary uppercase tracking-wide">Metadata</span>
-                  </div>
-                  <div className="space-y-2.5">
-                      {[
-                        { label: "Document Number", value: selectedFile.number || "—" },
-                        { label: "Year / Date", value: selectedFile.year || "—" },
-                        { label: "Category", value: categoryData?.label || category },
-                        { label: "Subcategory", value: subcategoryData?.label || subcategory },
-                        { label: "Source", value: "Philippine Legal Database" },
-                        { label: "Filename", value: selectedFile.filename },
-                      ].map(({ label, value }) => (
-                        <div key={label} className="flex flex-col gap-0.5">
-                          <span className="text-[10px] font-semibold text-text-tertiary uppercase tracking-wide">{label}</span>
-                          <span className="text-xs text-text-primary break-all">{value}</span>
-                        </div>
-                      ))}
-                      <div className="pt-2 border-t border-border">
-                        <a
-                          href={serveUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-primary-600 hover:underline break-all flex items-center gap-1"
-                        >
-                          <ExternalLink className="w-3 h-3 shrink-0" />
-                          Open source file
-                        </a>
-                      </div>
-                    </div>
-                </div>
+
               </div>
             </div>
 
