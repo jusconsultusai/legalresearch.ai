@@ -3,7 +3,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { generateCompletion } from "@/lib/ai/llm";
 import { prisma } from "@/lib/db/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import pdfParse from "pdf-parse";
 
 const LEGAL_DB_ROOT = path.join(process.cwd(), "data", "legal-database");
 
@@ -23,11 +23,6 @@ function htmlToText(html: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  // Require authentication — AI summarization consumes API credits
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
-  }
 
   let body: any;
   try {
@@ -45,9 +40,11 @@ export async function POST(req: NextRequest) {
 
   // Validate path stays within LEGAL_DB_ROOT
   const absPath = path.resolve(LEGAL_DB_ROOT, relPath);
-  if (!absPath.startsWith(LEGAL_DB_ROOT) || !/\.html?$/i.test(absPath)) {
+  if (!absPath.startsWith(LEGAL_DB_ROOT) || !/\.(html?|pdf)$/i.test(absPath)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+
+  const isPdf = /\.pdf$/i.test(absPath);
 
   // Check cached summary first
   const cacheKey = `summary:${relPath}`;
@@ -59,21 +56,25 @@ export async function POST(req: NextRequest) {
     }
   } catch { /* proceed to generate */ }
 
-  let rawHtml: string;
+  let plainText: string;
   try {
-    // Try utf-8 first, fallback to latin1
-    try {
-      rawHtml = await fs.readFile(absPath, "utf-8");
-    } catch {
+    if (isPdf) {
       const buf = await fs.readFile(absPath);
-      rawHtml = buf.toString("latin1");
+      const pdfData = await pdfParse(buf);
+      plainText = pdfData.text.replace(/\s{2,}/g, " ").trim().slice(0, 4000);
+    } else {
+      let rawHtml: string;
+      try {
+        rawHtml = await fs.readFile(absPath, "utf-8");
+      } catch {
+        const buf = await fs.readFile(absPath);
+        rawHtml = buf.toString("latin1");
+      }
+      plainText = htmlToText(rawHtml).slice(0, 4000);
     }
   } catch {
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
-
-  // Extract plain text and limit to ~4000 chars for the prompt
-  const plainText = htmlToText(rawHtml).slice(0, 4000);
 
   const documentId = number ? `${number} — ${title}` : title;
 

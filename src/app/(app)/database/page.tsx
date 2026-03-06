@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, Suspense, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui";
 import { LEGAL_DATABASE_STRUCTURE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -90,11 +90,38 @@ const CATEGORY_COLORS: Record<string, string> = {
   international_laws: "from-cyan-50 to-sky-50 border-cyan-200 text-cyan-700",
 };
 
-export default function DatabasePage() {
+// Inner component that uses useSearchParams
+function DatabasePageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeCategory, setActiveCategory] = useState("supreme_court");
   const [searchQuery, setSearchQuery] = useState("");
   const [subcategoryCounts, setSubcategoryCounts] = useState<Record<string, Record<string, number>>>({});
+
+  // Global search state (highlight-to-search)
+  interface GlobalSearchResult {
+    title: string;
+    number: string;
+    year: string;
+    category: string;
+    categoryLabel: string;
+    subcategory: string;
+    filename: string;
+    relativePath: string;
+    matchSnippet: string;
+    matchType: "title" | "content";
+  }
+  const [globalSearchQuery, setGlobalSearchQuery] = useState("");
+  const [globalSearchResults, setGlobalSearchResults] = useState<GlobalSearchResult[]>([]);
+  const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
+  const [globalSearchTotal, setGlobalSearchTotal] = useState(0);
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+  const [selectedGlobalResult, setSelectedGlobalResult] = useState<GlobalSearchResult | null>(null);
+
+  // Zoom level for viewer iframes
+  const [zoomLevel, setZoomLevel] = useState(100);
+  const aiIframeRef = useRef<HTMLIFrameElement>(null);
+  const globalIframeRef = useRef<HTMLIFrameElement>(null);
 
   // AI Research state
   type AISource = { title: string; number?: string; category: string; subcategory?: string; date?: string; score: number; relevantText?: string; relativePath?: string; };
@@ -103,6 +130,36 @@ export default function DatabasePage() {
   const [aiLoading, setAiLoading] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [selectedAISource, setSelectedAISource] = useState<AISource | null>(null);
+
+  // Global search handler
+  const handleGlobalSearch = useCallback(async (query: string) => {
+    if (!query.trim()) return;
+    setGlobalSearchLoading(true);
+    setGlobalSearchResults([]);
+    setShowGlobalSearch(true);
+    setSelectedGlobalResult(null);
+    try {
+      const res = await fetch(`/api/legal-files/global-search?q=${encodeURIComponent(query.trim())}&limit=50`);
+      if (res.ok) {
+        const data = await res.json();
+        setGlobalSearchResults(data.results || []);
+        setGlobalSearchTotal(data.total || 0);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setGlobalSearchLoading(false);
+    }
+  }, []);
+
+  // Handle ?search= URL parameter (from highlight-to-search in subcategory viewer)
+  useEffect(() => {
+    const searchParam = searchParams.get("search");
+    if (searchParam) {
+      setGlobalSearchQuery(searchParam);
+      handleGlobalSearch(searchParam);
+    }
+  }, [searchParams, handleGlobalSearch]);
 
   const handleAISearch = async () => {
     if (!aiQuery.trim()) return;
@@ -161,7 +218,7 @@ export default function DatabasePage() {
   return (
     <div className="flex h-full">
       {/* Main content — scrollable */}
-      <div className={cn("flex-1 min-w-0 overflow-auto transition-all", selectedAISource ? "lg:mr-0" : "")}>
+      <div className={cn("flex-1 min-w-0 overflow-auto transition-all", (selectedAISource || selectedGlobalResult) ? "lg:mr-0" : "")}>
         <div className="max-w-7xl mx-auto py-4 sm:py-8 px-3 sm:px-6 space-y-6 sm:space-y-8">
       {/* Header */}
       <div>
@@ -300,6 +357,110 @@ export default function DatabasePage() {
         </div>
       </div>
 
+      {/* Global Search — highlight-to-search across all files */}
+      <div className="max-w-3xl">
+        <div className="rounded-2xl border border-blue-200 dark:border-blue-700/40 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center">
+              <FileSearch className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-blue-900 dark:text-blue-200">Search Across All Documents</p>
+              <p className="text-[11px] text-blue-700 dark:text-blue-400">Search titles and full text content across the entire legal database</p>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={globalSearchQuery}
+              onChange={(e) => setGlobalSearchQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleGlobalSearch(globalSearchQuery); }}
+              placeholder="Search across all legal documents…"
+              className="flex-1 px-3 py-2 text-sm rounded-xl border border-blue-200 dark:border-blue-600/50 bg-white dark:bg-surface focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-700"
+            />
+            <button
+              onClick={() => handleGlobalSearch(globalSearchQuery)}
+              disabled={!globalSearchQuery.trim() || globalSearchLoading}
+              className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 shrink-0"
+            >
+              {globalSearchLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              Search All
+            </button>
+          </div>
+
+          {/* Global Search Results */}
+          {showGlobalSearch && (
+            <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-700/40 space-y-3">
+              {globalSearchLoading && (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                  <span className="text-sm text-blue-700 dark:text-blue-300">Searching all files…</span>
+                </div>
+              )}
+              {!globalSearchLoading && globalSearchResults.length === 0 && (
+                <p className="text-sm text-text-tertiary italic">No results found. Try a different search term.</p>
+              )}
+              {!globalSearchLoading && globalSearchResults.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">
+                      Results Found ({globalSearchTotal})
+                    </p>
+                    <button
+                      onClick={() => { setShowGlobalSearch(false); setGlobalSearchResults([]); setSelectedGlobalResult(null); }}
+                      className="text-[10px] text-text-tertiary hover:text-text-primary transition-colors"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div className="space-y-1.5 max-h-96 overflow-auto">
+                    {globalSearchResults.map((r, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setSelectedGlobalResult(selectedGlobalResult?.relativePath === r.relativePath ? null : r)}
+                        className={cn(
+                          "w-full text-left flex items-start gap-3 px-3 py-2.5 rounded-lg border transition-all group/res",
+                          selectedGlobalResult?.relativePath === r.relativePath
+                            ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20 shadow-sm"
+                            : "border-border hover:border-blue-300 hover:bg-blue-50/50 dark:hover:bg-blue-900/10"
+                        )}
+                      >
+                        <span className="text-xs font-bold text-blue-500 w-4 shrink-0 mt-0.5">{i + 1}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-text-primary truncate group-hover/res:text-blue-700 dark:group-hover/res:text-blue-300 transition-colors">
+                            {r.title}
+                          </p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {r.number && <span className="text-[10px] text-text-tertiary">{r.number}</span>}
+                            {r.year && <span className="flex items-center gap-0.5 text-[10px] text-text-tertiary"><Calendar className="w-2.5 h-2.5" />{r.year}</span>}
+                            <span className={cn(
+                              "inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium",
+                              r.category === "supreme_court"
+                                ? "bg-green-100 text-green-700"
+                                : r.category === "laws"
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-amber-100 text-amber-700"
+                            )}>
+                              {r.categoryLabel}
+                            </span>
+                          </div>
+                          {r.matchType === "content" && r.matchSnippet && (
+                            <p className="text-[10px] text-blue-600/70 dark:text-blue-400/60 mt-1 line-clamp-2 italic">
+                              {r.matchSnippet}
+                            </p>
+                          )}
+                        </div>
+                        <Eye className="w-3.5 h-3.5 text-blue-400 opacity-0 group-hover/res:opacity-100 transition-opacity shrink-0 mt-0.5" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Category Tabs */}
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
         {categories.map(([key, cat]) => (
@@ -413,6 +574,38 @@ export default function DatabasePage() {
             </button>
           </div>
 
+          {/* Zoom controls */}
+          <div className="flex items-center justify-between px-4 py-1.5 border-b border-border bg-surface-secondary/50 shrink-0">
+            <span className="text-[10px] text-text-tertiary uppercase tracking-wider font-semibold">Document View</span>
+            <div className="flex items-center gap-0.5 bg-surface-tertiary/70 rounded-lg px-1">
+              <button
+                onClick={() => {
+                  const next = Math.max(50, zoomLevel - 10);
+                  setZoomLevel(next);
+                  aiIframeRef.current?.contentWindow?.postMessage({ type: 'jus-zoom', zoom: next }, '*');
+                  globalIframeRef.current?.contentWindow?.postMessage({ type: 'jus-zoom', zoom: next }, '*');
+                }}
+                className="px-1.5 py-0.5 text-xs font-bold text-text-secondary hover:bg-surface-tertiary rounded transition-colors"
+                title="Decrease font size"
+              >
+                A−
+              </button>
+              <span className="text-[10px] font-medium text-text-tertiary min-w-[32px] text-center">{zoomLevel}%</span>
+              <button
+                onClick={() => {
+                  const next = Math.min(200, zoomLevel + 10);
+                  setZoomLevel(next);
+                  aiIframeRef.current?.contentWindow?.postMessage({ type: 'jus-zoom', zoom: next }, '*');
+                  globalIframeRef.current?.contentWindow?.postMessage({ type: 'jus-zoom', zoom: next }, '*');
+                }}
+                className="px-1.5 py-0.5 text-xs font-bold text-text-secondary hover:bg-surface-tertiary rounded transition-colors"
+                title="Increase font size"
+              >
+                A+
+              </button>
+            </div>
+          </div>
+
           {/* Relevant text snippet */}
           {selectedAISource.relevantText && (
             <div className="px-4 py-3 border-b border-border bg-purple-50/50 dark:bg-purple-900/10">
@@ -424,6 +617,7 @@ export default function DatabasePage() {
           {/* Document content */}
           {selectedAISource.relativePath ? (
             <iframe
+              ref={aiIframeRef}
               src={`/api/legal-files/serve?path=${encodeURIComponent(selectedAISource.relativePath)}${selectedAISource.relevantText ? `&highlight=${encodeURIComponent(selectedAISource.relevantText)}` : ""}`}
               className="flex-1 w-full border-0"
               title={selectedAISource.title}
@@ -459,6 +653,117 @@ export default function DatabasePage() {
           )}
         </div>
       )}
+
+      {/* Right-side viewer panel for global search results */}
+      {selectedGlobalResult && !selectedAISource && (
+        <div className="hidden lg:flex w-[480px] shrink-0 border-l border-border flex-col h-full bg-surface">
+          <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border bg-surface-secondary shrink-0">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-text-primary truncate">{selectedGlobalResult.title}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                {selectedGlobalResult.number && <span className="text-xs text-text-tertiary">{selectedGlobalResult.number}</span>}
+                {selectedGlobalResult.year && (
+                  <span className="flex items-center gap-0.5 text-xs text-text-tertiary">
+                    <Calendar className="w-3 h-3" />
+                    {selectedGlobalResult.year}
+                  </span>
+                )}
+                <span className={cn(
+                  "inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium",
+                  selectedGlobalResult.category === "supreme_court"
+                    ? "bg-green-100 text-green-700"
+                    : selectedGlobalResult.category === "laws"
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-amber-100 text-amber-700"
+                )}>
+                  {selectedGlobalResult.categoryLabel}
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => setSelectedGlobalResult(null)}
+              className="p-1.5 hover:bg-surface-tertiary rounded-lg transition-colors shrink-0"
+              title="Close viewer"
+            >
+              <X className="w-4 h-4 text-text-tertiary" />
+            </button>
+          </div>
+
+          {/* Zoom controls */}
+          <div className="flex items-center justify-between px-4 py-1.5 border-b border-border bg-surface-secondary/50 shrink-0">
+            <span className="text-[10px] text-text-tertiary uppercase tracking-wider font-semibold">Document View</span>
+            <div className="flex items-center gap-0.5 bg-surface-tertiary/70 rounded-lg px-1">
+              <button
+                onClick={() => {
+                  const next = Math.max(50, zoomLevel - 10);
+                  setZoomLevel(next);
+                  globalIframeRef.current?.contentWindow?.postMessage({ type: 'jus-zoom', zoom: next }, '*');
+                }}
+                className="px-1.5 py-0.5 text-xs font-bold text-text-secondary hover:bg-surface-tertiary rounded transition-colors"
+                title="Decrease font size"
+              >
+                A−
+              </button>
+              <span className="text-[10px] font-medium text-text-tertiary min-w-[32px] text-center">{zoomLevel}%</span>
+              <button
+                onClick={() => {
+                  const next = Math.min(200, zoomLevel + 10);
+                  setZoomLevel(next);
+                  globalIframeRef.current?.contentWindow?.postMessage({ type: 'jus-zoom', zoom: next }, '*');
+                }}
+                className="px-1.5 py-0.5 text-xs font-bold text-text-secondary hover:bg-surface-tertiary rounded transition-colors"
+                title="Increase font size"
+              >
+                A+
+              </button>
+            </div>
+          </div>
+
+          {selectedGlobalResult.matchType === "content" && selectedGlobalResult.matchSnippet && (
+            <div className="px-4 py-3 border-b border-border bg-blue-50/50 dark:bg-blue-900/10">
+              <p className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-1">Matching Content</p>
+              <p className="text-xs text-text-secondary leading-relaxed italic">{selectedGlobalResult.matchSnippet}</p>
+            </div>
+          )}
+
+          <iframe
+            ref={globalIframeRef}
+            src={`/api/legal-files/serve?path=${encodeURIComponent(selectedGlobalResult.relativePath)}&highlight=${encodeURIComponent(globalSearchQuery)}`}
+            className="flex-1 w-full border-0"
+            title={selectedGlobalResult.title}
+          />
+
+          <div className="shrink-0 border-t border-border px-4 py-2 flex items-center justify-end gap-2 bg-surface-secondary">
+            <button
+              onClick={() => router.push(`/database/${selectedGlobalResult.category}/${selectedGlobalResult.subcategory}`)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-text-secondary hover:text-text-primary border border-border rounded-lg hover:bg-surface transition-colors"
+            >
+              <Folder className="w-3 h-3" />
+              Browse {selectedGlobalResult.categoryLabel}
+            </button>
+            <button
+              onClick={() => {
+                window.open(
+                  `/api/legal-files/serve?path=${encodeURIComponent(selectedGlobalResult.relativePath)}`,
+                  "_blank"
+                );
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-text-secondary hover:text-text-primary border border-border rounded-lg hover:bg-surface transition-colors"
+            >
+              <ExternalLink className="w-3 h-3" />
+              Open in New Tab
+            </button>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+export default function DatabasePage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="w-6 h-6 animate-spin text-text-tertiary" /></div>}>
+      <DatabasePageInner />
+    </Suspense>
   );
 }

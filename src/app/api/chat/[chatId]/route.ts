@@ -40,7 +40,9 @@ export async function POST(
 
   if (!chat) return NextResponse.json({ error: "Chat not found" }, { status: 404 });
 
-  if (user.searchesLeft <= 0) {
+  // Check search limits (only for free plan users)
+  const isFreePlan = user.plan === "free";
+  if (isFreePlan && user.searchesLeft <= 0) {
     return NextResponse.json({ error: "No searches remaining. Please upgrade your plan." }, { status: 403 });
   }
 
@@ -119,10 +121,12 @@ export async function POST(
       },
     });
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { searchesLeft: { decrement: 1 } },
-    });
+    if (isFreePlan) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { searchesLeft: { decrement: 1 } },
+      });
+    }
 
     await prisma.chat.update({
       where: { id: chatId },
@@ -135,7 +139,7 @@ export async function POST(
         sources: searchedSources.slice(0, 20),
         createdAt: assistantMessage.createdAt.toISOString(),
       },
-      searchesLeft: user.searchesLeft - 1,
+      searchesLeft: isFreePlan ? user.searchesLeft - 1 : -1,
       deepSearchMeta: {
         subQueries: subQueriesOut,
         totalSourcesScanned: totalScanned,

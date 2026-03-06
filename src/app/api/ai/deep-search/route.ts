@@ -37,8 +37,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Query is required" }, { status: 400 });
   }
 
-  // Check search limits
-  if (user.searchesLeft <= 0) {
+  // Check search limits (only for free plan users)
+  const isFreePlan = user.plan === "free";
+  if (isFreePlan && user.searchesLeft <= 0) {
     return NextResponse.json(
       { error: "No searches remaining. Please upgrade your plan." },
       { status: 403 }
@@ -77,11 +78,13 @@ export async function POST(request: NextRequest) {
       totalSourcesScanned: searchResult.results.length,
     };
 
-    // Decrement search count
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { searchesLeft: { decrement: 1 } },
-    });
+    // Decrement search count (only for free plan users)
+    if (isFreePlan) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { searchesLeft: { decrement: 1 } },
+      });
+    }
 
     // Log search history
     await prisma.searchHistory.create({
@@ -99,7 +102,7 @@ export async function POST(request: NextRequest) {
       sources: result.sources,
       subQueries: result.subQueries,
       totalSourcesScanned: result.totalSourcesScanned,
-      searchesLeft: user.searchesLeft - 1,
+      searchesLeft: isFreePlan ? user.searchesLeft - 1 : -1,
     });
   } catch (error) {
     console.error("DeepSearch error:", error);

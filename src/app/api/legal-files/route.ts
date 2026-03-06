@@ -102,7 +102,7 @@ function extractExcerpt(html: string): string {
 
 /** Derive a human-readable title and number from a filename */
 function parseMeta(filename: string): { title: string; number: string; year: string } {
-  const name = filename.replace(/\.html?$/i, "");
+  const name = filename.replace(/\.(html?|pdf)$/i, "");
 
   // SC Decision: "G.R. No. 12, August 8, 1901"
   if (/^G\.?R\.?\s+No\./i.test(name)) {
@@ -223,7 +223,7 @@ async function collectFiles(folderAbs: string, yearFilter?: string): Promise<{ f
       try {
         const yearEntries = await fs.readdir(path.join(folderAbs, yearDir.name));
         for (const f of yearEntries) {
-          if (/\.html?$/i.test(f)) {
+          if (/\.(html?|pdf)$/i.test(f)) {
             results.push({ filename: f, yearFolder: yearDir.name });
           }
         }
@@ -233,7 +233,7 @@ async function collectFiles(folderAbs: string, yearFilter?: string): Promise<{ f
     }
   } else {
     for (const e of entries) {
-      if (e.isFile() && /\.html?$/i.test(e.name)) {
+      if (e.isFile() && /\.(html?|pdf)$/i.test(e.name)) {
         results.push({ filename: e.name });
       }
     }
@@ -281,7 +281,7 @@ export async function GET(req: NextRequest) {
     // Flat folder: extract unique years from filenames
     const yearSet = new Set<string>();
     for (const e of entries) {
-      if (!e.isFile() || !/\.html?$/i.test(e.name)) continue;
+      if (!e.isFile() || !/\.(html?|pdf)$/i.test(e.name)) continue;
       const m = e.name.match(/(\d{4})/);
       if (m) yearSet.add(m[1]);
     }
@@ -300,7 +300,7 @@ export async function GET(req: NextRequest) {
       ? `${relFolder}/${yearFolder}/${filename}`
       : `${relFolder}/${filename}`;
     // Extract full date from filename where available (e.g. "G.R. No. 12, August 8, 1901.html")
-    const nameNoExt = filename.replace(/\.html?$/i, "");
+    const nameNoExt = filename.replace(/\.(html?|pdf)$/i, "");
     const fullDateMatch = nameNoExt.match(/([A-Za-z]+ \d{1,2},\s*\d{4})/);
     const date = fullDateMatch ? fullDateMatch[1] : yearStr;
     return {

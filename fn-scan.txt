@@ -1,0 +1,37 @@
+
+LineNumber Line
+---------- ----
+       319 <p class="jn">Caguioa, (Chairperson), Inting, Gaerlan, and Singh
+           JJ., concur.</p>
+       322 <p class="b">Footnotes</p>
+       324 <p class="jn"><nt>1</nt> <i>Rollo,</i> pp. 1-86.</p>
+       325 <p class="jn"><nt>2</nt> <i>Id.</i> at 88-103.</p>
+       326 <p class="jn"><nt>3</nt> Now Human Settlements Adjudication
+           Commission.</p>
+       327 <p class="jn"><nt>4</nt> <i>Rollo,</i> pp. 10, 95-96.</p>
+       328 <p class="jn"><nt>5</nt> <i>Id.</i> at 16-20.</p>
+       329 <p class="jn"><nt>6</nt> Republic Act No. 9904 (2009), Magna Carta
+           for Homeowners and Homeowners' Associations.</p>
+       330 <p class="jn"><nt>7</nt> Presidential Decree No. 1216 (1977),
+           Defining "Open Space" in Residential Subdivisions and Amending
+           Section 31 of Presidential Decree No. 957 Requiring Subdivision
+           Owners to Provide Roads, Alleys, Sidewalks and Reserve Open Space
+           for Parks or Recreational Use.</p>
+       331 <p class="jn"><nt>8</nt> <i>Rollo,</i> pp. 16-17.</p>
+       332 <p class="jn"><nt>9</nt> <i>Id.</i> at 67-68, Answer with
+           Application for Cease and Desist Order/Temporary Restraining
+           Order.</p>
+       333 <p class="jn"><nt>10</nt> <i>Id.</i> at 68-69.</p>
+       334 <p class="jn"><nt>11</nt> <i>Id.</i> at 65, Notice of Hearing dated
+           September 16, 2013.</p>
+       335 <p class="jn"><nt>12</nt> <i>Id.</i> at 73-85, Answer (To
+           Respondent's Answer with Application for Cease and Desist
+           Order/Temporary Restraining Order).</p>
+       336 <p class="jn"><nt>13</nt> <i>Id.</i> at 74, 83.</p>
+       337 <p class="jn"><nt>14</nt> <i>Id.</i> at 86. Dated September 30,
+           2013.</p>
+       338 <p class="jn"><nt>15</nt> <i>Id.</i> at 13-15.</p>
+       339 <p class="jn"><nt>16</nt> <i>Id.</i> at 14-15.</p>
+       340 <p class="jn"><nt>17</nt> <i>Id.</i> at 13-14.</p>
+       341 <p class="jn"><nt>18</nt> <i>Id.</i> at 3.</p>
+

@@ -39,8 +39,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Instruction is required" }, { status: 400 });
   }
 
-  // Enforce search quota
-  if (user.searchesLeft <= 0) {
+  // Enforce search quota (only for free plan users)
+  const isFreePlan = user.plan === "free";
+  if (isFreePlan && user.searchesLeft <= 0) {
     return NextResponse.json({ error: "No searches remaining. Please upgrade your plan." }, { status: 403 });
   }
 
@@ -87,7 +88,9 @@ Rules:
         { temperature: 0.3, maxTokens: 4096 }
       );
 
-      await prisma.user.update({ where: { id: user.id }, data: { searchesLeft: { decrement: 1 } } });
+      if (isFreePlan) {
+        await prisma.user.update({ where: { id: user.id }, data: { searchesLeft: { decrement: 1 } } });
+      }
 
       return NextResponse.json({
         content: draftContent,
@@ -107,7 +110,9 @@ Rules:
 
       const answer = searchResult.agenticAnswer || "Research sources found (see sources below).";
 
-      await prisma.user.update({ where: { id: user.id }, data: { searchesLeft: { decrement: 1 } } });
+      if (isFreePlan) {
+        await prisma.user.update({ where: { id: user.id }, data: { searchesLeft: { decrement: 1 } } });
+      }
 
       return NextResponse.json({
         answer,
@@ -130,7 +135,9 @@ Rules:
         { temperature: 0.3, maxTokens: 1000 }
       );
 
-      await prisma.user.update({ where: { id: user.id }, data: { searchesLeft: { decrement: 1 } } });
+      if (isFreePlan) {
+        await prisma.user.update({ where: { id: user.id }, data: { searchesLeft: { decrement: 1 } } });
+      }
 
       return NextResponse.json({ explanation });
     }
@@ -146,7 +153,9 @@ Rules:
 
       const answer = searchResult.agenticAnswer || "Citations found (see sources below).";
 
-      await prisma.user.update({ where: { id: user.id }, data: { searchesLeft: { decrement: 1 } } });
+      if (isFreePlan) {
+        await prisma.user.update({ where: { id: user.id }, data: { searchesLeft: { decrement: 1 } } });
+      }
 
       return NextResponse.json({
         sources: searchResult.results,

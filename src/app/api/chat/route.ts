@@ -41,8 +41,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Message is required" }, { status: 400 });
   }
 
-  // Check search limits
-  if (user.searchesLeft <= 0) {
+  // Check search limits (only for free plan users)
+  const isFreePlan = user.plan === "free";
+  if (isFreePlan && user.searchesLeft <= 0) {
     return NextResponse.json({ error: "No searches remaining. Please upgrade your plan." }, { status: 403 });
   }
 
@@ -120,11 +121,13 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  // Decrement searches
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { searchesLeft: { decrement: 1 } },
-  });
+  // Decrement searches (only for free plan users)
+  if (isFreePlan) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { searchesLeft: { decrement: 1 } },
+    });
+  }
 
   return NextResponse.json({
     chat: {
@@ -138,7 +141,7 @@ export async function POST(request: NextRequest) {
         },
       ],
     },
-    searchesLeft: user.searchesLeft - 1,
+    searchesLeft: isFreePlan ? user.searchesLeft - 1 : -1,
     deepSearchMeta: {
       subQueries:          subQueriesOut,
       totalSourcesScanned: totalScanned,

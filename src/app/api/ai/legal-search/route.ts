@@ -31,8 +31,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Query is required" }, { status: 400 });
   }
 
-  // Enforce search quota
-  if (user.searchesLeft <= 0) {
+  // Enforce search quota (only for free plan users)
+  const isFreePlan = user.plan === "free";
+  if (isFreePlan && user.searchesLeft <= 0) {
     return NextResponse.json({ error: "No searches remaining. Please upgrade your plan." }, { status: 403 });
   }
 
@@ -70,11 +71,13 @@ export async function POST(request: NextRequest) {
       relativePath: r.relativePath,
     }));
 
-    // Decrement search quota
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { searchesLeft: { decrement: 1 } },
-    }).catch(() => {});
+    // Decrement search quota (only for free plan users)
+    if (isFreePlan) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { searchesLeft: { decrement: 1 } },
+      }).catch(() => {});
+    }
 
     return NextResponse.json({
       answer,

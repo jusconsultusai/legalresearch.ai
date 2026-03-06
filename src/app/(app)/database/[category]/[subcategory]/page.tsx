@@ -94,7 +94,11 @@ export default function SubcategoryPage() {
   const [aiSummary, setAiSummary] = useState<string>("");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiGenerated, setAiGenerated] = useState(false);
-  const [metaOpen, setMetaOpen] = useState(false);
+  // Collapsible panel states
+  const [summaryPanelOpen, setSummaryPanelOpen] = useState(true);
+
+  // Zoom level for iframe content (percentage)
+  const [zoomLevel, setZoomLevel] = useState(100);
 
   // AI Research state (context-aware search for this subcategory)
   const [aiResearchQuery, setAiResearchQuery] = useState("");
@@ -166,7 +170,6 @@ export default function SubcategoryPage() {
     setSelectedFile(file);
     setAiSummary("");
     setAiGenerated(false);
-    setMetaOpen(false);
     setListOpen(false); // collapse list to give full space to the reader
   };
 
@@ -538,98 +541,106 @@ export default function SubcategoryPage() {
               </button>
             )}
 
+            {/* Toggle to re-open the summary panel when collapsed */}
+            {!summaryPanelOpen && (
+              <button
+                onClick={() => setSummaryPanelOpen(true)}
+                className="shrink-0 flex items-center justify-center w-8 border-r border-border bg-surface-secondary hover:bg-surface-tertiary transition-colors group"
+                title="Show AI summary panel"
+              >
+                <ChevronRight className="w-4 h-4 text-text-tertiary group-hover:text-text-primary transition-colors" />
+              </button>
+            )}
+
             {/* Left Panel: AI Summary + Metadata */}
-            <div className="w-1/2 shrink-0 flex flex-col overflow-hidden border-r border-border bg-white">
+            <div className={cn(
+              "shrink-0 flex flex-col overflow-hidden border-r border-border bg-white transition-all duration-300",
+              summaryPanelOpen ? "w-1/2" : "w-0 min-w-0 overflow-hidden border-r-0"
+            )}>
 
               {/* Doc header */}
-              <div className="px-4 py-3 border-b border-border bg-surface-secondary shrink-0">
-                <div className="flex items-center justify-between mb-2">
-                  <Badge variant="accent" className="text-xs">{categoryData?.label || category}</Badge>
-                  <div className="flex items-center gap-1">
+              <div className="border-b border-border bg-surface-secondary shrink-0">
+                <div className="px-4 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Badge variant="accent" className="text-xs shrink-0">{categoryData?.label || category}</Badge>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
                     {listOpen && (
-                      <button
+                      <span
+                        role="button"
+                        tabIndex={0}
                         onClick={() => setListOpen(false)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') setListOpen(false); }}
                         className="p-1 hover:bg-surface-tertiary rounded-lg transition-colors text-text-tertiary"
                         title="Hide document list"
                       >
                         <ChevronLeft className="w-4 h-4" />
-                      </button>
+                      </span>
                     )}
-                    <button
-                      onClick={() => { setSelectedFile(null); setListOpen(true); }}
-                      className="p-1 hover:bg-surface-tertiary rounded-lg transition-colors text-text-tertiary"
-                      title="Close"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
                   </div>
                 </div>
-                {selectedFile.number && (
-                  <p className="text-xs text-text-tertiary font-semibold uppercase tracking-wide mb-1">
-                    {selectedFile.number}
-                  </p>
-                )}
-                <div className={cn("px-2.5 py-1.5 rounded-md border text-sm font-bold", titleAccent)}>
-                  <span className="line-clamp-3">{selectedFile.title}</span>
+                <div className="px-4 pb-3">
+                  {selectedFile.number && (
+                    <p className="text-xs text-text-tertiary font-semibold uppercase tracking-wide mb-1">
+                      {selectedFile.number}
+                    </p>
+                  )}
+                  <div className={cn("px-2.5 py-1.5 rounded-md border text-sm font-bold", titleAccent)}>
+                    <span className="line-clamp-3">{selectedFile.title}</span>
+                  </div>
+                  {selectedFile.year && (
+                    <p className="text-xs text-text-tertiary mt-1.5 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {selectedFile.year}
+                    </p>
+                  )}
                 </div>
-                {selectedFile.year && (
-                  <p className="text-xs text-text-tertiary mt-1.5 flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {selectedFile.year}
-                  </p>
-                )}
               </div>
 
               {/* Scrollable body */}
               <div className="flex-1 overflow-auto">
 
                 {/* AI Summary */}
-                <div className="px-4 py-3 border-b border-border">
-                  <div className="flex items-center gap-2 mb-3">
+                <div className="border-b border-border">
+                  <div className="px-4 py-3 flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-primary-500 shrink-0" />
                     <span className="text-xs font-semibold text-text-primary uppercase tracking-wide">AI Summary</span>
                   </div>
 
-                  {aiLoading && (
-                    <div className="flex flex-col items-center justify-center py-8 gap-3">
-                      <div className="w-6 h-6 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
-                      <p className="text-xs text-text-secondary animate-pulse">Analyzing document…</p>
-                    </div>
-                  )}
+                  <div className="px-4 pb-3">
+                    {aiLoading && (
+                      <div className="flex flex-col items-center justify-center py-8 gap-3">
+                        <div className="w-6 h-6 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
+                        <p className="text-xs text-text-secondary animate-pulse">Analyzing document…</p>
+                      </div>
+                    )}
 
-                  {!aiLoading && !aiGenerated && (
-                    <p className="text-xs text-text-tertiary text-center py-4">Preparing summary…</p>
-                  )}
+                    {!aiLoading && !aiGenerated && (
+                      <p className="text-xs text-text-tertiary text-center py-4">Preparing summary…</p>
+                    )}
 
-                  {!aiLoading && aiGenerated && (
-                    <div>
-                      <div
-                        className="text-xs text-text-secondary leading-relaxed whitespace-pre-wrap"
-                        dangerouslySetInnerHTML={{
-                          __html: aiSummary
-                            .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-                            .replace(/^(\d+\.\s)/gm, "<br/>$1"),
-                        }}
-                      />
-
-                    </div>
-                  )}
+                    {!aiLoading && aiGenerated && (
+                      <div>
+                        <div
+                          className="text-xs text-text-secondary leading-relaxed whitespace-pre-wrap"
+                          dangerouslySetInnerHTML={{
+                            __html: aiSummary
+                              .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+                              .replace(/^(\d+\.\s)/gm, "<br/>$1"),
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Metadata accordion */}
+                {/* Metadata */}
                 <div className="px-4 py-3">
-                  <button
-                    onClick={() => setMetaOpen((o) => !o)}
-                    className="flex items-center justify-between w-full mb-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Info className="w-4 h-4 text-text-tertiary shrink-0" />
-                      <span className="text-xs font-semibold text-text-primary uppercase tracking-wide">Metadata</span>
-                    </div>
-                    <ChevronDown className={cn("w-3.5 h-3.5 text-text-tertiary transition-transform", metaOpen && "rotate-180")} />
-                  </button>
-                  {metaOpen && (
-                    <div className="space-y-2.5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Info className="w-4 h-4 text-text-tertiary shrink-0" />
+                    <span className="text-xs font-semibold text-text-primary uppercase tracking-wide">Metadata</span>
+                  </div>
+                  <div className="space-y-2.5">
                       {[
                         { label: "Document Number", value: selectedFile.number || "—" },
                         { label: "Year / Date", value: selectedFile.year || "—" },
@@ -655,7 +666,6 @@ export default function SubcategoryPage() {
                         </a>
                       </div>
                     </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -664,10 +674,45 @@ export default function SubcategoryPage() {
             <div className="flex-1 flex flex-col overflow-hidden">
               <div className="flex items-center justify-between px-4 py-2 bg-amber-50 border-b border-amber-200 shrink-0">
                 <div className="flex items-center gap-2 text-xs text-amber-700">
+                  {summaryPanelOpen && (
+                    <button
+                      onClick={() => setSummaryPanelOpen(false)}
+                      className="p-1 -ml-1 hover:bg-amber-100 rounded-lg transition-colors"
+                      title="Hide AI summary panel"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                   <Scale className="w-3.5 h-3.5 shrink-0" />
                   Full text — original legal document
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
+                  {/* Zoom controls */}
+                  <div className="flex items-center gap-0.5 bg-amber-100/70 rounded-lg px-1">
+                    <button
+                      onClick={() => {
+                        const next = Math.max(50, zoomLevel - 10);
+                        setZoomLevel(next);
+                        iframeRef.current?.contentWindow?.postMessage({ type: 'jus-zoom', zoom: next }, '*');
+                      }}
+                      className="px-1.5 py-1 text-xs font-bold text-amber-700 hover:bg-amber-200 rounded transition-colors"
+                      title="Decrease font size"
+                    >
+                      A−
+                    </button>
+                    <span className="text-[10px] font-medium text-amber-600 min-w-[32px] text-center">{zoomLevel}%</span>
+                    <button
+                      onClick={() => {
+                        const next = Math.min(200, zoomLevel + 10);
+                        setZoomLevel(next);
+                        iframeRef.current?.contentWindow?.postMessage({ type: 'jus-zoom', zoom: next }, '*');
+                      }}
+                      className="px-1.5 py-1 text-xs font-bold text-amber-700 hover:bg-amber-200 rounded transition-colors"
+                      title="Increase font size"
+                    >
+                      A+
+                    </button>
+                  </div>
                   <a
                     href={serveUrl}
                     target="_blank"
