@@ -221,17 +221,21 @@ async function analyzeWithAI(text: string, fileName: string): Promise<object> {
 
   let raw = "";
   try {
-    raw = await generateCompletion(messages, { temperature: 0.2, maxTokens: 4096 });
+    raw = await generateCompletion(messages, { temperature: 0.2, maxTokens: 8192 });
   } catch (err) {
     console.error("[analyze-document] LLM call failed:", err);
     return buildFallbackAnalysis(text, fileName);
   }
 
-  // Strip markdown code fences and <think>…</think> blocks
+  // Strip <think>…</think> reasoning blocks, markdown code fences, and
+  // any preamble/postamble text the model may add before/after the JSON.
   const cleaned = raw
     .replace(/<think>[\s\S]*?<\/think>/gi, "")
-    .replace(/^```(?:json)?\s*/im, "")
-    .replace(/\s*```\s*$/m, "")
+    // Remove all markdown code fence lines (opening and closing)
+    .replace(/^```[^\n]*\n?/gim, "")
+    .replace(/\n?```\s*$/gm, "")
+    // Strip JSONC-style // line comments (LLMs sometimes include these)
+    .replace(/(?<![:\/])(\/\/[^\n"]*?)(?=\n|$)/g, "")
     .trim();
 
   // Attempt 1: direct parse
@@ -240,6 +244,7 @@ async function analyzeWithAI(text: string, fileName: string): Promise<object> {
   } catch { /* try extraction */ }
 
   // Attempt 2: locate the outermost JSON object using brace counting
+  // (handles preamble text, trailing text, or partial markdown remnants)
   const firstBrace = cleaned.indexOf("{");
   if (firstBrace !== -1) {
     let depth = 0;
@@ -257,11 +262,13 @@ async function analyzeWithAI(text: string, fileName: string): Promise<object> {
     }
     if (end !== -1) {
       const jsonSlice = cleaned.slice(firstBrace, end + 1);
-      try { return JSON.parse(jsonSlice); } catch { /* fall through */ }
+      // Remove trailing commas before ] or } (common LLM mistake)
+      const fixedSlice = jsonSlice.replace(/,\s*([}\]])/g, "$1");
+      try { return JSON.parse(fixedSlice); } catch { /* fall through */ }
     }
   }
 
-  console.warn("[analyze-document] JSON parse failed, using fallback. Raw snippet:", cleaned.slice(0, 200));
+  console.warn("[analyze-document] JSON parse failed, using fallback. Raw snippet:", cleaned.slice(0, 400));
   return buildFallbackAnalysis(text, fileName);
 }
 
