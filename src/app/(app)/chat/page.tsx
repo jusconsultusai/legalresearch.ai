@@ -9,6 +9,7 @@ import {
   Clock, X, ArrowRight, Calendar, SortAsc, Loader2, AlertCircle,
   Search, Lightbulb, PenTool, BookOpenCheck, BarChart3, Brain,
   Paperclip, ToggleLeft, ToggleRight, Sparkles, Check, ChevronDown, ListChecks,
+  ExternalLink,
 } from "lucide-react";
 import { useChatManagement } from "@/stores";
 import DocumentAnalysisModal from "@/components/document/DocumentAnalysisModal";
@@ -399,6 +400,50 @@ export default function ChatPage() {
   // When true, closing the analysis modal after a completed analysis
   // redirects to the document editor instead of staying in chat
   const [docAnalysisRedirectToEditor, setDocAnalysisRedirectToEditor] = useState(false);
+  const [savingToDoc, setSavingToDoc] = useState<string | null>(null);
+
+  const handleSaveAsDocument = async (content: string, msgId: string) => {
+    setSavingToDoc(msgId);
+    try {
+      // Extract a title from the first non-empty line (strip markdown)
+      const firstLine = content.split("\n").find((l) => l.trim().length > 0) || "Untitled Document";
+      const title = firstLine.replace(/^#+\s*/, "").replace(/[*_`]/g, "").slice(0, 80).trim();
+
+      // Create document
+      const docRes = await fetch("/api/documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title || "AI Drafted Document", content: "", category: "general" }),
+      });
+      const docData = await docRes.json();
+      if (!docRes.ok || !docData.document?.id) return;
+      const docId = docData.document.id as string;
+
+      // Convert plain text / markdown content to basic HTML
+      const html = content
+        .split("\n")
+        .map((line) => {
+          const h = line.match(/^(#{1,3})\s+(.+)/);
+          if (h) return `<h${h[1].length}>${h[2]}</h${h[1].length}>`;
+          if (line.trim() === "") return "";
+          return `<p>${line.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\*(.+?)\*/g, "<em>$1</em>")}</p>`;
+        })
+        .filter(Boolean)
+        .join("");
+
+      await fetch("/api/onlyoffice/content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId: docId, html }),
+      }).catch(() => {/* non-critical */});
+
+      router.push(`/documents/${docId}`);
+    } catch {
+      // silently fail
+    } finally {
+      setSavingToDoc(null);
+    }
+  };
 
 
   const [lastDeepMeta, setLastDeepMeta] = useState<DeepSearchMeta | null>(null);
@@ -837,10 +882,23 @@ export default function ChatPage() {
                                 </div>
                               </div>
                             )}
-                            <div className="mt-5 pt-4 border-t border-border flex items-center gap-3">
+                            <div className="mt-5 pt-4 border-t border-border flex items-center gap-3 flex-wrap">
                               <span className="text-xs text-text-tertiary">Was that helpful?</span>
                               <button onClick={() => setFeedback((p) => ({ ...p, [msg.id]: "up" }))} title="Helpful" aria-label="Helpful" className={cn("p-1.5 rounded-lg transition-colors", feedback[msg.id] === "up" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600" : "hover:bg-surface-secondary text-text-tertiary")}><ThumbsUp className="w-3.5 h-3.5" /></button>
                               <button onClick={() => setFeedback((p) => ({ ...p, [msg.id]: "down" }))} title="Not helpful" aria-label="Not helpful" className={cn("p-1.5 rounded-lg transition-colors", feedback[msg.id] === "down" ? "bg-red-100 dark:bg-red-900/30 text-red-600" : "hover:bg-surface-secondary text-text-tertiary")}><ThumbsDown className="w-3.5 h-3.5" /></button>
+                              <button
+                                onClick={() => handleSaveAsDocument(cleanContent, msg.id)}
+                                disabled={savingToDoc === msg.id}
+                                title="Save and edit in OnlyOffice"
+                                className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-50 hover:bg-primary-100 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-700/40 transition-colors disabled:opacity-60"
+                              >
+                                {savingToDoc === msg.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                )}
+                                Edit in OnlyOffice
+                              </button>
                             </div>
                             {topics.length > 0 && (
                               <div className="mt-4">

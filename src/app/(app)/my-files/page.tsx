@@ -28,6 +28,7 @@ import {
   Wand2,
   Sparkles,
   Loader2,
+  ExternalLink,
 } from "lucide-react";
 
 interface LocalFile {
@@ -111,6 +112,8 @@ export default function MyFilesPage() {
 
   // "Use in Builder" loading state (tracks which file is being opened)
   const [builderLoading, setBuilderLoading] = useState<string | null>(null);
+  // "Edit in OnlyOffice" loading state
+  const [editorLoading, setEditorLoading] = useState<string | null>(null);
 
   const filtered = files.filter((f) => {
     const matchesSearch =
@@ -236,6 +239,42 @@ export default function MyFilesPage() {
     } finally {
       setBuilderLoading(null);
     }
+  };
+
+  const handleOpenInEditor = async (file: LocalFile) => {
+    setEditorLoading(file.id);
+    try {
+      syncFileToChat(file);
+      const title = file.name.replace(/\.[^.]+$/, "") || file.name;
+      const res = await fetch("/api/documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, content: "", category: "general" }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.document?.id) { alert("Failed to create document. Please try again."); return; }
+      const docId = data.document.id as string;
+      let html = "";
+      if (file.type.startsWith("text/") || file.type === "application/json") {
+        try {
+          const decoded = atob(file.content.split(",")[1] || "");
+          html = decoded.startsWith("<")
+            ? decoded
+            : `<p>${decoded.replace(/\n\n+/g, "</p><p>").replace(/\n/g, "<br/>")}</p>`;
+        } catch { html = `<p>Imported from: ${file.name}</p>`; }
+      } else {
+        html = `<h2>${title}</h2><p><em>File imported from My Files: ${file.name}</em></p><p>Edit this document to add your content.</p>`;
+      }
+      if (html) {
+        await fetch("/api/onlyoffice/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ documentId: docId, html }),
+        }).catch(() => {});
+      }
+      router.push(`/documents/${docId}`);
+    } catch { alert("Failed to open in editor. Please try again."); }
+    finally { setEditorLoading(null); }
   };
 
   // Sync a single file to DB so AI Chat can reference it
@@ -454,6 +493,20 @@ export default function MyFilesPage() {
                   AI Analyze
                 </button>
 
+                {/* Labeled: Edit in OnlyOffice */}
+                <button
+                  onClick={() => handleOpenInEditor(file)}
+                  disabled={editorLoading === file.id}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-900/30 dark:hover:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 text-xs font-medium transition-colors border border-cyan-200 dark:border-cyan-700/40 disabled:opacity-60"
+                >
+                  {editorLoading === file.id ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  )}
+                  Edit
+                </button>
+
                 {/* Labeled: Use in Builder */}
                 <button
                   onClick={() => handleUseInDocBuilder(file)}
@@ -531,6 +584,18 @@ export default function MyFilesPage() {
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   AI
+                </button>
+                <button
+                  onClick={() => handleOpenInEditor(file)}
+                  disabled={editorLoading === file.id}
+                  className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-900/30 dark:hover:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 text-xs font-medium transition-colors border border-cyan-200 dark:border-cyan-700/40 disabled:opacity-60"
+                >
+                  {editorLoading === file.id ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  )}
+                  Edit
                 </button>
                 <button
                   onClick={() => handleUseInDocBuilder(file)}
