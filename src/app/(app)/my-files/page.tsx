@@ -229,8 +229,8 @@ export default function MyFilesPage() {
         }).catch(() => {/* non-critical */});
       }
 
-      // Navigate directly to the document editor
-      router.push(`/documents/${docId}`);
+      // Navigate directly to the document editor with builder panel open
+      router.push(`/documents/${docId}?panel=builder`);
     } catch {
       alert("Failed to open in Document Builder. Please try again.");
     } finally {

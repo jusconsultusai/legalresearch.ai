@@ -78,6 +78,7 @@ export default function DocumentEditorPage() {
   const searchParams = useSearchParams();
   const docType = searchParams.get("type");
   const mode = searchParams.get("mode");
+  const panel = searchParams.get("panel");
 
   const [document, setDocument] = useState<Document | null>(null);
   const [title, setTitle] = useState("");
@@ -91,8 +92,8 @@ export default function DocumentEditorPage() {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Side panel state
-  const [sidePanel, setSidePanel] = useState<SidePanel>(null);
+  // Side panel state — initialize from ?panel= URL param (e.g. ?panel=builder)
+  const [sidePanel, setSidePanel] = useState<SidePanel>((panel as SidePanel) || null);
   const [showRedlines, setShowRedlines] = useState(false);
   const [originalContent, setOriginalContent] = useState("");
 
@@ -101,8 +102,9 @@ export default function DocumentEditorPage() {
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
   const [aiReviewContent, setAiReviewContent] = useState<string | null>(null);
 
-  // Document version — increment to force ONLYOFFICE to reload with new content
-  const [documentVersion, setDocumentVersion] = useState(1);
+  // Document version — use session-unique initial value (Date.now) to prevent
+  // stale OnlyOffice cache entries from old/failed sessions causing Download failed.
+  const [documentVersion, setDocumentVersion] = useState(() => Date.now());
 
   // Empty‑document warning dialog ("improve" | "review" | null)
   const [emptyDocWarning, setEmptyDocWarning] = useState<"improve" | "review" | null>(null);
