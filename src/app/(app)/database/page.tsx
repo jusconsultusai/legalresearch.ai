@@ -228,8 +228,8 @@ function DatabasePageInner() {
         </p>
       </div>
 
-      {/* AI-Powered Research */}
-      <div className="max-w-3xl hidden">
+      {/* AI-Powered Research — hidden from dashboard (function still usable via handleAISearch) */}
+      {false && <div className="max-w-3xl">
         <div className="rounded-2xl border border-purple-200 dark:border-purple-700/40 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 p-5">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center">
@@ -355,7 +355,7 @@ function DatabasePageInner() {
             </div>
           )}
         </div>
-      </div>
+      </div>}
 
       {/* Global Search — highlight-to-search across all files */}
       <div className="max-w-3xl">
