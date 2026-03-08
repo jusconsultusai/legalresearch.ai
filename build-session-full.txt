@@ -1,0 +1,119 @@
+
+> jusconsultus.ai@1.0.0 build
+> cross-env NODE_OPTIONS=--max-old-space-size=4096 next build --webpack
+
+Γû▓ Next.js 16.1.6 (webpack)
+- Environments: .env.local, .env
+- Experiments (use with caution):
+  ┬╖ optimizePackageImports
+
+  Creating an optimized production build ...
+ΓÜá Compiled with warnings in 8.7min
+
+./node_modules/html-to-docx/dist/html-to-docx.esm.js
+Module not found: Can't resolve 'encoding' in 'D:\JusConsultus.AI\node_modules\html-to-docx\dist'
+
+Import trace for requested module:
+./node_modules/html-to-docx/dist/html-to-docx.esm.js
+./src/app/api/documents/export/route.ts
+
+Γ£ô Compiled successfully in 8.8min
+  Skipping validation of types
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/78) ...
+  Generating static pages using 7 workers (19/78) 
+  Generating static pages using 7 workers (38/78) 
+  Generating static pages using 7 workers (58/78) 
+Γ£ô Generating static pages using 7 workers (78/78) in 2.6s
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+Γöî ╞Æ /
+Γö£ Γùï /_not-found
+Γö£ ╞Æ /about
+Γö£ Γùï /admin/activate
+Γö£ ╞Æ /api/ai/analyze-document
+Γö£ ╞Æ /api/ai/deep-search
+Γö£ ╞Æ /api/ai/document-assist
+Γö£ ╞Æ /api/ai/file-analysis
+Γö£ ╞Æ /api/ai/legal-search
+Γö£ ╞Æ /api/ai/trend-analysis
+Γö£ ╞Æ /api/analyze
+Γö£ ╞Æ /api/auth/forgot-password
+Γö£ ╞Æ /api/auth/google
+Γö£ ╞Æ /api/auth/google/callback
+Γö£ ╞Æ /api/auth/me
+Γö£ ╞Æ /api/auth/reset-password
+Γö£ ╞Æ /api/auth/signin
+Γö£ ╞Æ /api/auth/signout
+Γö£ ╞Æ /api/auth/signup
+Γö£ ╞Æ /api/bookmarks
+Γö£ ╞Æ /api/bookmarks/[bookmarkId]
+Γö£ ╞Æ /api/chat
+Γö£ ╞Æ /api/chat/[chatId]
+Γö£ ╞Æ /api/chat/summary
+Γö£ ╞Æ /api/database
+Γö£ ╞Æ /api/database/stats
+Γö£ ╞Æ /api/docspace/sync
+Γö£ ╞Æ /api/documents
+Γö£ ╞Æ /api/documents/[documentId]
+Γö£ ╞Æ /api/documents/export
+Γö£ ╞Æ /api/documents/generate
+Γö£ ╞Æ /api/documents/search
+Γö£ ╞Æ /api/documents/template
+Γö£ ╞Æ /api/legal-files
+Γö£ ╞Æ /api/legal-files/global-search
+Γö£ ╞Æ /api/legal-files/serve
+Γö£ ╞Æ /api/legal-files/summary
+Γö£ ╞Æ /api/my-files/sync
+Γö£ ╞Æ /api/onlyoffice-proxy/[...path]
+Γö£ ╞Æ /api/onlyoffice/builder
+Γö£ ╞Æ /api/onlyoffice/builder/python
+Γö£ ╞Æ /api/onlyoffice/builder/status
+Γö£ ╞Æ /api/onlyoffice/callback
+Γö£ ╞Æ /api/onlyoffice/config
+Γö£ ╞Æ /api/onlyoffice/content
+Γö£ ╞Æ /api/onlyoffice/file
+Γö£ ╞Æ /api/payments/activate-subscription
+Γö£ ╞Æ /api/payments/checkout-com
+Γö£ ╞Æ /api/payments/checkout-webhook
+Γö£ ╞Æ /api/payments/create-checkout
+Γö£ ╞Æ /api/payments/pending-payments
+Γö£ ╞Æ /api/payments/verify-subscription
+Γö£ ╞Æ /api/payments/webhook
+Γö£ ╞Æ /api/user/change-password
+Γö£ Γùï /blog
+Γö£ ΓùÅ /blog/[slug]
+Γöé Γö£ /blog/ai-legal-research-philippines
+Γöé Γö£ /blog/understanding-data-privacy-act
+Γöé Γö£ /blog/jusconsultus-context-awareness
+Γöé Γöö [+5 more paths]
+Γö£ Γùï /bookmarks
+Γö£ Γùï /chat
+Γö£ ╞Æ /contact
+Γö£ Γùï /dashboard
+Γö£ Γùï /database
+Γö£ ╞Æ /database/[category]/[subcategory]
+Γö£ Γùï /documents
+Γö£ ╞Æ /documents/[documentId]
+Γö£ Γùï /documents/new
+Γö£ Γùï /forgot-password
+Γö£ Γùï /help
+Γö£ Γùï /my-files
+Γö£ Γùï /pricing
+Γö£ Γùï /privacy
+Γö£ Γùï /profile
+Γö£ Γùï /reset-password
+Γö£ Γùï /signin
+Γö£ Γùï /signup
+Γö£ Γùï /terms
+Γö£ Γùï /upgrade
+Γö£ Γùï /upgrade/failed
+Γöö Γùï /upgrade/success
+
+
+Γùï  (Static)   prerendered as static content
+ΓùÅ  (SSG)      prerendered as static HTML (uses generateStaticParams)
+╞Æ  (Dynamic)  server-rendered on demand
+

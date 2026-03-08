@@ -510,7 +510,7 @@ export async function GET(req: NextRequest) {
     } catch {
       return new NextResponse("File not found", { status: 404 });
     }
-    return new NextResponse(pdfBuf, {
+    return new NextResponse(pdfBuf as unknown as BodyInit, {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": "inline",

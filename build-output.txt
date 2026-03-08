@@ -1,4 +1,8 @@
-Γû▓ Next.js 16.1.6 (Turbopack)
+
+> jusconsultus.ai@1.0.0 build
+> cross-env NODE_OPTIONS=--max-old-space-size=4096 next build --webpack
+
+Γû▓ Next.js 16.1.6 (webpack)
 - Environments: .env.local, .env
 - Experiments (use with caution):
   ┬╖ optimizePackageImports

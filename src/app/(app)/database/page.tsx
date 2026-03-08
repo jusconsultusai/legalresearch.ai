@@ -270,16 +270,16 @@ function DatabasePageInner() {
               )}
               {!aiLoading && aiResult && (
                 <>
-                  {(!aiResult.sources || aiResult.sources.length === 0) && (
+                  {(!aiResult!.sources || aiResult!.sources.length === 0) && (
                     <p className="text-sm text-text-tertiary italic">No sources found. Try a different query or get a full AI analysis in Chat.</p>
                   )}
-                  {aiResult.sources && aiResult.sources.length > 0 && (
+                  {aiResult!.sources && aiResult!.sources.length > 0 && (
                     <div className="space-y-3">
-                      <p className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Sources Found ({aiResult.sources.length})</p>
+                      <p className="text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Sources Found ({aiResult!.sources.length})</p>
 
                       {/* Source badges */}
                       <div className="flex flex-wrap gap-1.5">
-                        {aiResult.sources.map((s, i) => (
+                        {aiResult!.sources.map((s, i) => (
                           <button
                             key={i}
                             onClick={() => setSelectedAISource(selectedAISource?.title === s.title ? null : s)}
@@ -303,7 +303,7 @@ function DatabasePageInner() {
 
                       {/* Detailed source list */}
                       <div className="space-y-1.5 max-h-72 overflow-auto">
-                        {aiResult.sources.map((s, i) => (
+                        {aiResult!.sources.map((s, i) => (
                           <button
                             key={i}
                             onClick={() => setSelectedAISource(selectedAISource?.title === s.title ? null : s)}
