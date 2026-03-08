@@ -8,9 +8,10 @@ const LEGAL_DB_ROOT = path.join(process.cwd(), "data", "legal-database");
 const INJECTED_STYLE = `
 <style id="jusconsultus-viewer">
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --jus-base-font: 15px; }
   html, body {
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 15px;
+    font-size: var(--jus-base-font);
     line-height: 1.75;
     color: #374151;
     background: #ffffff;
@@ -271,7 +272,7 @@ const INJECTED_SCRIPT = `
     if (!ev.data || ev.data.type !== 'jus-zoom') return;
     var level = parseFloat(ev.data.zoom);
     if (isNaN(level) || level < 50 || level > 200) return;
-    document.documentElement.style.fontSize = level + '%';
+    document.documentElement.style.setProperty('--jus-base-font', (15 * level / 100) + 'px');
   });
 
   /* ── Footnote/Citation Linking ── */
