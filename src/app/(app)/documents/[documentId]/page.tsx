@@ -34,16 +34,13 @@ import {
   Brain,
   Loader2,
   FileScan,
-  Code2,
-  Play,
-  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge, Tabs, Skeleton } from "@/components/ui";
 import { useLocalStorage } from "@/hooks";
 import AIDraftingModal, { GenerationParams } from "@/components/ui/AIDraftingModal";
 import OnlyOfficeDocBuilderButton from "@/components/OnlyOfficeDocBuilderButton";
-import DocumentAnalysisModal, { type AISuggestion } from "@/components/document/DocumentAnalysisModal";
+import DocumentAnalysisModal from "@/components/document/DocumentAnalysisModal";
 
 const OnlyOfficeEditor = dynamic(() => import("@/components/editor/OnlyOfficeEditor"), { ssr: false, loading: () => (
   <div className="flex-1 bg-surface flex items-center justify-center">
@@ -60,7 +57,7 @@ interface Document {
 }
 
 type SaveState = "saved" | "saving" | "unsaved" | "error";
-type SidePanel = "ai" | "analysis" | "research" | "precedent" | "metadata" | "builder" | null;
+type SidePanel = "ai" | "analysis" | "research" | "precedent" | "metadata" | null;
 
 interface MyFile {
   id: string;
@@ -78,7 +75,6 @@ export default function DocumentEditorPage() {
   const searchParams = useSearchParams();
   const docType = searchParams.get("type");
   const mode = searchParams.get("mode");
-  const panel = searchParams.get("panel");
 
   const [document, setDocument] = useState<Document | null>(null);
   const [title, setTitle] = useState("");
@@ -92,8 +88,8 @@ export default function DocumentEditorPage() {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Side panel state — initialize from ?panel= URL param (e.g. ?panel=builder)
-  const [sidePanel, setSidePanel] = useState<SidePanel>((panel as SidePanel) || null);
+  // Side panel state
+  const [sidePanel, setSidePanel] = useState<SidePanel>(null);
   const [showRedlines, setShowRedlines] = useState(false);
   const [originalContent, setOriginalContent] = useState("");
 
@@ -102,9 +98,8 @@ export default function DocumentEditorPage() {
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
   const [aiReviewContent, setAiReviewContent] = useState<string | null>(null);
 
-  // Document version — use session-unique initial value (Date.now) to prevent
-  // stale OnlyOffice cache entries from old/failed sessions causing Download failed.
-  const [documentVersion, setDocumentVersion] = useState(() => Date.now());
+  // Document version — increment to force ONLYOFFICE to reload with new content
+  const [documentVersion, setDocumentVersion] = useState(1);
 
   // Empty‑document warning dialog ("improve" | "review" | null)
   const [emptyDocWarning, setEmptyDocWarning] = useState<"improve" | "review" | null>(null);
@@ -137,78 +132,6 @@ export default function DocumentEditorPage() {
   const [researchQuery, setResearchQuery] = useState("");
   const [researchResults, setResearchResults] = useState<{ title: string; number: string; summary: string }[]>([]);
   const [researching, setResearching] = useState(false);
-
-  // Document Builder state
-  const DEFAULT_BUILDER_SCRIPT = `builder.CreateFile("docx");
-var oDocument = Api.GetDocument();
-var oParagraph = Api.CreateParagraph();
-oParagraph.AddText("Hello world!");
-oDocument.InsertContent([oParagraph]);
-builder.SaveFile("docx", "Api.docx");
-builder.CloseFile();`;
-
-  const DEFAULT_PYTHON_SCRIPT = `import os
-import docbuilder
-
-builder = docbuilder.CDocBuilder()
-builder.CreateFile("docx")
-
-context = builder.GetContext()
-globalObj = context.GetGlobal()
-api = globalObj["Api"]
-
-document = api.GetDocument()
-paragraph = api.CreateParagraph()
-paragraph.AddText("Hello, World!")
-content = context.CreateArray(1)
-content[0] = paragraph
-document.InsertContent(content)
-
-dst = os.getcwd() + "/result.docx"
-builder.SaveFile("docx", dst)
-builder.CloseFile()`;
-
-  const [builderLang, setBuilderLang] = useState<"script" | "python">("script");
-  const [builderScript, setBuilderScript] = useState(DEFAULT_BUILDER_SCRIPT);
-  const [builderPython, setBuilderPython] = useState(DEFAULT_PYTHON_SCRIPT);
-  const [builderFormat, setBuilderFormat] = useState<"docx" | "xlsx" | "pptx">("docx");
-  const [builderFilename, setBuilderFilename] = useState("generated");
-  const [builderRunning, setBuilderRunning] = useState(false);
-  const [builderStatus, setBuilderStatus] = useState<{ type: "success" | "error"; text: string } | null>(null);
-
-  const handleRunBuilder = useCallback(async () => {
-    setBuilderRunning(true);
-    setBuilderStatus(null);
-    try {
-      const isScript = builderLang === "script";
-      const endpoint = isScript ? "/api/onlyoffice/builder" : "/api/onlyoffice/builder/python";
-      const body = isScript
-        ? { builderScript, outputType: builderFormat, title: builderFilename || "generated" }
-        : { script: builderPython, outputType: builderFormat, filename: builderFilename || "generated" };
-
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "Unknown error" }));
-        throw new Error(err.error || (err.details ? `${err.error}: ${err.details}` : `Failed (${res.status})`));
-      }
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = window.document.createElement("a");
-      a.href = url;
-      a.download = `${builderFilename || "generated"}.${builderFormat}`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-      setBuilderStatus({ type: "success", text: `Generated ${builderFilename || "generated"}.${builderFormat}` });
-    } catch (e: any) {
-      setBuilderStatus({ type: "error", text: e?.message || "Generation failed" });
-    } finally {
-      setBuilderRunning(false);
-    }
-  }, [builderLang, builderScript, builderPython, builderFormat, builderFilename]);
 
   // Precedent library (from My Files)
   const [myFiles] = useLocalStorage<MyFile[]>("jusconsultus-my-files", []);
@@ -663,7 +586,6 @@ builder.CloseFile()`;
         type="file"
         accept=".pdf,.docx,.doc,.txt,.html,.htm"
         className="hidden"
-        aria-label="Import document file"
         onChange={handleImportFile}
       />
 
@@ -725,11 +647,6 @@ builder.CloseFile()`;
           {/* Metadata */}
           <button onClick={() => toggleSidePanel("metadata")} className={cn("p-2 rounded-lg transition-colors", sidePanel === "metadata" ? "bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400" : "hover:bg-surface-tertiary text-text-secondary")} title="Document Metadata">
             <Tag className="w-4 h-4" />
-          </button>
-
-          {/* Builder */}
-          <button onClick={() => toggleSidePanel("builder")} className={cn("p-2 rounded-lg transition-colors", sidePanel === "builder" ? "bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400" : "hover:bg-surface-tertiary text-text-secondary")} title="Document Builder">
-            <Code2 className="w-4 h-4" />
           </button>
 
           <button className="p-2 hover:bg-surface-tertiary rounded-lg transition-colors" title="Share">
@@ -834,7 +751,7 @@ builder.CloseFile()`;
           {toast.type === "error" && <AlertCircle className="w-3.5 h-3.5 shrink-0" />}
           {toast.type === "info" && <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" />}
           <span className="flex-1">{toast.text}</span>
-          <button onClick={() => setToast(null)} title="Dismiss" aria-label="Dismiss notification"><X className="w-3.5 h-3.5" /></button>
+          <button onClick={() => setToast(null)}><X className="w-3.5 h-3.5" /></button>
         </div>
       )}
 
@@ -883,7 +800,7 @@ builder.CloseFile()`;
 
         {/* Side Panel */}
         {sidePanel && (
-          <div className={cn("bg-surface border-l border-border flex flex-col animate-slide-in overflow-hidden", sidePanel === "builder" ? "w-[480px]" : "w-80")}>
+          <div className="w-80 bg-surface border-l border-border flex flex-col animate-slide-in overflow-hidden">
             {/* Panel Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
@@ -892,7 +809,6 @@ builder.CloseFile()`;
                 {sidePanel === "research" && <><Search className="w-4 h-4 text-primary-600" /> Legal Research</>}
                 {sidePanel === "precedent" && <><FolderOpen className="w-4 h-4 text-primary-600" /> Precedent Library</>}
                 {sidePanel === "metadata" && <><Tag className="w-4 h-4 text-primary-600" /> Metadata</>}
-                {sidePanel === "builder" && <><Code2 className="w-4 h-4 text-orange-500" /> Document Builder</>}
               </h3>
               <button onClick={() => setSidePanel(null)} className="p-1 hover:bg-surface-tertiary rounded" title="Close panel">
                 <X className="w-4 h-4 text-text-tertiary" />
@@ -1143,160 +1059,6 @@ builder.CloseFile()`;
                 </div>
               )}
 
-              {/* Builder Panel */}
-              {sidePanel === "builder" && (
-                <div className="flex flex-col gap-3 h-full">
-
-                  {/* Language switcher */}
-                  <div className="flex rounded-lg border border-border overflow-hidden text-xs font-medium shrink-0">
-                    <button
-                      onClick={() => { setBuilderLang("script"); setBuilderStatus(null); }}
-                      className={cn("flex-1 py-1.5 transition-colors", builderLang === "script" ? "bg-orange-600 text-white" : "bg-surface text-text-secondary hover:bg-surface-tertiary")}
-                    >
-                      .docbuilder Script
-                    </button>
-                    <button
-                      onClick={() => { setBuilderLang("python"); setBuilderStatus(null); }}
-                      className={cn("flex-1 py-1.5 transition-colors border-l border-border", builderLang === "python" ? "bg-blue-600 text-white" : "bg-surface text-text-secondary hover:bg-surface-tertiary")}
-                    >
-                      Python
-                    </button>
-                  </div>
-
-                  {/* Options row */}
-                  <div className="flex gap-2 shrink-0">
-                    <div className="flex flex-col gap-1 flex-1">
-                      <label className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">Output Format</label>
-                      <div className="relative">
-                        <select
-                          value={builderFormat}
-                          onChange={(e) => setBuilderFormat(e.target.value as "docx" | "xlsx" | "pptx")}
-                          title="Output format"
-                          aria-label="Output format"
-                          className="w-full text-xs border border-border rounded-lg px-2.5 py-1.5 bg-surface text-text-primary appearance-none pr-7 focus:outline-none focus:ring-2 focus:ring-orange-400"
-                        >
-                          <option value="docx">DOCX (Word)</option>
-                          <option value="xlsx">XLSX (Spreadsheet)</option>
-                          <option value="pptx">PPTX (Presentation)</option>
-                        </select>
-                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-tertiary pointer-events-none" />
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-1 flex-1">
-                      <label className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">Filename</label>
-                      <input
-                        type="text"
-                        value={builderFilename}
-                        onChange={(e) => setBuilderFilename(e.target.value)}
-                        placeholder="generated"
-                        className="text-xs border border-border rounded-lg px-2.5 py-1.5 bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-orange-400"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Script editor */}
-                  <div className="flex flex-col gap-1 flex-1">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
-                        {builderLang === "script" ? ".docbuilder Script" : "Python Script"}
-                      </label>
-                      <a
-                        href={
-                          builderLang === "script"
-                            ? "https://api.onlyoffice.com/playground/?editor=word&testType=builder"
-                            : "https://api.onlyoffice.com/docs/document-builder/builder-framework/Python/CDocBuilder/"
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[10px] text-primary-600 hover:underline flex items-center gap-0.5"
-                      >
-                        <ExternalLink className="w-2.5 h-2.5" />
-                        {builderLang === "script" ? "Playground" : "API Docs"}
-                      </a>
-                    </div>
-                    {builderLang === "script" ? (
-                      <textarea
-                        value={builderScript}
-                        onChange={(e) => setBuilderScript(e.target.value)}
-                        spellCheck={false}
-                        className="flex-1 min-h-[300px] font-mono text-xs border border-border rounded-lg p-3 bg-surface-secondary text-text-primary resize-none focus:outline-none focus:ring-2 focus:ring-orange-400 leading-relaxed"
-                        placeholder={"builder.CreateFile('docx');\nvar oDocument = Api.GetDocument();\n..."}
-                      />
-                    ) : (
-                      <>
-                        <textarea
-                          value={builderPython}
-                          onChange={(e) => setBuilderPython(e.target.value)}
-                          spellCheck={false}
-                          className="flex-1 min-h-[300px] font-mono text-xs border border-border rounded-lg p-3 bg-surface-secondary text-text-primary resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 leading-relaxed"
-                          placeholder={"import docbuilder\nbuilder = docbuilder.CDocBuilder()\nbuilder.CreateFile('docx')\n..."}
-                        />
-                        <div className="mt-1 px-2 py-1.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/40 rounded-lg text-[10px] text-blue-700 dark:text-blue-400 leading-relaxed">
-                          <strong>CDocBuilder methods:</strong>{" "}
-                          <span className="font-mono">CreateFile(type)</span> ·{" "}
-                          <span className="font-mono">OpenFile(path, params)</span> ·{" "}
-                          <span className="font-mono">SaveFile(type, path)</span> ·{" "}
-                          <span className="font-mono">CloseFile()</span> ·{" "}
-                          <span className="font-mono">GetContext()</span> ·{" "}
-                          <span className="font-mono">ExecuteCommand(cmd)</span> ·{" "}
-                          <span className="font-mono">RunText(commands)</span> ·{" "}
-                          <span className="font-mono">SetTmpFolder(path)</span> ·{" "}
-                          <span className="font-mono">SetProperty(param, val)</span> ·{" "}
-                          <span className="font-mono">GetVersion()</span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Status */}
-                  {builderStatus && (
-                    <div className={cn(
-                      "flex items-start gap-2 text-xs rounded-lg px-3 py-2 border shrink-0",
-                      builderStatus.type === "success"
-                        ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700/40 text-green-700 dark:text-green-400"
-                        : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700/40 text-red-700 dark:text-red-400"
-                    )}>
-                      {builderStatus.type === "success" ? <Check className="w-3.5 h-3.5 shrink-0 mt-0.5" /> : <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
-                      <span className="break-all">{builderStatus.text}</span>
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex gap-2 shrink-0">
-                    <button
-                      onClick={handleRunBuilder}
-                      disabled={builderRunning || (builderLang === "script" ? !builderScript.trim() : !builderPython.trim())}
-                      className={cn(
-                        "flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-white disabled:opacity-50 transition-colors",
-                        builderLang === "script" ? "bg-orange-600 hover:bg-orange-700" : "bg-blue-600 hover:bg-blue-700"
-                      )}
-                    >
-                      {builderRunning ? (
-                        <><Loader2 className="w-4 h-4 animate-spin" /> Running...</>
-                      ) : (
-                        <><Play className="w-4 h-4" /> Run & Download</>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => {
-                        builderLang === "script" ? setBuilderScript(DEFAULT_BUILDER_SCRIPT) : setBuilderPython(DEFAULT_PYTHON_SCRIPT);
-                        setBuilderStatus(null);
-                      }}
-                      title="Reset to default script"
-                      className="px-3 py-2 text-xs border border-border rounded-lg text-text-secondary hover:bg-surface-tertiary transition-colors shrink-0"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  <p className="text-[10px] text-text-tertiary leading-relaxed shrink-0">
-                    {builderLang === "script"
-                      ? "Runs a .docbuilder script server-side via ONLYOFFICE Document Builder."
-                      : "Runs a Python script using the docbuilder package. Requires \`pip install docbuilder\` on the server."}
-                  </p>
-                </div>
-              )}
-
               {/* Metadata Panel */}
               {sidePanel === "metadata" && (
                 <div className="space-y-4">
@@ -1413,42 +1175,6 @@ builder.CloseFile()`;
           } catch {
             showToast("Failed to apply suggestion", "error");
           }
-        }}
-        onApplyAllCorrections={async (suggestions: AISuggestion[]) => {
-          try {
-            let latest = await fetchLatestContent();
-            let applied = 0;
-            for (const s of suggestions) {
-              if (!s.original || !s.suggested) continue;
-              const before = latest;
-              latest = latest.replace(s.original, s.suggested);
-              if (latest !== before) applied++;
-            }
-            if (applied > 0) {
-              await pushContentAndReload(latest);
-              showToast(`Applied ${applied} of ${suggestions.length} correction(s) to document`, "success");
-            } else {
-              showToast("Could not locate any of the suggested texts in the document — try copying manually", "error");
-            }
-          } catch {
-            showToast("Failed to apply corrections", "error");
-          }
-        }}
-        onSendToBuilder={(suggestions: AISuggestion[]) => {
-          // Build a .docbuilder script that performs find-and-replace for each correction
-          const replaceLines = suggestions.map((s) => {
-            const esc = (str: string) => str.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
-            return `oDocument.SearchAndReplace({"searchString": "${esc(s.original)}", "replaceString": "${esc(s.suggested)}"});`;
-          });
-          const script = [
-            `// Auto-generated corrections from Document Analysis`,
-            `// ${suggestions.length} suggestion(s)`,
-            `var oDocument = Api.GetDocument();`,
-            ...replaceLines,
-          ].join("\n");
-          setBuilderScript(script);
-          setSidePanel("builder");
-          showToast(`${suggestions.length} correction(s) loaded into Document Builder`, "success");
         }}
         onInsertAnalysis={async (analysis) => {
           const summary = [

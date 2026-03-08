@@ -94,32 +94,19 @@ export default function OnlyOfficeEditor({
       const stale = window.document.getElementById("onlyoffice-api-script");
       if (stale) stale.remove();
 
-      // Give the browser more time — proxy requests can take several seconds
-      // and the first load after server startup is slower due to JIT compilation.
-      const timeout = setTimeout(() => {
-        script.remove();
-        reject(
-          new Error(
-            `Timed out loading ONLYOFFICE API from ${onlyofficeUrl}.\nMake sure ONLYOFFICE Document Server is running:\n\ndocker-compose up -d`
-          )
-        );
-      }, 30_000);
-
       const script = window.document.createElement("script");
       script.id = "onlyoffice-api-script";
       script.src = `${onlyofficeUrl}/web-apps/apps/api/documents/api.js`;
       script.async = true;
       script.onload = () => {
-        clearTimeout(timeout);
         if (window.DocsAPI) {
           resolve();
         } else {
           script.remove();
-          reject(new Error("ONLYOFFICE API script loaded but DocsAPI is undefined. The Document Server may still be starting up — retrying..."));
+          reject(new Error("ONLYOFFICE API script loaded but DocsAPI is undefined. The Document Server may still be starting up — please retry in a few seconds."));
         }
       };
       script.onerror = () => {
-        clearTimeout(timeout);
         script.remove();
         reject(
           new Error(
@@ -212,11 +199,12 @@ export default function OnlyOfficeEditor({
           const msg = err?.message || "Failed to initialize ONLYOFFICE editor";
           const isDocsAPIUndefined = msg.includes("DocsAPI is undefined");
 
-          // Auto-retry up to 3 times (with fast 1 / 2 / 3 s delays) when DocsAPI
+          // Auto-retry up to 3 times (with 3 / 6 / 9 s delays) when DocsAPI
           // isn't ready yet — the Document Server is still warming up.
           if (isDocsAPIUndefined && retryCount < 3) {
-            const delay = (retryCount + 1) * 1000;
-            setAutoRetryMsg(`Document Server is starting up — retrying… (${retryCount + 1}/3)`);
+            const delay = (retryCount + 1) * 3000;
+            const seconds = delay / 1000;
+            setAutoRetryMsg(`Document Server is starting up — retrying in ${seconds}s… (${retryCount + 1}/3)`);
             setLoading(true);
             autoRetryRef.current = setTimeout(() => {
               if (!destroyed) setRetryCount((c) => c + 1);

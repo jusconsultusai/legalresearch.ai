@@ -16,18 +16,13 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [securityLoading, setSecurityLoading] = useState(false);
-  const [securityError, setSecurityError] = useState("");
-  const [securitySuccess, setSecuritySuccess] = useState(false);
 
   // Plan metadata
   const PLAN_INFO: Record<string, { name: string; description: string; searches: number }> = {
-    free:       { name: "Free Plan",   description: "15 AI searches per 14 days · Basic legal database", searches: 15 },
-    pro:        { name: "Pro Plan",    description: "Unlimited searches · Full legal database", searches: -1 },
-    team:       { name: "Team Plan",   description: "Unlimited searches · Team collaboration", searches: -1 },
+    free:       { name: "Free Plan",   description: "15 AI searches per month · Basic legal database", searches: 15 },
+    pro:        { name: "Pro Plan",    description: "500 AI searches per month · Full legal database", searches: 500 },
+    team:       { name: "Team Plan",   description: "2,000 searches per month · Team collaboration", searches: 2000 },
     enterprise: { name: "Enterprise",  description: "Unlimited searches · Custom integrations", searches: -1 },
   };
   const planKey = user?.plan || "free";
@@ -54,41 +49,6 @@ export default function ProfilePage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const handlePasswordChange = async () => {
-    setSecurityError("");
-    setSecuritySuccess(false);
-
-    if (form.newPassword.length < 8) {
-      setSecurityError("New password must be at least 8 characters.");
-      return;
-    }
-    if (form.newPassword !== form.confirmPassword) {
-      setSecurityError("Passwords do not match.");
-      return;
-    }
-
-    setSecurityLoading(true);
-    try {
-      const res = await fetch("/api/user/change-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          currentPassword: form.currentPassword || undefined,
-          newPassword: form.newPassword,
-        }),
-      });
-      const data = await res.json() as { error?: string };
-      if (!res.ok) throw new Error(data.error || "Something went wrong.");
-      setSecuritySuccess(true);
-      setForm((f) => ({ ...f, currentPassword: "", newPassword: "", confirmPassword: "" }));
-      setTimeout(() => setSecuritySuccess(false), 4000);
-    } catch (err) {
-      setSecurityError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
-      setSecurityLoading(false);
-    }
-  };
-
   const TABS = [
     { id: "profile", label: "Profile", icon: <User className="w-4 h-4" /> },
     { id: "security", label: "Security", icon: <Shield className="w-4 h-4" /> },
@@ -97,20 +57,20 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto py-4 sm:py-8 px-4 sm:px-6 space-y-6">
+    <div className="max-w-4xl mx-auto py-8 px-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-text-primary">Account Settings</h1>
         <p className="text-sm text-text-secondary mt-1">Manage your profile and preferences</p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-        {/* Tabs — horizontal scroll on mobile, vertical sidebar on sm+ */}
-        <div className="flex sm:flex-col sm:w-48 sm:shrink-0 gap-1 overflow-x-auto pb-1 sm:pb-0">
+      <div className="flex gap-6">
+        {/* Sidebar */}
+        <div className="w-48 shrink-0 space-y-1">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex shrink-0 sm:w-full items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-left whitespace-nowrap transition-colors ${
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-left transition-colors ${
                 activeTab === tab.id ? "bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 font-medium" : "hover:bg-surface-secondary text-text-secondary"
               }`}
             >
@@ -217,58 +177,27 @@ export default function ProfilePage() {
 
           {activeTab === "security" && (
             <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-1">{user?.hasPassword ? "Change Password" : "Set a Password"}</h2>
-              {!user?.hasPassword && (
-                <p className="text-sm text-text-secondary mb-4">
-                  Your account uses Google Sign-In. Set a password below to also enable email&nbsp;+&nbsp;password login.
-                </p>
-              )}
-              {securityError && (
-                <div className="mb-4 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-400">
-                  {securityError}
-                </div>
-              )}
-              {securitySuccess && (
-                <div className="mb-4 px-4 py-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-sm text-green-600 dark:text-green-400">
-                  Password updated successfully!
-                </div>
-              )}
+              <h2 className="text-lg font-semibold mb-4">Change Password</h2>
               <div className="space-y-4 max-w-sm">
-                {user?.hasPassword && (
-                  <div>
-                    <label className="block text-xs font-medium text-text-secondary mb-1.5">Current Password</label>
-                    <div className="relative">
-                      <input type={showPassword ? "text" : "password"} className="input pr-10" value={form.currentPassword} onChange={(e) => setForm({ ...form, currentPassword: e.target.value })} placeholder="Current password" />
-                      <button className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowPassword(!showPassword)} title="Toggle password visibility">
-                        {showPassword ? <EyeOff className="w-4 h-4 text-text-tertiary" /> : <Eye className="w-4 h-4 text-text-tertiary" />}
-                      </button>
-                    </div>
-                  </div>
-                )}
                 <div>
-                  <label className="block text-xs font-medium text-text-secondary mb-1.5">New Password</label>
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5">Current Password</label>
                   <div className="relative">
-                    <input type={showNewPassword ? "text" : "password"} className="input pr-10" value={form.newPassword} onChange={(e) => setForm({ ...form, newPassword: e.target.value })} placeholder="At least 8 characters" />
-                    <button className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowNewPassword(!showNewPassword)} title="Toggle new password visibility">
-                      {showNewPassword ? <EyeOff className="w-4 h-4 text-text-tertiary" /> : <Eye className="w-4 h-4 text-text-tertiary" />}
+                    <input type={showPassword ? "text" : "password"} className="input pr-10" value={form.currentPassword} onChange={(e) => setForm({ ...form, currentPassword: e.target.value })} placeholder="Current password" />
+                    <button className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowPassword(!showPassword)} title="Toggle password visibility">
+                      {showPassword ? <EyeOff className="w-4 h-4 text-text-tertiary" /> : <Eye className="w-4 h-4 text-text-tertiary" />}
                     </button>
                   </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5">New Password</label>
+                  <input type="password" className="input" value={form.newPassword} onChange={(e) => setForm({ ...form, newPassword: e.target.value })} placeholder="New password" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-text-secondary mb-1.5">Confirm New Password</label>
-                  <div className="relative">
-                    <input type={showConfirmPassword ? "text" : "password"} className="input pr-10" value={form.confirmPassword} onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })} placeholder="Confirm new password" />
-                    <button className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowConfirmPassword(!showConfirmPassword)} title="Toggle confirm password visibility">
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4 text-text-tertiary" /> : <Eye className="w-4 h-4 text-text-tertiary" />}
-                    </button>
-                  </div>
+                  <input type="password" className="input" value={form.confirmPassword} onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })} placeholder="Confirm new password" />
                 </div>
-                <button
-                  onClick={handlePasswordChange}
-                  disabled={securityLoading}
-                  className="px-5 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 disabled:opacity-50 transition-colors"
-                >
-                  {securityLoading ? "Updating…" : user?.hasPassword ? "Update Password" : "Set Password"}
+                <button onClick={handleSave} className="px-5 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors">
+                  Update Password
                 </button>
               </div>
             </Card>
@@ -379,25 +308,21 @@ export default function ProfilePage() {
 
                 {/* Usage */}
                 <div className="space-y-2 mb-5">
-                  {planInfo.searches === -1 ? (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-text-secondary">AI Searches</span>
-                      <span className="font-semibold text-sm text-green-600 dark:text-green-400">Unlimited</span>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-text-secondary">Searches used this period</span>
-                        <span className="font-semibold text-sm">
-                          {Math.max(0, planInfo.searches - Math.max(0, user?.searchesLeft ?? planInfo.searches))} / {planInfo.searches}
-                        </span>
-                      </div>
-                      <ProgressBar
-                        value={Math.min(100, ((planInfo.searches - Math.max(0, user?.searchesLeft ?? planInfo.searches)) / planInfo.searches) * 100)}
-                        aria-label="Search usage"
-                        barClassName="bg-primary-600"
-                      />
-                    </>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-text-secondary">Searches used this month</span>
+                    <span className="font-semibold text-sm">
+                      {planInfo.searches === -1
+                        ? `${Math.max(0, (planInfo.searches === -1 ? 0 : planInfo.searches) - (user?.searchesLeft ?? 0))} / Unlimited`
+                        : `${Math.max(0, planInfo.searches - (user?.searchesLeft ?? planInfo.searches))} / ${planInfo.searches}`
+                      }
+                    </span>
+                  </div>
+                  {planInfo.searches !== -1 && (
+                    <ProgressBar
+                      value={Math.min(100, ((planInfo.searches - (user?.searchesLeft ?? planInfo.searches)) / planInfo.searches) * 100)}
+                      aria-label="Search usage"
+                      barClassName={isPaid ? "bg-primary-600" : "bg-primary-600"}
+                    />
                   )}
                 </div>
 

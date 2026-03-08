@@ -28,7 +28,6 @@ import {
   Wand2,
   Sparkles,
   Loader2,
-  ExternalLink,
 } from "lucide-react";
 
 interface LocalFile {
@@ -112,8 +111,6 @@ export default function MyFilesPage() {
 
   // "Use in Builder" loading state (tracks which file is being opened)
   const [builderLoading, setBuilderLoading] = useState<string | null>(null);
-  // "Edit in OnlyOffice" loading state
-  const [editorLoading, setEditorLoading] = useState<string | null>(null);
 
   const filtered = files.filter((f) => {
     const matchesSearch =
@@ -232,49 +229,13 @@ export default function MyFilesPage() {
         }).catch(() => {/* non-critical */});
       }
 
-      // Navigate directly to the document editor with builder panel open
-      router.push(`/documents/${docId}?panel=builder`);
+      // Navigate directly to the document editor
+      router.push(`/documents/${docId}`);
     } catch {
       alert("Failed to open in Document Builder. Please try again.");
     } finally {
       setBuilderLoading(null);
     }
-  };
-
-  const handleOpenInEditor = async (file: LocalFile) => {
-    setEditorLoading(file.id);
-    try {
-      syncFileToChat(file);
-      const title = file.name.replace(/\.[^.]+$/, "") || file.name;
-      const res = await fetch("/api/documents", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, content: "", category: "general" }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.document?.id) { alert("Failed to create document. Please try again."); return; }
-      const docId = data.document.id as string;
-      let html = "";
-      if (file.type.startsWith("text/") || file.type === "application/json") {
-        try {
-          const decoded = atob(file.content.split(",")[1] || "");
-          html = decoded.startsWith("<")
-            ? decoded
-            : `<p>${decoded.replace(/\n\n+/g, "</p><p>").replace(/\n/g, "<br/>")}</p>`;
-        } catch { html = `<p>Imported from: ${file.name}</p>`; }
-      } else {
-        html = `<h2>${title}</h2><p><em>File imported from My Files: ${file.name}</em></p><p>Edit this document to add your content.</p>`;
-      }
-      if (html) {
-        await fetch("/api/onlyoffice/content", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ documentId: docId, html }),
-        }).catch(() => {});
-      }
-      router.push(`/documents/${docId}`);
-    } catch { alert("Failed to open in editor. Please try again."); }
-    finally { setEditorLoading(null); }
   };
 
   // Sync a single file to DB so AI Chat can reference it
@@ -309,22 +270,21 @@ export default function MyFilesPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-4 sm:py-8 px-3 sm:px-6 space-y-4 sm:space-y-6" id="tour-myfiles">
+    <div className="max-w-7xl mx-auto py-8 px-6 space-y-6" id="tour-myfiles">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-bold text-text-primary">My Files</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-text-primary">My Files</h1>
           <p className="text-sm text-text-secondary mt-1">
             Your personal legal documents stored locally in your browser
           </p>
         </div>
         <button
           onClick={() => setShowUploadModal(true)}
-          className="flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors shrink-0"
+          className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors"
         >
           <Upload className="w-4 h-4" />
-          <span className="hidden sm:inline">Upload Files</span>
-          <span className="sm:hidden">Upload</span>
+          Upload Files
         </button>
       </div>
 
@@ -493,20 +453,6 @@ export default function MyFilesPage() {
                   AI Analyze
                 </button>
 
-                {/* Labeled: Edit in OnlyOffice */}
-                <button
-                  onClick={() => handleOpenInEditor(file)}
-                  disabled={editorLoading === file.id}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-900/30 dark:hover:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 text-xs font-medium transition-colors border border-cyan-200 dark:border-cyan-700/40 disabled:opacity-60"
-                >
-                  {editorLoading === file.id ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  )}
-                  Edit
-                </button>
-
                 {/* Labeled: Use in Builder */}
                 <button
                   onClick={() => handleUseInDocBuilder(file)}
@@ -543,9 +489,7 @@ export default function MyFilesPage() {
                 ) : (
                   <button
                     onClick={() => setDeleteConfirm(file.id)}
-                    title="Delete file"
-                    aria-label="Delete file"
-                    className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-text-tertiary hover:text-red-500 transition-colors"
+                  className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-text-tertiary hover:text-red-500 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -584,18 +528,6 @@ export default function MyFilesPage() {
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   AI
-                </button>
-                <button
-                  onClick={() => handleOpenInEditor(file)}
-                  disabled={editorLoading === file.id}
-                  className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-900/30 dark:hover:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 text-xs font-medium transition-colors border border-cyan-200 dark:border-cyan-700/40 disabled:opacity-60"
-                >
-                  {editorLoading === file.id ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  )}
-                  Edit
                 </button>
                 <button
                   onClick={() => handleUseInDocBuilder(file)}
