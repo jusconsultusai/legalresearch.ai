@@ -57,7 +57,7 @@ interface Document {
 }
 
 type SaveState = "saved" | "saving" | "unsaved" | "error";
-type SidePanel = "ai" | "analysis" | "research" | "precedent" | "metadata" | null;
+type SidePanel = "ai" | "improve" | "analysis" | "research" | "precedent" | "metadata" | null;
 
 interface MyFile {
   id: string;
@@ -97,6 +97,8 @@ export default function DocumentEditorPage() {
   const [aiProcessing, setAiProcessing] = useState(false);
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
   const [aiReviewContent, setAiReviewContent] = useState<string | null>(null);
+  const [aiImproveContent, setAiImproveContent] = useState<string | null>(null);
+  const [aiImproveHtml, setAiImproveHtml] = useState<string | null>(null);
 
   // Document version — increment to force ONLYOFFICE to reload with new content
   const [documentVersion, setDocumentVersion] = useState(1);
@@ -486,18 +488,32 @@ ${stripped}`,
 
       if (res.ok) {
         const data = await res.json();
-        const improvedHtml = (data.content as string)
+        const rawContent = data.content as string;
+        const improvedHtml = rawContent
           .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
           .replace(/^#{1,3} (.+)/gm, "<h2>$1</h2>")
           .replace(/\n\n+/g, "</p><p>")
           .replace(/\n/g, "<br/>");
-        await pushContentAndReload(`<p>${improvedHtml}</p>`);
-        showToast("Document improved — editor reloading", "success");
+        // Store the improvement for user review
+        setAiImproveContent(rawContent);
+        setAiImproveHtml(`<p>${improvedHtml}</p>`);
+        setSidePanel("improve");
+        showToast("AI Improve complete — review suggestions in the side panel", "success");
       } else {
         showToast("AI Improve failed — please try again", "error");
       }
     } catch { showToast("AI Improve failed — please try again", "error"); }
     finally { setAiProcessing(false); }
+  };
+
+  // Apply AI Improvement to document
+  const handleApplyImprovement = async () => {
+    if (!aiImproveHtml) return;
+    await pushContentAndReload(aiImproveHtml);
+    setAiImproveContent(null);
+    setAiImproveHtml(null);
+    setSidePanel(null);
+    showToast("Improvement applied — editor reloading", "success");
   };
 
   // ── AI Review handler ─────────────────────────────────────────────────────
@@ -838,6 +854,7 @@ ${stripped}`,
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
                 {sidePanel === "ai" && <><Sparkles className="w-4 h-4 text-primary-600" /> AI Assistant</>}
+                {sidePanel === "improve" && <><Zap className="w-4 h-4 text-amber-600" /> AI Improve</>}
                 {sidePanel === "analysis" && <><Lightbulb className="w-4 h-4 text-primary-600" /> Document Analysis</>}
                 {sidePanel === "research" && <><Search className="w-4 h-4 text-primary-600" /> Legal Research</>}
                 {sidePanel === "precedent" && <><FolderOpen className="w-4 h-4 text-primary-600" /> Precedent Library</>}
@@ -892,6 +909,106 @@ ${stripped}`,
                       >
                         <Brain className="w-3.5 h-3.5" />
                         Start Review
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* AI Improve Panel */}
+              {sidePanel === "improve" && (
+                <div className="space-y-4">
+                  {aiProcessing ? (
+                    <div className="flex flex-col items-center justify-center py-12 gap-3">
+                      <div className="w-8 h-8 border-2 border-amber-200 border-t-amber-600 rounded-full animate-spin" />
+                      <p className="text-xs text-text-secondary">AI is improving your document…</p>
+                    </div>
+                  ) : aiImproveContent ? (
+                    <div className="space-y-4">
+                      {/* Improvement Categories */}
+                      <div className="space-y-3">
+                        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700/40 rounded-lg p-3">
+                          <h4 className="text-xs font-semibold text-green-700 dark:text-green-400 flex items-center gap-1.5 mb-1">
+                            <Check className="w-3.5 h-3.5" />
+                            Grammar & Spelling
+                          </h4>
+                          <p className="text-[11px] text-green-600 dark:text-green-400/80">Fixed errors, punctuation, and sentence structure</p>
+                        </div>
+
+                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/40 rounded-lg p-3">
+                          <h4 className="text-xs font-semibold text-blue-700 dark:text-blue-400 flex items-center gap-1.5 mb-1">
+                            <BookOpen className="w-3.5 h-3.5" />
+                            Legal Clarity & Word Choice
+                          </h4>
+                          <p className="text-[11px] text-blue-600 dark:text-blue-400/80">Precise terminology and authoritative phrasing</p>
+                        </div>
+
+                        <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700/40 rounded-lg p-3">
+                          <h4 className="text-xs font-semibold text-purple-700 dark:text-purple-400 flex items-center gap-1.5 mb-1">
+                            <Scale className="w-3.5 h-3.5" />
+                            Jurisprudence & Citations
+                          </h4>
+                          <p className="text-[11px] text-purple-600 dark:text-purple-400/80">Philippine SC cases, G.R. numbers, statutes, doctrines</p>
+                        </div>
+
+                        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-lg p-3">
+                          <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5 mb-1">
+                            <FileText className="w-3.5 h-3.5" />
+                            Structure & Formatting
+                          </h4>
+                          <p className="text-[11px] text-amber-600 dark:text-amber-400/80">Paragraph flow and standard clauses</p>
+                        </div>
+                      </div>
+
+                      {/* Preview */}
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
+                          <Eye className="w-3.5 h-3.5 text-text-tertiary" />
+                          Improved Document Preview
+                        </h4>
+                        <div className="text-xs text-text-secondary whitespace-pre-wrap leading-relaxed bg-surface-secondary rounded-lg p-3 max-h-[40vh] overflow-auto border border-border">
+                          {aiImproveContent}
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleApplyImprovement}
+                          className="flex-1 px-4 py-2.5 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 transition-colors flex items-center justify-center gap-1.5"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          Apply Improvement
+                        </button>
+                        <button
+                          onClick={() => { setAiImproveContent(null); setAiImproveHtml(null); setSidePanel(null); }}
+                          className="px-4 py-2.5 text-xs text-text-secondary border border-border rounded-lg hover:bg-surface-secondary transition-colors"
+                        >
+                          Discard
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={handleAIImprove}
+                        disabled={aiProcessing}
+                        className="w-full text-xs text-amber-600 hover:text-amber-700 py-2 border border-amber-200 rounded-lg flex items-center justify-center gap-1.5 hover:bg-amber-50 transition-colors disabled:opacity-50"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        Re-run Improvement
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <Zap className="w-10 h-10 text-text-tertiary mx-auto mb-3" />
+                      <p className="text-xs font-semibold text-text-primary mb-1">AI Document Improve</p>
+                      <p className="text-xs text-text-secondary mb-5 leading-relaxed">Enhance your document with grammar fixes, legal clarity, jurisprudence citations, and proper formatting.</p>
+                      <button
+                        onClick={handleAIImprove}
+                        disabled={aiProcessing}
+                        className="px-4 py-2 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50 flex items-center gap-1.5 mx-auto"
+                      >
+                        <Zap className="w-3.5 h-3.5" />
+                        Start Improvement
                       </button>
                     </div>
                   )}
