@@ -53,15 +53,23 @@ function formatDate(dateStr: string): string {
 // ─── AI options ───────────────────────────────────────────────────────────────
 const AI_TONES = [
   { value: "formal", label: "Formal", desc: "Standard legal language" },
-  { value: "persuasive", label: "Persuasive", desc: "Advocacy-focused" },
+  { value: "assertive", label: "Assertive", desc: "Strong and persuasive" },
   { value: "neutral", label: "Neutral", desc: "Objective and balanced" },
-  { value: "technical", label: "Technical", desc: "Precise, clause-heavy" },
+  { value: "conciliatory", label: "Conciliatory", desc: "Cooperative tone" },
+];
+
+const AI_STYLES = [
+  { value: "standard", label: "Standard", desc: "Traditional format" },
+  { value: "modern", label: "Modern", desc: "Reader-friendly" },
+  { value: "concise", label: "Concise", desc: "Brief and direct" },
+  { value: "comprehensive", label: "Comprehensive", desc: "Thorough detail" },
 ];
 
 const AI_LENGTHS = [
   { value: "short", label: "Brief", desc: "1–2 pages" },
   { value: "medium", label: "Standard", desc: "3–5 pages" },
-  { value: "long", label: "Comprehensive", desc: "6+ pages" },
+  { value: "long", label: "Long", desc: "6–10 pages" },
+  { value: "detailed", label: "Detailed", desc: "10+ pages" },
 ];
 
 function toHtml(raw: string): string {
@@ -190,8 +198,9 @@ export default function NewDocumentPage() {
   // ── ai mode ──────────────────────────────────────────────────────
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiTone, setAiTone] = useState("formal");
+  const [aiStyle, setAiStyle] = useState("standard");
   const [aiLength, setAiLength] = useState("medium");
-  const [aiJurisdiction, setAiJurisdiction] = useState("Philippines");
+  const [aiJurisdiction, setAiJurisdiction] = useState("Republic of the Philippines");
   const [generatingAI, setGeneratingAI] = useState(false);
   const [aiStep, setAiStep] = useState<"form" | "generating" | "done">("form");
 
@@ -339,11 +348,19 @@ export default function NewDocumentPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          documentType: selectedType || "legal document",
-          details: { title: documentTitle, prompt: aiPrompt.trim(), jurisdiction: aiJurisdiction },
+          documentType: selectedType || selectedTypeLabel || "legal document",
+          templateId: selectedType,
+          details: { 
+            title: documentTitle, 
+            prompt: aiPrompt.trim(), 
+            jurisdiction: aiJurisdiction,
+            category: selectedCategory,
+          },
           tone: aiTone,
+          style: aiStyle,
           length: aiLength,
           jurisdiction: aiJurisdiction,
+          title: documentTitle,
         }),
       });
       if (genRes.ok) {
@@ -905,7 +922,7 @@ export default function NewDocumentPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">Length</label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   {AI_LENGTHS.map((l) => (
                     <button
                       key={l.value}
@@ -923,13 +940,33 @@ export default function NewDocumentPage() {
               </div>
 
               <div>
+                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">Style</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {AI_STYLES.map((s) => (
+                    <button
+                      key={s.value}
+                      onClick={() => setAiStyle(s.value)}
+                      className={cn(
+                        "p-2 rounded-lg border text-center transition-colors",
+                        aiStyle === s.value ? "border-primary-400 bg-primary-50 text-primary-700" : "border-border hover:bg-surface-secondary text-text-secondary"
+                      )}
+                    >
+                      <p className="text-xs font-semibold">{s.label}</p>
+                      <p className="text-[10px] mt-0.5 opacity-70">{s.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
                 <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">Jurisdiction</label>
                 <select value={aiJurisdiction} onChange={(e) => setAiJurisdiction(e.target.value)} className="input w-full text-sm" title="Jurisdiction">
-                  <option value="Philippines">Philippines (default)</option>
-                  <option value="Metro Manila">Metro Manila</option>
-                  <option value="Cebu">Cebu</option>
-                  <option value="Davao">Davao</option>
-                  <option value="Iloilo">Iloilo</option>
+                  <option value="Republic of the Philippines">Republic of the Philippines</option>
+                  <option value="Metro Manila, Philippines">Metro Manila, Philippines</option>
+                  <option value="Quezon City, Philippines">Quezon City, Philippines</option>
+                  <option value="Cebu City, Philippines">Cebu City, Philippines</option>
+                  <option value="Davao City, Philippines">Davao City, Philippines</option>
+                  <option value="Makati City, Philippines">Makati City, Philippines</option>
                 </select>
               </div>
             </div>

@@ -223,10 +223,16 @@ export default function DocumentEditorPage() {
         body: JSON.stringify({
           documentType: genParams.templateId || docType || "general",
           templateId: genParams.templateId,
-          details: { prompt: genParams.prompt, title },
+          details: { 
+            prompt: genParams.prompt, 
+            title,
+            additionalContext: genParams.additionalContext,
+          },
           tone: genParams.tone || "formal",
+          style: genParams.style || "standard",
           length: genParams.length || "medium",
-          jurisdiction: genParams.jurisdiction || "Philippines",
+          jurisdiction: genParams.jurisdiction || "Republic of the Philippines",
+          title,
         }),
       });
 
