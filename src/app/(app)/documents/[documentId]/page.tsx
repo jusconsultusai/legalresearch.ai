@@ -503,6 +503,18 @@ ${stripped}`,
         const data = await res.json();
         const rawContent = data.content as string;
         
+        // Helper to clean text for display
+        const cleanText = (text: string): string => {
+          if (!text) return "";
+          return text
+            .replace(/\\n/g, " ") // Replace escaped newlines
+            .replace(/\\"/g, '"') // Unescape quotes
+            .replace(/\\/g, "") // Remove remaining backslashes
+            .replace(/<[^>]*>/g, "") // Remove HTML tags
+            .replace(/\s+/g, " ") // Normalize whitespace
+            .trim();
+        };
+        
         // Parse JSON segments from response
         try {
           // Extract JSON array from response (handle markdown code blocks)
@@ -516,9 +528,9 @@ ${stripped}`,
           const segments: ImprovementSegment[] = parsedSegments.map((seg: { category?: string; original?: string; improved?: string; explanation?: string }, idx: number) => ({
             id: idx,
             category: seg.category || "grammar",
-            original: seg.original || "",
-            improved: seg.improved || "",
-            explanation: seg.explanation || "",
+            original: cleanText(seg.original || ""),
+            improved: cleanText(seg.improved || ""),
+            explanation: cleanText(seg.explanation || ""),
             selected: true, // Default selected
           }));
           
@@ -1067,17 +1079,17 @@ ${stripped}`,
                                   {seg.original && (
                                     <div className="mb-2">
                                       <p className="text-[10px] text-text-tertiary mb-0.5">Original:</p>
-                                      <p className="text-[11px] text-text-secondary line-through bg-red-50 dark:bg-red-900/10 rounded px-1.5 py-1">{seg.original.slice(0, 150)}{seg.original.length > 150 ? "..." : ""}</p>
+                                      <p className="text-[11px] text-text-secondary line-through bg-red-50 dark:bg-red-900/10 rounded px-2 py-1.5 leading-relaxed">{seg.original}</p>
                                     </div>
                                   )}
                                   
                                   <div className="mb-2">
-                                    <p className="text-[10px] text-text-tertiary mb-0.5">Improved:</p>
-                                    <p className="text-[11px] text-text-primary bg-green-50 dark:bg-green-900/10 rounded px-1.5 py-1">{seg.improved.slice(0, 150)}{seg.improved.length > 150 ? "..." : ""}</p>
+                                    <p className="text-[10px] text-text-tertiary mb-0.5">Suggested:</p>
+                                    <p className="text-[11px] text-text-primary bg-green-50 dark:bg-green-900/10 rounded px-2 py-1.5 leading-relaxed">{seg.improved}</p>
                                   </div>
                                   
                                   {seg.explanation && (
-                                    <p className="text-[10px] text-text-tertiary italic">{seg.explanation}</p>
+                                    <p className="text-[10px] text-text-tertiary italic mt-1.5">💡 {seg.explanation}</p>
                                   )}
                                 </div>
                               </div>
