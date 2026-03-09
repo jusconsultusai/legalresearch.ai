@@ -217,8 +217,8 @@ export default function DocumentAnalysisModal({
       notify("Please upload a PDF, image (PNG/JPG), Word document, or text file.", "error");
       return;
     }
-    if (selectedFile.size > 10 * 1024 * 1024) {
-      notify("File size must be less than 10 MB.", "error");
+    if (selectedFile.size > 50 * 1024 * 1024) {
+      notify("File size must be less than 50 MB.", "error");
       return;
     }
     setAnalysisError(null);
@@ -261,9 +261,9 @@ export default function DocumentAnalysisModal({
       fd.append("extractText", "true");
       fd.append("analyzeContent", "true");
 
-      // 95-second timeout — slightly under Cloudflare's ~100s limit
+      // 3-minute timeout for large document extraction + LLM analysis
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 95_000);
+      const timeoutId = setTimeout(() => controller.abort(), 180_000);
 
       let res: Response;
       try {
@@ -313,7 +313,7 @@ export default function DocumentAnalysisModal({
       }
     } catch (err: any) {
       const msg = err?.name === "AbortError"
-        ? "Analysis timed out. Try a smaller file or a text-based document (PDF/DOCX)."
+        ? "Analysis timed out (3 min). For very large files, try extracting text first, then analyze."
         : err.message || "Analysis failed. Please try again.";
       setAnalysisError(msg);
       notify(`Analysis failed: ${msg}`, "error");
@@ -768,7 +768,7 @@ export default function DocumentAnalysisModal({
                     </div>
                     <p className="text-base font-medium text-text-secondary">Drop your legal document here</p>
                     <p className="text-xs text-text-tertiary">or click to browse</p>
-                    <p className="text-xs text-text-tertiary">PDF, DOCX, DOC, TXT, JPG, PNG (max 10 MB)</p>
+                    <p className="text-xs text-text-tertiary">PDF, DOCX, DOC, TXT, JPG, PNG (max 50 MB)</p>
                   </div>
                 )}
               </div>

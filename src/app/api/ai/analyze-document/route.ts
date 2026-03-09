@@ -201,9 +201,31 @@ async function buildFallbackAnalysis(text: string, fileName: string): Promise<ob
   };
 }
 
+// ─── Smart text sampler ───────────────────────────────────────────────────────
+// For large documents, take the beginning (parties/context), a middle slice,
+// and the end (signature/attestation) rather than blindly truncating at the head.
+function sampleText(text: string, maxChars: number): string {
+  if (text.length <= maxChars) return text;
+  const head = Math.floor(maxChars * 0.70);  // 70 % — beginning is most critical
+  const tail = Math.floor(maxChars * 0.25);  // 25 % — end (signature block / clauses)
+  const mid  = maxChars - head - tail;       //  5 % — a middle window for context
+  const midStart = Math.floor(text.length / 2) - Math.floor(mid / 2);
+  const omittedKb = Math.round((text.length - head - mid - tail) / 1000);
+  return (
+    text.slice(0, head) +
+    `\n\n[... ~${omittedKb}K characters omitted from middle ...]\n\n` +
+    text.slice(midStart, midStart + mid) +
+    `\n\n[... continuing near end ...]\n\n` +
+    text.slice(text.length - tail)
+  );
+}
+
 async function analyzeWithAI(text: string, fileName: string): Promise<object> {
   const wordCount = text.trim().split(/\s+/).length;
-  const truncated = text.length > 8000 ? text.slice(0, 8000) + "\n\n[... document truncated for analysis ...]" : text;
+  // Up to 100 000 chars (~20 000 words) fit comfortably in modern LLM context windows
+  // (GPT-4o, DeepSeek V3 — both 128 K token contexts).
+  const MAX_CHARS = 100_000;
+  const truncated = sampleText(text, MAX_CHARS);
 
   // Check if an API key is actually configured
   const apiKey = process.env.LLM_API_KEY || process.env.OPENAI_API_KEY;
@@ -353,4 +375,4 @@ export async function POST(req: NextRequest) {
 // File uploads require Node.js runtime (pdf-parse, mammoth, tesseract.js) and dynamic rendering
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 300; // allow up to 5 min for large-doc extraction + LLM
