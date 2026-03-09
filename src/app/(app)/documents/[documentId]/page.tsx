@@ -489,13 +489,21 @@ ${stripped}`,
       if (res.ok) {
         const data = await res.json();
         const rawContent = data.content as string;
+        // Format for preview display - cleaner rendering
+        const formattedPreview = rawContent
+          .replace(/\*\*(.*?)\*\*/g, "$1") // Remove bold markdown
+          .replace(/\*(.*?)\*/g, "$1") // Remove italic markdown
+          .replace(/^#+\s*/gm, "") // Remove heading markers
+          .replace(/^[-*]\s+/gm, "• ") // Convert list markers to bullets
+          .replace(/\n{3,}/g, "\n\n") // Normalize multiple newlines
+          .trim();
         const improvedHtml = rawContent
           .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
           .replace(/^#{1,3} (.+)/gm, "<h2>$1</h2>")
           .replace(/\n\n+/g, "</p><p>")
           .replace(/\n/g, "<br/>");
         // Store the improvement for user review
-        setAiImproveContent(rawContent);
+        setAiImproveContent(formattedPreview);
         setAiImproveHtml(`<p>${improvedHtml}</p>`);
         setSidePanel("improve");
         showToast("AI Improve complete — review suggestions in the side panel", "success");
@@ -549,7 +557,16 @@ ${stripped}`,
 
       if (res.ok) {
         const data = await res.json();
-        setAiReviewContent(data.content as string);
+        const rawReview = data.content as string;
+        // Format for cleaner display
+        const formattedReview = rawReview
+          .replace(/\*\*(.*?)\*\*/g, "$1") // Remove bold markdown
+          .replace(/\*(.*?)\*/g, "$1") // Remove italic markdown
+          .replace(/^#+\s*/gm, "") // Remove heading markers
+          .replace(/^[-*]\s+/gm, "• ") // Convert list markers to bullets
+          .replace(/\n{3,}/g, "\n\n") // Normalize multiple newlines
+          .trim();
+        setAiReviewContent(formattedReview);
         setSidePanel("ai");
         showToast("AI review complete — see results in the side panel", "success");
       } else {
