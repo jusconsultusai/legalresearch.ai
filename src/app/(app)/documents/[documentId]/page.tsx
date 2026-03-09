@@ -69,6 +69,15 @@ interface MyFile {
   uploadedAt: string;
 }
 
+interface ImprovementSegment {
+  id: number;
+  category: "grammar" | "clarity" | "jurisprudence" | "structure";
+  original: string;
+  improved: string;
+  explanation: string;
+  selected: boolean;
+}
+
 export default function DocumentEditorPage() {
   const params = useParams();
   const router = useRouter();
@@ -99,6 +108,8 @@ export default function DocumentEditorPage() {
   const [aiReviewContent, setAiReviewContent] = useState<string | null>(null);
   const [aiImproveContent, setAiImproveContent] = useState<string | null>(null);
   const [aiImproveHtml, setAiImproveHtml] = useState<string | null>(null);
+  const [aiImproveSegments, setAiImproveSegments] = useState<ImprovementSegment[]>([]);
+  const [originalDocContent, setOriginalDocContent] = useState<string>("");
 
   // Document version — increment to force ONLYOFFICE to reload with new content
   const [documentVersion, setDocumentVersion] = useState(1);
@@ -440,6 +451,7 @@ export default function DocumentEditorPage() {
       return;
     }
 
+    setOriginalDocContent(stripped);
     setAiProcessing(true);
     showToast("AI Improve started — this may take a few minutes…", "info");
     try {
@@ -448,34 +460,35 @@ export default function DocumentEditorPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          documentType: "improvement",
+          documentType: "improvement-segments",
           details: {
-            prompt: `You are an expert Philippine legal document editor and legal researcher. Improve the following legal document comprehensively:
+            prompt: `You are an expert Philippine legal document editor. Analyze and improve the following legal document by providing SPECIFIC improvements as JSON segments.
 
-**1. GRAMMAR & SPELLING**
-- Fix all grammatical errors, spelling mistakes, and punctuation issues
-- Ensure proper sentence structure and syntax
+Return a JSON array of improvement segments. Each segment should identify a specific part of the document and provide an improvement. Format:
 
-**2. LEGAL CLARITY & WORD CHOICE**
-- Enhance clarity and readability of legal arguments
-- Replace vague terms with precise legal terminology
-- Strengthen weak legal language with more authoritative phrasing
-- Ensure proper use of legal terms of art
+[
+  {
+    "category": "grammar" | "clarity" | "jurisprudence" | "structure",
+    "original": "exact text from original document",
+    "improved": "the improved version of that text",
+    "explanation": "brief explanation of the change"
+  }
+]
 
-**3. JURISPRUDENCE & LEGAL CITATIONS**
-- Suggest relevant Philippine Supreme Court cases that support the document's arguments
-- Add appropriate case citations where legal principles are stated (e.g., "G.R. No. XXXXX, Party v. Party, date")
-- Reference applicable statutes, codes, and regulations
-- Include relevant doctrines with their source cases
+CATEGORIES:
+- "grammar": Fix grammatical errors, spelling, punctuation, sentence structure
+- "clarity": Improve legal terminology, word choice, clearer phrasing
+- "jurisprudence": Add Philippine Supreme Court case citations, G.R. numbers, statutes, doctrines
+- "structure": Fix paragraph flow, add missing clauses, improve formatting
 
-**4. STRUCTURE & FORMATTING**
-- Fix paragraph structure and logical flow
-- Add missing standard clauses if appropriate
-- Ensure proper legal document formatting
+IMPORTANT:
+- Return ONLY valid JSON array, no other text
+- Each segment should be a specific, actionable improvement
+- The "original" field must be an exact quote from the document
+- Provide 5-15 improvement segments covering different areas
+- Focus on the most impactful improvements
 
-Return ONLY the improved document in clean HTML paragraphs (use <p>, <strong>, <h2> tags). Include the suggested citations inline within the text where appropriate. Do NOT include explanations or commentary outside the document.
-
-Document title: ${title}
+Document to improve:
 
 ${stripped}`,
             title,
@@ -489,24 +502,51 @@ ${stripped}`,
       if (res.ok) {
         const data = await res.json();
         const rawContent = data.content as string;
-        // Format for preview display - cleaner rendering
-        const formattedPreview = rawContent
-          .replace(/\*\*(.*?)\*\*/g, "$1") // Remove bold markdown
-          .replace(/\*(.*?)\*/g, "$1") // Remove italic markdown
-          .replace(/^#+\s*/gm, "") // Remove heading markers
-          .replace(/^[-*]\s+/gm, "• ") // Convert list markers to bullets
-          .replace(/\n{3,}/g, "\n\n") // Normalize multiple newlines
-          .trim();
-        const improvedHtml = rawContent
-          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-          .replace(/^#{1,3} (.+)/gm, "<h2>$1</h2>")
-          .replace(/\n\n+/g, "</p><p>")
-          .replace(/\n/g, "<br/>");
-        // Store the improvement for user review
-        setAiImproveContent(formattedPreview);
-        setAiImproveHtml(`<p>${improvedHtml}</p>`);
-        setSidePanel("improve");
-        showToast("AI Improve complete — review suggestions in the side panel", "success");
+        
+        // Parse JSON segments from response
+        try {
+          // Extract JSON array from response (handle markdown code blocks)
+          let jsonStr = rawContent;
+          const jsonMatch = rawContent.match(/\[[\s\S]*\]/);
+          if (jsonMatch) {
+            jsonStr = jsonMatch[0];
+          }
+          
+          const parsedSegments = JSON.parse(jsonStr);
+          const segments: ImprovementSegment[] = parsedSegments.map((seg: { category?: string; original?: string; improved?: string; explanation?: string }, idx: number) => ({
+            id: idx,
+            category: seg.category || "grammar",
+            original: seg.original || "",
+            improved: seg.improved || "",
+            explanation: seg.explanation || "",
+            selected: true, // Default selected
+          }));
+          
+          setAiImproveSegments(segments);
+          setAiImproveContent(null);
+          setAiImproveHtml(null);
+          setSidePanel("improve");
+          showToast(`Found ${segments.length} improvements — review in the side panel`, "success");
+        } catch {
+          // Fallback to old behavior if JSON parsing fails
+          const formattedPreview = rawContent
+            .replace(/\*\*(.*?)\*\*/g, "$1")
+            .replace(/\*(.*?)\*/g, "$1")
+            .replace(/^#+\s*/gm, "")
+            .replace(/^[-*]\s+/gm, "• ")
+            .replace(/\n{3,}/g, "\n\n")
+            .trim();
+          const improvedHtml = rawContent
+            .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+            .replace(/^#{1,3} (.+)/gm, "<h2>$1</h2>")
+            .replace(/\n\n+/g, "</p><p>")
+            .replace(/\n/g, "<br/>");
+          setAiImproveContent(formattedPreview);
+          setAiImproveHtml(`<p>${improvedHtml}</p>`);
+          setAiImproveSegments([]);
+          setSidePanel("improve");
+          showToast("AI Improve complete — review in the side panel", "success");
+        }
       } else {
         showToast("AI Improve failed — please try again", "error");
       }
@@ -514,14 +554,42 @@ ${stripped}`,
     finally { setAiProcessing(false); }
   };
 
-  // Apply AI Improvement to document
+  // Toggle segment selection
+  const toggleSegmentSelection = (id: number) => {
+    setAiImproveSegments(prev => prev.map(seg => 
+      seg.id === id ? { ...seg, selected: !seg.selected } : seg
+    ));
+  };
+
+  // Apply selected AI Improvements to document
   const handleApplyImprovement = async () => {
-    if (!aiImproveHtml) return;
-    await pushContentAndReload(aiImproveHtml);
+    if (aiImproveSegments.length > 0) {
+      // Apply selected segments to original content
+      let updatedContent = originalDocContent;
+      const selectedSegments = aiImproveSegments.filter(s => s.selected);
+      
+      for (const seg of selectedSegments) {
+        if (seg.original && seg.improved) {
+          updatedContent = updatedContent.replace(seg.original, seg.improved);
+        }
+      }
+      
+      // Convert to HTML
+      const htmlContent = `<p>${updatedContent
+        .replace(/\n\n+/g, "</p><p>")
+        .replace(/\n/g, "<br/>")}</p>`;
+      
+      await pushContentAndReload(htmlContent);
+      showToast(`Applied ${selectedSegments.length} improvement(s) — editor reloading`, "success");
+    } else if (aiImproveHtml) {
+      await pushContentAndReload(aiImproveHtml);
+      showToast("Improvement applied — editor reloading", "success");
+    }
+    
     setAiImproveContent(null);
     setAiImproveHtml(null);
+    setAiImproveSegments([]);
     setSidePanel(null);
-    showToast("Improvement applied — editor reloading", "success");
   };
 
   // ── AI Review handler ─────────────────────────────────────────────────────
@@ -940,55 +1008,124 @@ ${stripped}`,
                       <div className="w-8 h-8 border-2 border-amber-200 border-t-amber-600 rounded-full animate-spin" />
                       <p className="text-xs text-text-secondary">AI is improving your document…</p>
                     </div>
-                  ) : aiImproveContent ? (
+                  ) : aiImproveSegments.length > 0 ? (
                     <div className="space-y-4">
-                      {/* Improvement Categories */}
-                      <div className="space-y-3">
-                        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700/40 rounded-lg p-3">
-                          <h4 className="text-xs font-semibold text-green-700 dark:text-green-400 flex items-center gap-1.5 mb-1">
-                            <Check className="w-3.5 h-3.5" />
-                            Grammar & Spelling
-                          </h4>
-                          <p className="text-[11px] text-green-600 dark:text-green-400/80">Fixed errors, punctuation, and sentence structure</p>
-                        </div>
-
-                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/40 rounded-lg p-3">
-                          <h4 className="text-xs font-semibold text-blue-700 dark:text-blue-400 flex items-center gap-1.5 mb-1">
-                            <BookOpen className="w-3.5 h-3.5" />
-                            Legal Clarity & Word Choice
-                          </h4>
-                          <p className="text-[11px] text-blue-600 dark:text-blue-400/80">Precise terminology and authoritative phrasing</p>
-                        </div>
-
-                        <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700/40 rounded-lg p-3">
-                          <h4 className="text-xs font-semibold text-purple-700 dark:text-purple-400 flex items-center gap-1.5 mb-1">
-                            <Scale className="w-3.5 h-3.5" />
-                            Jurisprudence & Citations
-                          </h4>
-                          <p className="text-[11px] text-purple-600 dark:text-purple-400/80">Philippine SC cases, G.R. numbers, statutes, doctrines</p>
-                        </div>
-
-                        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-lg p-3">
-                          <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5 mb-1">
-                            <FileText className="w-3.5 h-3.5" />
-                            Structure & Formatting
-                          </h4>
-                          <p className="text-[11px] text-amber-600 dark:text-amber-400/80">Paragraph flow and standard clauses</p>
+                      {/* Segment Count */}
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-semibold text-text-primary">
+                          {aiImproveSegments.filter(s => s.selected).length} of {aiImproveSegments.length} improvements selected
+                        </h4>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => setAiImproveSegments(prev => prev.map(s => ({ ...s, selected: true })))}
+                            className="text-[10px] text-amber-600 hover:text-amber-700"
+                          >
+                            Select All
+                          </button>
+                          <button 
+                            onClick={() => setAiImproveSegments(prev => prev.map(s => ({ ...s, selected: false })))}
+                            className="text-[10px] text-text-tertiary hover:text-text-secondary"
+                          >
+                            Deselect All
+                          </button>
                         </div>
                       </div>
 
-                      {/* Preview */}
+                      {/* Improvement Segments */}
+                      <div className="space-y-3 max-h-[55vh] overflow-auto">
+                        {aiImproveSegments.map((seg) => {
+                          const categoryStyles = {
+                            grammar: { bg: "bg-green-50 dark:bg-green-900/20", border: "border-green-200 dark:border-green-700/40", text: "text-green-700 dark:text-green-400", icon: <Check className="w-3 h-3" /> },
+                            clarity: { bg: "bg-blue-50 dark:bg-blue-900/20", border: "border-blue-200 dark:border-blue-700/40", text: "text-blue-700 dark:text-blue-400", icon: <BookOpen className="w-3 h-3" /> },
+                            jurisprudence: { bg: "bg-purple-50 dark:bg-purple-900/20", border: "border-purple-200 dark:border-purple-700/40", text: "text-purple-700 dark:text-purple-400", icon: <Scale className="w-3 h-3" /> },
+                            structure: { bg: "bg-amber-50 dark:bg-amber-900/20", border: "border-amber-200 dark:border-amber-700/40", text: "text-amber-700 dark:text-amber-400", icon: <FileText className="w-3 h-3" /> },
+                          };
+                          const style = categoryStyles[seg.category] || categoryStyles.grammar;
+                          
+                          return (
+                            <div 
+                              key={seg.id} 
+                              className={cn(
+                                "rounded-lg border p-3 cursor-pointer transition-all",
+                                seg.selected ? `${style.bg} ${style.border}` : "bg-surface-secondary border-border opacity-60"
+                              )}
+                              onClick={() => toggleSegmentSelection(seg.id)}
+                            >
+                              <div className="flex items-start gap-2">
+                                <input 
+                                  type="checkbox" 
+                                  checked={seg.selected} 
+                                  onChange={() => toggleSegmentSelection(seg.id)}
+                                  className="mt-0.5 w-3.5 h-3.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className={cn("text-[10px] font-semibold uppercase tracking-wide flex items-center gap-1 mb-1.5", style.text)}>
+                                    {style.icon}
+                                    {seg.category === "jurisprudence" ? "Citation" : seg.category}
+                                  </div>
+                                  
+                                  {seg.original && (
+                                    <div className="mb-2">
+                                      <p className="text-[10px] text-text-tertiary mb-0.5">Original:</p>
+                                      <p className="text-[11px] text-text-secondary line-through bg-red-50 dark:bg-red-900/10 rounded px-1.5 py-1">{seg.original.slice(0, 150)}{seg.original.length > 150 ? "..." : ""}</p>
+                                    </div>
+                                  )}
+                                  
+                                  <div className="mb-2">
+                                    <p className="text-[10px] text-text-tertiary mb-0.5">Improved:</p>
+                                    <p className="text-[11px] text-text-primary bg-green-50 dark:bg-green-900/10 rounded px-1.5 py-1">{seg.improved.slice(0, 150)}{seg.improved.length > 150 ? "..." : ""}</p>
+                                  </div>
+                                  
+                                  {seg.explanation && (
+                                    <p className="text-[10px] text-text-tertiary italic">{seg.explanation}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 pt-2 border-t border-border">
+                        <button
+                          onClick={handleApplyImprovement}
+                          disabled={aiImproveSegments.filter(s => s.selected).length === 0}
+                          className="flex-1 px-4 py-2.5 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          Apply Selected ({aiImproveSegments.filter(s => s.selected).length})
+                        </button>
+                        <button
+                          onClick={() => { setAiImproveSegments([]); setSidePanel(null); }}
+                          className="px-4 py-2.5 text-xs text-text-secondary border border-border rounded-lg hover:bg-surface-secondary transition-colors"
+                        >
+                          Discard
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={handleAIImprove}
+                        disabled={aiProcessing}
+                        className="w-full text-xs text-amber-600 hover:text-amber-700 py-2 border border-amber-200 rounded-lg flex items-center justify-center gap-1.5 hover:bg-amber-50 transition-colors disabled:opacity-50"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        Re-run Improvement
+                      </button>
+                    </div>
+                  ) : aiImproveContent ? (
+                    <div className="space-y-4">
+                      {/* Fallback: Full document preview */}
                       <div className="space-y-2">
                         <h4 className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
                           <Eye className="w-3.5 h-3.5 text-text-tertiary" />
                           Improved Document Preview
                         </h4>
-                        <div className="text-xs text-text-secondary whitespace-pre-wrap leading-relaxed bg-surface-secondary rounded-lg p-3 max-h-[40vh] overflow-auto border border-border">
+                        <div className="text-xs text-text-secondary whitespace-pre-wrap leading-relaxed bg-surface-secondary rounded-lg p-3 max-h-[50vh] overflow-auto border border-border">
                           {aiImproveContent}
                         </div>
                       </div>
 
-                      {/* Action Buttons */}
                       <div className="flex gap-2">
                         <button
                           onClick={handleApplyImprovement}
