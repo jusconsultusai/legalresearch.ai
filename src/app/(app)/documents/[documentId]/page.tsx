@@ -448,7 +448,34 @@ export default function DocumentEditorPage() {
         body: JSON.stringify({
           documentType: "improvement",
           details: {
-            prompt: `You are an expert Philippine legal document editor. Improve the following legal document: fix grammar, enhance clarity, strengthen legal language, fix formatting and paragraph structure, add missing standard clauses if appropriate. Return ONLY the improved document in clean HTML paragraphs (use <p>, <strong>, <h2> tags). Do NOT include explanations or commentary.\n\nDocument title: ${title}\n\n${stripped}`,
+            prompt: `You are an expert Philippine legal document editor and legal researcher. Improve the following legal document comprehensively:
+
+**1. GRAMMAR & SPELLING**
+- Fix all grammatical errors, spelling mistakes, and punctuation issues
+- Ensure proper sentence structure and syntax
+
+**2. LEGAL CLARITY & WORD CHOICE**
+- Enhance clarity and readability of legal arguments
+- Replace vague terms with precise legal terminology
+- Strengthen weak legal language with more authoritative phrasing
+- Ensure proper use of legal terms of art
+
+**3. JURISPRUDENCE & LEGAL CITATIONS**
+- Suggest relevant Philippine Supreme Court cases that support the document's arguments
+- Add appropriate case citations where legal principles are stated (e.g., "G.R. No. XXXXX, Party v. Party, date")
+- Reference applicable statutes, codes, and regulations
+- Include relevant doctrines with their source cases
+
+**4. STRUCTURE & FORMATTING**
+- Fix paragraph structure and logical flow
+- Add missing standard clauses if appropriate
+- Ensure proper legal document formatting
+
+Return ONLY the improved document in clean HTML paragraphs (use <p>, <strong>, <h2> tags). Include the suggested citations inline within the text where appropriate. Do NOT include explanations or commentary outside the document.
+
+Document title: ${title}
+
+${stripped}`,
             title,
           },
           tone: "formal",
