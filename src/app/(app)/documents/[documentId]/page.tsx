@@ -320,6 +320,7 @@ export default function DocumentEditorPage() {
   };
 
   // Run document analysis — pull fresh content from document first
+  // If document has content, immediately analyze it; otherwise show upload modal
   const runAnalysis = async () => {
     let latestContent = content;
     try {
@@ -333,6 +334,14 @@ export default function DocumentEditorPage() {
 
     const stripped = latestContent.replace(/<[^>]*>/g, "");
     const words = stripped.split(/\s+/).filter(Boolean);
+
+    // If document is empty or has very little content, show upload modal
+    if (words.length < 10) {
+      setShowAnalysisModal(true);
+      return;
+    }
+
+    // Document has content — run analysis
     const legalTerms = [
       "whereas", "hereby", "thereof", "herein", "jurisdiction", "complainant",
       "respondent", "plaintiff", "defendant", "affidavit", "stipulation",

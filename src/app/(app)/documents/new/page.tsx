@@ -23,6 +23,7 @@ import {
   Clock,
   HardDrive,
 } from "lucide-react";
+import AIDraftingModal, { GenerationParams } from "@/components/ui/AIDraftingModal";
 
 // ─── My Files type ────────────────────────────────────────────────────────────
 interface MyFile {
@@ -203,6 +204,7 @@ export default function NewDocumentPage() {
   const [aiJurisdiction, setAiJurisdiction] = useState("Republic of the Philippines");
   const [generatingAI, setGeneratingAI] = useState(false);
   const [aiStep, setAiStep] = useState<"form" | "generating" | "done">("form");
+  const [showAIDraftModal, setShowAIDraftModal] = useState(false);
 
   // ── My Files import banner ───────────────────────────────────────
   const [importedFile, setImportedFile] = useState<{ name: string; content: string; type: string } | null>(null);
@@ -360,6 +362,57 @@ export default function NewDocumentPage() {
           style: aiStyle,
           length: aiLength,
           jurisdiction: aiJurisdiction,
+          title: documentTitle,
+        }),
+      });
+      if (genRes.ok) {
+        const genData = await genRes.json();
+        const html = `<p>${toHtml(genData.content as string)}</p>`;
+        await fetch("/api/onlyoffice/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ documentId: docId, html }),
+        });
+      }
+      setAiStep("done");
+      await new Promise((r) => setTimeout(r, 800));
+      router.push(`/documents/${docId}`);
+    } catch { setError("Generation failed. Please try again."); setAiStep("form"); }
+    finally { setGeneratingAI(false); }
+  };
+
+  // ── Handle AI Draft from AIDraftingModal ────────────────────────────
+  const handleAIDraftGenerate = async (params: GenerationParams) => {
+    setError(null);
+    setGeneratingAI(true);
+    setAiStep("generating");
+    try {
+      const documentTitle = title.trim() || params.templateName || params.prompt.split(" ").slice(0, 5).join(" ") || "AI-Generated Document";
+      const docRes = await fetch("/api/documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: documentTitle, content: "", category: params.category || "general" }),
+      });
+      const docData = await docRes.json();
+      if (!docRes.ok) { setError(docData.error || "Failed to create document."); setAiStep("form"); return; }
+      const docId = docData.document?.id;
+
+      const genRes = await fetch("/api/documents/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentType: params.templateId || params.templateName || "legal document",
+          templateId: params.templateId,
+          details: { 
+            title: documentTitle, 
+            prompt: params.prompt.trim(), 
+            jurisdiction: params.jurisdiction,
+            category: params.category,
+          },
+          tone: params.tone,
+          style: params.style,
+          length: params.length,
+          jurisdiction: params.jurisdiction,
           title: documentTitle,
         }),
       });
@@ -839,137 +892,29 @@ export default function NewDocumentPage() {
           <div className="flex items-start gap-3 bg-primary-50 border border-primary-200 rounded-xl px-4 py-3">
             <Brain className="w-4 h-4 text-primary-600 shrink-0 mt-0.5" />
             <p className="text-xs text-primary-700">
-              Describe what you need and the AI will draft a complete,
-              Philippine-law-compliant document. Select a type below for better accuracy, then add specific details in the prompt.
+              Let AI draft a complete, Philippine-law-compliant document for you. 
+              Click the button below to open the AI Document Drafter and configure your document.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
-            {/* Left: document type picker */}
-            <div className="space-y-3">
-              <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider">Document Type</label>
-              <div className="flex gap-1.5 flex-wrap">
-                {DOCUMENT_CATEGORIES.map((cat) => (
-                  <button
-                    key={cat.category}
-                    onClick={() => { setSelectedCategory(cat.category); setSelectedType(null); setSelectedTypeLabel(""); }}
-                    className={cn(
-                      "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
-                      selectedCategory === cat.category
-                        ? "bg-primary-600 text-white border-primary-600"
-                        : "border-border text-text-secondary hover:border-primary-300"
-                    )}
-                  >
-                    {cat.icon} {cat.label}
-                  </button>
-                ))}
-              </div>
-              <div className="space-y-1 max-h-52 overflow-auto pr-1">
-                {currentCategory?.types.map((type) => (
-                  <button
-                    key={type.key}
-                    onClick={() => selectType(type.key, type.label)}
-                    className={cn(
-                      "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left border transition-colors",
-                      selectedType === type.key
-                        ? "bg-primary-50 border-primary-300 text-primary-700 font-medium"
-                        : "border-border hover:bg-surface-secondary text-text-secondary"
-                    )}
-                  >
-                    {selectedType === type.key ? <Check className="w-3 h-3 text-primary-600 shrink-0" /> : <span className="w-3" />}
-                    {type.label}
-                  </button>
-                ))}
-              </div>
+          {/* Open AI Document Drafter button */}
+          <div className="flex flex-col items-center justify-center py-12 bg-surface-secondary rounded-xl border border-dashed border-border">
+            <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mb-4">
+              <Wand2 className="w-8 h-8 text-primary-600" />
             </div>
-
-            {/* Right: prompt + options */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
-                  Describe What You Need
-                </label>
-                <textarea
-                  value={aiPrompt}
-                  onChange={(e) => setAiPrompt(e.target.value)}
-                  placeholder={`e.g. "Complaint for breach of a lease contract. Plaintiff: Juan dela Cruz. Defendant: ABC Corporation. The defendant failed to pay rent for 6 months totalling ₱360,000."`}
-                  rows={5}
-                  className="w-full input resize-none text-sm leading-relaxed"
-                />
-                <p className="text-[10px] text-text-tertiary mt-1">
-                  The more detail you provide, the more accurate the output.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">Tone</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {AI_TONES.map((t) => (
-                    <button
-                      key={t.value}
-                      onClick={() => setAiTone(t.value)}
-                      className={cn(
-                        "p-2.5 rounded-lg border text-left transition-colors",
-                        aiTone === t.value ? "border-primary-400 bg-primary-50 text-primary-700" : "border-border hover:bg-surface-secondary text-text-secondary"
-                      )}
-                    >
-                      <p className="text-xs font-semibold">{t.label}</p>
-                      <p className="text-[10px] mt-0.5 opacity-70">{t.desc}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">Length</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {AI_LENGTHS.map((l) => (
-                    <button
-                      key={l.value}
-                      onClick={() => setAiLength(l.value)}
-                      className={cn(
-                        "p-2 rounded-lg border text-center transition-colors",
-                        aiLength === l.value ? "border-primary-400 bg-primary-50 text-primary-700" : "border-border hover:bg-surface-secondary text-text-secondary"
-                      )}
-                    >
-                      <p className="text-xs font-semibold">{l.label}</p>
-                      <p className="text-[10px] mt-0.5 opacity-70">{l.desc}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">Style</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {AI_STYLES.map((s) => (
-                    <button
-                      key={s.value}
-                      onClick={() => setAiStyle(s.value)}
-                      className={cn(
-                        "p-2 rounded-lg border text-center transition-colors",
-                        aiStyle === s.value ? "border-primary-400 bg-primary-50 text-primary-700" : "border-border hover:bg-surface-secondary text-text-secondary"
-                      )}
-                    >
-                      <p className="text-xs font-semibold">{s.label}</p>
-                      <p className="text-[10px] mt-0.5 opacity-70">{s.desc}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">Jurisdiction</label>
-                <select value={aiJurisdiction} onChange={(e) => setAiJurisdiction(e.target.value)} className="input w-full text-sm" title="Jurisdiction">
-                  <option value="Republic of the Philippines">Republic of the Philippines</option>
-                  <option value="Metro Manila, Philippines">Metro Manila, Philippines</option>
-                  <option value="Quezon City, Philippines">Quezon City, Philippines</option>
-                  <option value="Cebu City, Philippines">Cebu City, Philippines</option>
-                  <option value="Davao City, Philippines">Davao City, Philippines</option>
-                  <option value="Makati City, Philippines">Makati City, Philippines</option>
-                </select>
-              </div>
-            </div>
+            <h3 className="text-lg font-semibold text-text-primary mb-2">AI Document Drafter</h3>
+            <p className="text-sm text-text-secondary text-center max-w-md mb-4">
+              Generate Philippine legal documents with AI. Select a document type, customize tone and style, 
+              then describe your document details.
+            </p>
+            <button
+              onClick={() => setShowAIDraftModal(true)}
+              disabled={generatingAI}
+              className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors disabled:opacity-50"
+            >
+              {generatingAI ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              {generatingAI ? "Generating…" : "Open AI Document Drafter"}
+            </button>
           </div>
 
           {aiStep === "generating" && (
@@ -989,6 +934,14 @@ export default function NewDocumentPage() {
           )}
         </div>
       )}
+
+      {/* AI Drafting Modal */}
+      <AIDraftingModal
+        isOpen={showAIDraftModal}
+        onClose={() => setShowAIDraftModal(false)}
+        onGenerate={handleAIDraftGenerate}
+        initialDocType={selectedType || undefined}
+      />
 
       {/* Error */}
       {error && (
@@ -1048,12 +1001,12 @@ export default function NewDocumentPage() {
           )}
           {mode === "ai" && (
             <button
-              onClick={handleGenerateWithAI}
+              onClick={() => setShowAIDraftModal(true)}
               disabled={generatingAI || aiStep === "done"}
               className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors disabled:opacity-50"
             >
               {generatingAI ? <Loader2 className="w-4 h-4 animate-spin" /> : aiStep === "done" ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-              {generatingAI ? "Generating…" : aiStep === "done" ? "Opening Editor" : "Generate with AI"}
+              {generatingAI ? "Generating…" : aiStep === "done" ? "Opening Editor" : "Open AI Document Drafter"}
             </button>
           )}
         </div>
