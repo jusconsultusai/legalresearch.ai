@@ -18,6 +18,15 @@ const nextConfig: NextConfig = {
       // Next.js handles the HTTP proxying natively (streaming, websockets, etc.)
       // which is far more reliable than manually buffering in an API route.
       beforeFiles: [
+        // Proxy /onlyoffice/* → OnlyOffice Docker (port 8000), stripping the prefix.
+        // This is what the Caddy rule was supposed to do, but cloudflared bypasses
+        // Caddy and routes all traffic directly to Next.js. Handled here instead.
+        {
+          source: "/onlyoffice/:path*",
+          destination: "http://localhost:8000/:path*",
+        },
+        // Also expose the named proxy path (used by NEXT_PUBLIC_ONLYOFFICE_URL in
+        // newer builds) so both paths always work regardless of build state.
         {
           source: "/api/onlyoffice-proxy/:path*",
           destination: "http://localhost:8000/:path*",
