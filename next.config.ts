@@ -31,6 +31,22 @@ const nextConfig: NextConfig = {
           source: "/api/onlyoffice-proxy/:path*",
           destination: "http://localhost:8000/:path*",
         },
+        // OnlyOffice makes requests to /cache/* for internal document caching/editing.
+        // These MUST be proxied to the Document Server, otherwise editor fails.
+        {
+          source: "/cache/:path*",
+          destination: "http://localhost:8000/cache/:path*",
+        },
+        // OnlyOffice also accesses /coauthoring/* for real-time collaboration.
+        {
+          source: "/coauthoring/:path*",
+          destination: "http://localhost:8000/coauthoring/:path*",
+        },
+        // Additional OnlyOffice paths for web-apps resources
+        {
+          source: "/web-apps/:path*",
+          destination: "http://localhost:8000/web-apps/:path*",
+        },
       ],
       afterFiles: [],
       fallback: [

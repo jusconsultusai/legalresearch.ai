@@ -37,16 +37,30 @@ export async function POST(req: NextRequest) {
 
     const documentKey = status.key || "";
 
-    // Extract document ID from key (format: "doc-{documentId}-v{version}" or just documentId)
+    // Extract document ID from key
+    // Supported formats:
+    //   - "doc-{documentId}-v{version}" (legacy)
+    //   - "{documentId}-v{version}" (current editor format)
+    //   - "{documentId}-{16-hex-hash}" (hash-based key from generateFileKey)
+    //   - "{documentId}" (plain ID fallback)
     let documentId = documentKey;
-    const keyMatch = documentKey.match(/^doc-(.+?)-v\d+$/);
-    if (keyMatch) {
-      documentId = keyMatch[1];
+
+    // Try: "doc-{documentId}-v{version}"
+    const legacyKeyMatch = documentKey.match(/^doc-(.+?)-v\d+$/);
+    if (legacyKeyMatch) {
+      documentId = legacyKeyMatch[1];
     } else {
-      // Also handle hash-based keys: "{documentId}-{hash}"
-      const hashMatch = documentKey.match(/^(.+?)-[a-f0-9]{16}$/);
-      if (hashMatch) {
-        documentId = hashMatch[1];
+      // Try: "{documentId}-v{version}" (e.g., "cmmj7mrqn000145ew4lxjxjzp-v1")
+      const versionKeyMatch = documentKey.match(/^(.+?)-v\d+$/);
+      if (versionKeyMatch) {
+        documentId = versionKeyMatch[1];
+      } else {
+        // Try: "{documentId}-{16-hex-hash}"
+        const hashMatch = documentKey.match(/^(.+?)-[a-f0-9]{16}$/);
+        if (hashMatch) {
+          documentId = hashMatch[1];
+        }
+        // Otherwise keep documentKey as-is (plain ID)
       }
     }
 
