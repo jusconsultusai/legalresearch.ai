@@ -625,13 +625,13 @@ export default function MyFilesPage() {
                   Drag & drop files here, or click to browse
                 </p>
                 <p className="text-xs text-text-secondary mt-1">
-                  Supports PDF, DOC, DOCX, TXT, and image files
+                  Supports PDF, DOC, DOCX, TXT, HTML, and image files
                 </p>
                 <input
                   ref={fileInputRef}
                   type="file"
                   multiple
-                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.webp"
+                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.webp,.html,.htm"
                   onChange={(e) => handleFileUpload(e.target.files)}
                   className="hidden"
                   title="Upload files"

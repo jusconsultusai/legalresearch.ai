@@ -743,7 +743,7 @@ export default function DocumentAnalysisModal({
                   ref={fileInputRef}
                   type="file"
                   onChange={handleFileInput}
-                  accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt"
+                  accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt,.html,.htm"
                   className="hidden"
                   title="Upload document"
                 />
