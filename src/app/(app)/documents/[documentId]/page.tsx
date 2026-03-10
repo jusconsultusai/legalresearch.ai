@@ -251,16 +251,25 @@ export default function DocumentEditorPage() {
 
       if (res.ok) {
         const data = await res.json();
-        const formattedContent = (data.content as string)
-          .replace(/\n\n/g, "</p><p>")
-          .replace(/\n/g, "<br/>")
-          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-          .replace(/^#{1,3} (.+)/gm, "<h2>$1</h2>")
-          .replace(/^<\/p>/, "")
-          .replace(/(?<!<\/h2>)<br\/>(?!<p>)(.)/g, "<p>$1");
-        const wrappedHtml = `<p>${formattedContent}</p>`;
+        const apiContent = data.content as string;
+        
+        // If API returned formatted HTML (has tags), use directly
+        // Otherwise, do basic formatting
+        let finalHtml: string;
+        if (/<(p|div|span|br)\s*[^>]*>/i.test(apiContent)) {
+          finalHtml = apiContent;
+        } else {
+          const formattedContent = apiContent
+            .replace(/\n\n/g, "</p><p>")
+            .replace(/\n/g, "<br/>")
+            .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+            .replace(/^#{1,3} (.+)/gm, "<h2>$1</h2>")
+            .replace(/^<\/p>/, "")
+            .replace(/(?<!<\/h2>)<br\/>(?!<p>)(.)/g, "<p>$1");
+          finalHtml = `<p>${formattedContent}</p>`;
+        }
 
-        await pushContentAndReload(wrappedHtml);
+        await pushContentAndReload(finalHtml);
         setShowAiModal(false);
         showToast("Document drafted successfully — editor reloading", "success");
       } else {

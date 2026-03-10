@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   DOCUMENT_TEMPLATES,
   type DocumentTemplateKey,
+  formatLegalHtml,
+  wrapWithScPaperStyles,
 } from "@/lib/documentFormats/scPaperRule";
 
 // Map URL type keys → template keys (same map as the generate route)
@@ -57,19 +59,12 @@ const TEMPLATE_KEY_MAP: Record<string, DocumentTemplateKey> = {
 };
 
 /**
- * Convert raw template text to styled HTML
+ * Convert raw template text to styled HTML following SC Paper Rule
  */
 function convertToHtml(rawText: string): string {
-  return rawText
-    .split("\n")
-    .map((line) => {
-      const trimmed = line.trimEnd();
-      if (trimmed === "") return "<br/>";
-      if (/^\s{10,}/.test(trimmed))
-        return `<p style="text-align:center;font-family:Arial,sans-serif;font-size:14px;margin:0 0 4px">${trimmed.trim()}</p>`;
-      return `<p style="font-family:Arial,sans-serif;font-size:14px;margin:0 0 4px;white-space:pre-wrap">${trimmed}</p>`;
-    })
-    .join("");
+  // Use the comprehensive SC Paper Rule formatter
+  const formattedHtml = formatLegalHtml(rawText, true);
+  return wrapWithScPaperStyles(formattedHtml);
 }
 
 /**

@@ -569,6 +569,248 @@ export function getDocxStyles(): string {
   return `@page { size: 8.5in 13in; margin: ${SC_PAPER_RULE.margins.top}in ${SC_PAPER_RULE.margins.right}in ${SC_PAPER_RULE.margins.bottom}in ${SC_PAPER_RULE.margins.left}in; } body { font-family: Arial, sans-serif; font-size: ${SC_PAPER_RULE.typography.fontSize}pt; line-height: 1; text-align: justify; }`;
 }
 
+/**
+ * Formats raw legal document text into properly styled HTML following SC Paper Rule (A.M. No. 11-9-4-SC)
+ * - Font: Arial, 14pt (user can change this)
+ * - Single-spaced lines
+ * - Proper court heading, caption, body formatting
+ * - Legal paper size (8.5" x 13")
+ */
+export function formatLegalHtml(rawText: string, isCourtPleading = false): string {
+  const lines = rawText.split("\n");
+  const htmlParts: string[] = [];
+  
+  // Detection patterns
+  const courtHeadingPatterns = [
+    /^republic of the philippines$/i,
+    /^regional trial court$/i,
+    /^metropolitan trial court$/i,
+    /^municipal trial court$/i,
+    /^court of appeals$/i,
+    /^supreme court$/i,
+    /^sandiganbayan$/i,
+    /^court of tax appeals$/i,
+    /^national labor relations commission$/i,
+    /^office of the ombudsman$/i,
+  ];
+  
+  const centeredTitlePatterns = [
+    /^complaint$/i,
+    /^answer$/i,
+    /^motion/i,
+    /^memorandum$/i,
+    /^petition/i,
+    /^affidavit/i,
+    /^verification$/i,
+    /^certification/i,
+    /^prayer$/i,
+    /^contract/i,
+    /^agreement$/i,
+    /^deed of/i,
+    /^special power of attorney$/i,
+    /^general power of attorney$/i,
+    /^board resolution$/i,
+    /^secretary.?s certificate$/i,
+    /^demand letter$/i,
+    /^the parties$/i,
+    /^cause of action$/i,
+    /^statement of/i,
+    /^issues$/i,
+    /^arguments?$/i,
+    /^conclusion$/i,
+    /^witnesseth$/i,
+    /^acknowledgment$/i,
+  ];
+  
+  const signaturePatterns = [
+    /^respectfully submitted/i,
+    /^very truly yours/i,
+    /^in witness whereof/i,
+  ];
+  
+  const notarialJuratPatterns = [
+    /^subscribed and sworn/i,
+    /^doc\.?\s*no\.?/i,
+    /^page no\.?/i,
+    /^book no\.?/i,
+    /^series of/i,
+    /^notary public/i,
+  ];
+  
+  const caseInfoPatterns = [
+    /civil case no/i,
+    /criminal case no/i,
+    /sp\.\s*proc/i,
+    /^for:\s*/i,
+  ];
+  
+  const partyDesignationPatterns = [
+    /^\s*plaintiff[,.]?$/i,
+    /^\s*defendant[,.]?$/i,
+    /^\s*petitioner[,.]?$/i,
+    /^\s*respondent[,.]?$/i,
+    /^\s*complainant[,.]?$/i,
+    /^\s*accused[,.]?$/i,
+    /^\s*appellant[,.]?$/i,
+    /^\s*appellee[,.]?$/i,
+  ];
+  
+  const separatorPatterns = [
+    /^x\s*-+\s*-*\s*x$/i,
+    /^-{3,}\s*versus\s*-{3,}$/i,
+    /^-+$/,
+  ];
+
+  let inSignatureBlock = false;
+  let prevLineWasEmpty = false;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    
+    // Empty line
+    if (trimmed === "") {
+      if (!prevLineWasEmpty) {
+        htmlParts.push("<p><br/></p>");
+      }
+      prevLineWasEmpty = true;
+      continue;
+    }
+    prevLineWasEmpty = false;
+    
+    // Court heading lines (centered, uppercase)
+    if (courtHeadingPatterns.some(p => p.test(trimmed))) {
+      const isBold = /^(regional|metropolitan|municipal|supreme|court of|sandiganbayan|national labor)/i.test(trimmed);
+      htmlParts.push(`<p style="text-align: center;${isBold ? " font-weight: bold;" : ""}">${trimmed.toUpperCase()}</p>`);
+      continue;
+    }
+    
+    // Branch line (centered)
+    if (/^branch\s+/i.test(trimmed) || /^___*\s*judicial region$/i.test(trimmed) || /judicial region$/i.test(trimmed)) {
+      htmlParts.push(`<p style="text-align: center;">${trimmed}</p>`);
+      continue;
+    }
+    
+    // City/Municipality line in heading (centered)
+    if (i < 10 && /^(city of|municipality of|\[city|quezon city|manila|makati|pasig|taguig)/i.test(trimmed)) {
+      htmlParts.push(`<p style="text-align: center;">${trimmed}</p>`);
+      continue;
+    }
+    
+    // Case number and "For:" lines (right-aligned, bold)
+    if (caseInfoPatterns.some(p => p.test(trimmed))) {
+      htmlParts.push(`<p style="text-align: right; font-weight: bold;">${trimmed}</p>`);
+      continue;
+    }
+    
+    // Party names in caption (bold, left)
+    if (i < 25 && /^[A-Z\[\].,\s]+$/.test(trimmed) && trimmed.length < 60 && !centeredTitlePatterns.some(p => p.test(trimmed))) {
+      // Check if next line is a party designation
+      const nextLine = lines[i + 1]?.trim() || "";
+      if (partyDesignationPatterns.some(p => p.test(nextLine))) {
+        htmlParts.push(`<p style="font-weight: bold;">${trimmed}</p>`);
+        continue;
+      }
+    }
+    
+    // Party designations (indented, italic)
+    if (partyDesignationPatterns.some(p => p.test(trimmed))) {
+      htmlParts.push(`<p style="text-indent: 144px; font-style: italic;">${trimmed}</p>`);
+      continue;
+    }
+    
+    // "versus" line
+    if (/^\s*-*\s*versus\s*-*\s*$/i.test(trimmed)) {
+      htmlParts.push(`<p style="text-indent: 72px;">- versus -</p>`);
+      continue;
+    }
+    
+    // Separator lines (x---x)
+    if (separatorPatterns.some(p => p.test(trimmed))) {
+      htmlParts.push(`<p>${trimmed}</p>`);
+      continue;
+    }
+    
+    // Centered document titles (bold, letter-spaced for main titles)
+    if (centeredTitlePatterns.some(p => p.test(trimmed))) {
+      const isMainTitle = /^(complaint|answer|motion|memorandum|petition|affidavit|verification|certification|prayer|deed of|contract|agreement|special power|general power|board resolution|secretary)/i.test(trimmed);
+      if (isMainTitle) {
+        // Add letter spacing for main document titles
+        const spaced = trimmed.toUpperCase().split("").join(" ");
+        htmlParts.push(`<p style="text-align: center; font-weight: bold; letter-spacing: 0.15em;">${spaced}</p>`);
+      } else {
+        htmlParts.push(`<p style="text-align: center; font-weight: bold;">${trimmed.toUpperCase()}</p>`);
+      }
+      continue;
+    }
+    
+    // Signature block start
+    if (signaturePatterns.some(p => p.test(trimmed))) {
+      inSignatureBlock = true;
+      htmlParts.push(`<p style="text-indent: 36px;">${trimmed}</p>`);
+      continue;
+    }
+    
+    // In signature block - right-align attorney/notary info
+    if (inSignatureBlock) {
+      if (/^(atty\.|counsel|ibp|ptr|roll|mcle|notary)/i.test(trimmed) || /^_+$/.test(trimmed)) {
+        htmlParts.push(`<p style="text-align: right;">${trimmed}</p>`);
+        continue;
+      }
+      // Check for signature line (underscores followed by name)
+      if (/^_+\s*$/.test(trimmed) || /^\[.*\]$/.test(trimmed)) {
+        htmlParts.push(`<p style="text-align: right;">${trimmed}</p>`);
+        continue;
+      }
+    }
+    
+    // Notarial JURAT section
+    if (notarialJuratPatterns.some(p => p.test(trimmed))) {
+      htmlParts.push(`<p style="text-align: justify;">${trimmed}</p>`);
+      inSignatureBlock = false;
+      continue;
+    }
+    
+    // Numbered paragraphs (detect patterns like "1.", "1)", "(1)", "a.", etc.)
+    if (/^(\d+[\.\)]\s*|\([a-z\d]+\)\s*|[a-z][\.\)]\s*)/i.test(trimmed)) {
+      htmlParts.push(`<p style="text-indent: 36px; text-align: justify;">${trimmed}</p>`);
+      continue;
+    }
+    
+    // "WHEREFORE" paragraphs
+    if (/^wherefore/i.test(trimmed)) {
+      htmlParts.push(`<p style="text-indent: 36px; text-align: justify;"><strong>WHEREFORE</strong>, ${trimmed.replace(/^wherefore,?\s*/i, "")}</p>`);
+      continue;
+    }
+    
+    // "COMES NOW" paragraphs
+    if (/^comes now/i.test(trimmed)) {
+      htmlParts.push(`<p style="text-indent: 36px; text-align: justify;"><strong>COMES NOW</strong>, ${trimmed.replace(/^comes now,?\s*/i, "")}</p>`);
+      continue;
+    }
+    
+    // Leading whitespace indicates centered or special formatting
+    if (/^\s{10,}/.test(line) && trimmed.length < 80) {
+      htmlParts.push(`<p style="text-align: center;">${trimmed}</p>`);
+      continue;
+    }
+    
+    // Default: body paragraph with first-line indent and justified text
+    htmlParts.push(`<p style="text-indent: 36px; text-align: justify;">${trimmed}</p>`);
+  }
+  
+  return htmlParts.join("\n");
+}
+
+/**
+ * Wraps formatted HTML content with proper SC Paper Rule styles
+ */
+export function wrapWithScPaperStyles(htmlContent: string): string {
+  return `<div style="font-family: Arial, sans-serif; font-size: 14pt; line-height: 1.5;">
+${htmlContent}
+</div>`;
+}
+
 // AI Template Categories for the Drafting Modal
 export const AI_TEMPLATE_CATEGORIES = {
   pleadings: {

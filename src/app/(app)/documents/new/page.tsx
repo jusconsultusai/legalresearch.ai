@@ -75,6 +75,11 @@ const AI_LENGTHS = [
 ];
 
 function toHtml(raw: string): string {
+  // If content already contains HTML tags, return as-is
+  if (/<(p|div|span|br|strong|em|h[1-6])\s*[^>]*>/i.test(raw)) {
+    return raw;
+  }
+  // Otherwise convert plain text to basic HTML
   return raw
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/^#{1,3} (.+)/gm, "<h2>$1</h2>")
@@ -391,7 +396,9 @@ export default function NewDocumentPage() {
       });
       if (genRes.ok) {
         const genData = await genRes.json();
-        const html = `<p>${toHtml(genData.content as string)}</p>`;
+        const content = genData.content as string;
+        // Use content directly if already HTML, otherwise convert and wrap
+        const html = /<(p|div|span|br)\s*[^>]*>/i.test(content) ? content : `<p>${toHtml(content)}</p>`;
         await fetch("/api/onlyoffice/content", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -442,7 +449,9 @@ export default function NewDocumentPage() {
       });
       if (genRes.ok) {
         const genData = await genRes.json();
-        const html = `<p>${toHtml(genData.content as string)}</p>`;
+        const content = genData.content as string;
+        // Use content directly if already HTML, otherwise convert and wrap
+        const html = /<(p|div|span|br)\s*[^>]*>/i.test(content) ? content : `<p>${toHtml(content)}</p>`;
         await fetch("/api/onlyoffice/content", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
