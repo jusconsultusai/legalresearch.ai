@@ -68,9 +68,10 @@ export default function ProfilePage() {
         <div className="w-48 shrink-0 space-y-1">
           {TABS.map((tab) => (
             <button
+              suppressHydrationWarning
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-left transition-colors ${
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-left transition-colors ${`
                 activeTab === tab.id ? "bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 font-medium" : "hover:bg-surface-secondary text-text-secondary"
               }`}
             >
@@ -112,6 +113,7 @@ export default function ProfilePage() {
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
                       <input
+                        suppressHydrationWarning
                         type="text"
                         className="input pl-10"
                         value={form.name}
@@ -124,21 +126,21 @@ export default function ProfilePage() {
                     <label className="block text-xs font-medium text-text-secondary mb-1.5">Email</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
-                      <input type="email" className="input pl-10" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email address" />
+                      <input suppressHydrationWarning type="email" className="input pl-10" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email address" />
                     </div>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-text-secondary mb-1.5">Law Firm / Organization</label>
                     <div className="relative">
                       <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
-                      <input type="text" className="input pl-10" value={form.firm} onChange={(e) => setForm({ ...form, firm: e.target.value })} placeholder="Firm name" />
+                      <input suppressHydrationWarning type="text" className="input pl-10" value={form.firm} onChange={(e) => setForm({ ...form, firm: e.target.value })} placeholder="Firm name" />
                     </div>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-text-secondary mb-1.5">Role</label>
                     <div className="relative">
                       <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
-                      <select className="input pl-10 appearance-none" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} title="Select role">
+                      <select suppressHydrationWarning className="input pl-10 appearance-none" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} title="Select role">
                         <option value="">Select Role</option>
                         <option value="lawyer">Lawyer</option>
                         <option value="student">Law Student</option>
@@ -154,6 +156,7 @@ export default function ProfilePage() {
                 <div className="mt-4">
                   <label className="block text-xs font-medium text-text-secondary mb-1.5">Bio</label>
                   <textarea
+                    suppressHydrationWarning
                     className="input resize-none"
                     rows={3}
                     placeholder="Tell us a bit about yourself..."
@@ -164,6 +167,7 @@ export default function ProfilePage() {
               </Card>
               <div className="flex justify-end">
                 <button
+                  suppressHydrationWarning
                   onClick={handleSave}
                   disabled={saving}
                   className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 disabled:opacity-50 transition-colors"
@@ -182,21 +186,21 @@ export default function ProfilePage() {
                 <div>
                   <label className="block text-xs font-medium text-text-secondary mb-1.5">Current Password</label>
                   <div className="relative">
-                    <input type={showPassword ? "text" : "password"} className="input pr-10" value={form.currentPassword} onChange={(e) => setForm({ ...form, currentPassword: e.target.value })} placeholder="Current password" />
-                    <button className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowPassword(!showPassword)} title="Toggle password visibility">
+                    <input suppressHydrationWarning type={showPassword ? "text" : "password"} className="input pr-10" value={form.currentPassword} onChange={(e) => setForm({ ...form, currentPassword: e.target.value })} placeholder="Current password" />
+                    <button suppressHydrationWarning className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowPassword(!showPassword)} title="Toggle password visibility">
                       {showPassword ? <EyeOff className="w-4 h-4 text-text-tertiary" /> : <Eye className="w-4 h-4 text-text-tertiary" />}
                     </button>
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-text-secondary mb-1.5">New Password</label>
-                  <input type="password" className="input" value={form.newPassword} onChange={(e) => setForm({ ...form, newPassword: e.target.value })} placeholder="New password" />
+                  <input suppressHydrationWarning type="password" className="input" value={form.newPassword} onChange={(e) => setForm({ ...form, newPassword: e.target.value })} placeholder="New password" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-text-secondary mb-1.5">Confirm New Password</label>
-                  <input type="password" className="input" value={form.confirmPassword} onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })} placeholder="Confirm new password" />
+                  <input suppressHydrationWarning type="password" className="input" value={form.confirmPassword} onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })} placeholder="Confirm new password" />
                 </div>
-                <button onClick={handleSave} className="px-5 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors">
+                <button suppressHydrationWarning onClick={handleSave} className="px-5 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors">
                   Update Password
                 </button>
               </div>
@@ -218,6 +222,7 @@ export default function ProfilePage() {
                       <p className="text-xs text-text-secondary mt-0.5">{n.desc}</p>
                     </div>
                     <button
+                      suppressHydrationWarning
                       onClick={() => setForm({ ...form, notifications: { ...form.notifications, [n.key]: !form.notifications[n.key as keyof typeof form.notifications] } })}
                       className={`w-11 h-6 rounded-full transition-colors ${form.notifications[n.key as keyof typeof form.notifications] ? "bg-primary-600" : "bg-surface-tertiary"}`}
                       title={`Toggle ${n.label.toLowerCase()}`}

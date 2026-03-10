@@ -193,6 +193,7 @@ export function Sidebar() {
         <div className="mt-4 px-3 flex-1 min-h-0 flex flex-col">
           <div className="flex items-center justify-between px-1 mb-1.5">
             <button
+              suppressHydrationWarning
               onClick={() => setChatsExpanded((v) => !v)}
               className="flex items-center gap-1.5 text-[11px] font-semibold text-text-tertiary uppercase tracking-wider hover:text-text-primary transition-colors"
             >
@@ -201,6 +202,7 @@ export function Sidebar() {
             </button>
             {recentChats.length > 0 && (
               <button
+                suppressHydrationWarning
                 onClick={clearAllChats}
                 className="p-1 rounded hover:bg-red-50 text-text-tertiary hover:text-red-500 transition-colors"
                 title="Clear all chats"
