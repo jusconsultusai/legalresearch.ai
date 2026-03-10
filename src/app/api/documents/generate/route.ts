@@ -8,6 +8,174 @@ import {
 } from "@/lib/documentFormats/scPaperRule";
 
 /**
+ * Smart jurisdiction detection and court mapping for Philippine legal documents.
+ */
+function getJurisdictionDetails(jurisdiction: string, userPrompt: string): {
+  heading: string;
+  courtType: string;
+  branchInfo: string;
+  cityProvince: string;
+} {
+  const prompt = (userPrompt || "").toLowerCase();
+  const jurisdictionLower = jurisdiction.toLowerCase();
+
+  // Detect specific court types from prompt
+  let courtType = "REGIONAL TRIAL COURT";
+  let branchInfo = "Branch ___";
+  
+  if (prompt.includes("supreme court") || prompt.includes("sc ")) {
+    courtType = "SUPREME COURT";
+    branchInfo = "En Banc / Division";
+  } else if (prompt.includes("court of appeals") || prompt.includes("ca ")) {
+    courtType = "COURT OF APPEALS";
+    branchInfo = "_____ Division";
+  } else if (prompt.includes("sandiganbayan")) {
+    courtType = "SANDIGANBAYAN";
+    branchInfo = "_____ Division";
+  } else if (prompt.includes("court of tax appeals") || prompt.includes("cta")) {
+    courtType = "COURT OF TAX APPEALS";
+    branchInfo = "_____ Division";
+  } else if (prompt.includes("municipal trial court") || prompt.includes("mtc ") || prompt.includes("mctc")) {
+    courtType = "MUNICIPAL TRIAL COURT";
+  } else if (prompt.includes("metropolitan trial court") || prompt.includes("metc")) {
+    courtType = "METROPOLITAN TRIAL COURT";
+  } else if (prompt.includes("municipal circuit") || prompt.includes("mctc")) {
+    courtType = "MUNICIPAL CIRCUIT TRIAL COURT";
+  } else if (prompt.includes("family court")) {
+    courtType = "FAMILY COURT";
+  } else if (prompt.includes("labor arbiter") || prompt.includes("nlrc") || prompt.includes("national labor")) {
+    courtType = "NATIONAL LABOR RELATIONS COMMISSION";
+    branchInfo = "Regional Arbitration Branch No. ___";
+  } else if (prompt.includes("darab") || prompt.includes("agrarian")) {
+    courtType = "DEPARTMENT OF AGRARIAN REFORM ADJUDICATION BOARD";
+    branchInfo = "Regional Office No. ___";
+  } else if (prompt.includes("ombudsman")) {
+    courtType = "OFFICE OF THE OMBUDSMAN";
+    branchInfo = "";
+  } else if (prompt.includes("sec ") || prompt.includes("securities")) {
+    courtType = "SECURITIES AND EXCHANGE COMMISSION";
+    branchInfo = "";
+  }
+
+  // Detect city/province for branch assignment
+  const cityMapping: Record<string, string> = {
+    "quezon city": "Quezon City",
+    "makati": "Makati City",
+    "manila": "City of Manila",
+    "pasig": "Pasig City",
+    "taguig": "Taguig City",
+    "mandaluyong": "Mandaluyong City",
+    "pasay": "Pasay City",
+    "parañaque": "Parañaque City",
+    "paranaque": "Parañaque City",
+    "caloocan": "Caloocan City",
+    "las piñas": "Las Piñas City",
+    "las pinas": "Las Piñas City",
+    "muntinlupa": "Muntinlupa City",
+    "marikina": "Marikina City",
+    "san juan": "San Juan City",
+    "valenzuela": "Valenzuela City",
+    "malabon": "Malabon City",
+    "navotas": "Navotas City",
+    "pateros": "Pateros",
+    "cebu city": "Cebu City",
+    "cebu": "Cebu City",
+    "davao city": "Davao City",
+    "davao": "Davao City",
+    "cagayan de oro": "Cagayan de Oro City",
+    "zamboanga city": "Zamboanga City",
+    "zamboanga": "Zamboanga City",
+    "iloilo city": "Iloilo City",
+    "iloilo": "Iloilo City",
+    "bacolod city": "Bacolod City",
+    "bacolod": "Bacolod City",
+    "general santos": "General Santos City",
+    "gensan": "General Santos City",
+    "baguio city": "Baguio City",
+    "baguio": "Baguio City",
+    "angeles city": "Angeles City",
+    "angeles": "Angeles City",
+    "olongapo": "Olongapo City",
+    "san fernando la union": "San Fernando City, La Union",
+    "san fernando pampanga": "City of San Fernando, Pampanga",
+    "laoag": "Laoag City",
+    "vigan": "Vigan City",
+    "tuguegarao": "Tuguegarao City",
+    "batangas city": "Batangas City",
+    "batangas": "Batangas City",
+    "lucena": "Lucena City",
+    "naga city": "Naga City",
+    "naga": "Naga City",
+    "legazpi": "Legazpi City",
+    "tacloban": "Tacloban City",
+    "ormoc": "Ormoc City",
+    "dumaguete": "Dumaguete City",
+    "tagbilaran": "Tagbilaran City",
+    "puerto princesa": "Puerto Princesa City",
+    "palawan": "Puerto Princesa City",
+    "cotabato city": "Cotabato City",
+    "cotabato": "Cotabato City",
+    "butuan city": "Butuan City",
+    "butuan": "Butuan City",
+    "surigao": "Surigao City",
+    "dipolog": "Dipolog City",
+    "pagadian": "Pagadian City",
+    "iligan city": "Iligan City",
+    "iligan": "Iligan City",
+    "marawi": "Marawi City",
+    "kidapawan": "Kidapawan City",
+    "koronadal": "Koronadal City",
+    "tacurong": "Tacurong City",
+    "antipolo": "Antipolo City",
+    "cainta": "Cainta, Rizal",
+    "taytay": "Taytay, Rizal",
+    "biñan": "City of Biñan",
+    "binan": "City of Biñan",
+    "santa rosa": "City of Santa Rosa",
+    "calamba": "Calamba City",
+    "san pablo": "San Pablo City",
+    "lipa": "Lipa City",
+    "tarlac": "Tarlac City",
+    "dagupan": "Dagupan City",
+    "urdaneta": "Urdaneta City",
+    "san carlos pangasinan": "San Carlos City, Pangasinan",
+    "cabanatuan": "Cabanatuan City",
+    "san jose nueva ecija": "San Jose City, Nueva Ecija",
+    "meycauayan": "Meycauayan City",
+    "malolos": "City of Malolos",
+    "san jose del monte": "San Jose del Monte City",
+  };
+
+  let cityProvince = "";
+  for (const [key, value] of Object.entries(cityMapping)) {
+    if (prompt.includes(key) || jurisdictionLower.includes(key)) {
+      cityProvince = value;
+      break;
+    }
+  }
+
+  // Default to jurisdiction if no city found
+  if (!cityProvince) {
+    if (jurisdictionLower.includes("metro manila") || jurisdictionLower.includes("ncr")) {
+      cityProvince = "Metro Manila";
+    } else if (jurisdictionLower.includes("philippines") || jurisdictionLower === "republic of the philippines") {
+      cityProvince = "[City/Municipality]";
+    } else {
+      cityProvince = jurisdiction;
+    }
+  }
+
+  const heading = "REPUBLIC OF THE PHILIPPINES";
+
+  return {
+    heading,
+    courtType,
+    branchInfo,
+    cityProvince,
+  };
+}
+
+/**
  * Build a dynamic system prompt that adapts to tone, style, and length parameters.
  */
 function buildSystemPrompt(params: {
@@ -16,8 +184,11 @@ function buildSystemPrompt(params: {
   style: string;
   length: string;
   jurisdiction: string;
+  userPrompt?: string;
 }): string {
-  const { documentType, tone, style, length, jurisdiction } = params;
+  const { documentType, tone, style, length, jurisdiction, userPrompt = "" } = params;
+
+  const jurisdictionInfo = getJurisdictionDetails(jurisdiction, userPrompt);
 
   const toneInstructions: Record<string, string> = {
     formal: "Use formal, professional legal language with proper honorifics and courteous phrasing.",
@@ -42,6 +213,24 @@ function buildSystemPrompt(params: {
 
   return `You are JusConsultus AI, an expert Philippine legal document drafter. Generate a professional, complete ${documentType} that is fully compliant with Philippine law.
 
+=== SMART JURISDICTION DETECTION ===
+Based on the user's input, you have detected:
+- Heading: ${jurisdictionInfo.heading}
+- Court/Forum: ${jurisdictionInfo.courtType}
+- Branch/Division: ${jurisdictionInfo.branchInfo}
+- Location: ${jurisdictionInfo.cityProvince}
+
+IMPORTANT: Always start court pleadings with the proper heading:
+
+${jurisdictionInfo.heading}
+${jurisdictionInfo.courtType}
+${jurisdictionInfo.branchInfo}
+${jurisdictionInfo.cityProvince}
+
+For non-court documents (contracts, affidavits, notarial docs), use:
+${jurisdictionInfo.heading}
+[City/Municipality], [Province]
+
 === JURISDICTION ===
 ${jurisdiction}
 
@@ -55,18 +244,125 @@ ${styleInstructions[style] || styleInstructions.standard}
 ${lengthInstructions[length] || lengthInstructions.medium}
 
 === FORMATTING RULES ===
+- ALWAYS start with "REPUBLIC OF THE PHILIPPINES" as the first line for court documents
+- Include proper caption with case number placeholder (Civil Case No. ___ or Criminal Case No. ___)
 - Follow proper Philippine legal format (caption, numbered paragraphs, prayer, signatures)
 - Comply with the Supreme Court Efficient Use of Paper Rule (A.M. No. 11-9-4-SC)
-- For courts: Include proper caption, case number placeholder, branch designation
+- For courts: Include proper branch designation based on detected city/municipality
 - Use [BRACKET PLACEHOLDERS] ONLY for specific details that need to be filled in
 - Cite relevant Philippine laws, Rules of Court, and jurisprudence where applicable
-- Include Verification and Certification Against Forum Shopping if required
+- Include Verification and Certification Against Forum Shopping if required for pleadings
+- For contracts/agreements: Include proper venue clause matching the detected jurisdiction
+
+=== JUDICIAL AFFIDAVIT RULE (A.M. No. 12-8-8-SC) ===
+For Judicial Affidavits, strictly follow this format:
+1. Start with proper caption (case number, court, parties)
+2. Include: "JUDICIAL AFFIDAVIT OF [WITNESS NAME]"
+3. Use Q&A format for direct examination questions
+4. Number each question and answer consecutively (Q1, A1, Q2, A2, etc.)
+5. Include attestation clause at the end
+6. Include JURAT with notarial details
+7. Required contents per Section 3:
+   - Name, age, residence, occupation of witness
+   - Name and address of lawyer who conducted examination
+   - Place where affidavit was taken
+   - A statement that affiant was fully apprised of duties to tell truth
+   - Signature of witness over printed name
+   - Signature of examining lawyer
+
+=== DOCUMENT HEADING EXAMPLES ===
+For Court Pleadings:
+REPUBLIC OF THE PHILIPPINES
+REGIONAL TRIAL COURT
+Branch ___
+${jurisdictionInfo.cityProvince}
+
+For NLRC Cases:
+REPUBLIC OF THE PHILIPPINES
+NATIONAL LABOR RELATIONS COMMISSION
+Regional Arbitration Branch No. ___
+${jurisdictionInfo.cityProvince}
+
+For Notarial Documents:
+REPUBLIC OF THE PHILIPPINES)
+${jurisdictionInfo.cityProvince}         ) S.S.
 
 === OUTPUT REQUIREMENTS ===
 - Output ONLY the document content — no explanations, commentary, or metadata
-- Start directly with the document (e.g., "REPUBLIC OF THE PHILIPPINES" or the first section)
+- Start directly with the document heading "Republic of the Philippines" (title case)
 - Generate a complete, ready-to-use document that can be filed or executed
-- Fill in all details the user provides; use [PLACEHOLDER] only for truly unknown specifics`;
+- Fill in all details the user provides; use [PLACEHOLDER] only for truly unknown specifics
+- Automatically detect and use the correct court/forum based on subject matter
+
+=== HTML FORMATTING RULES (Pleading Structure - Font is User's Choice) ===
+Generate HTML using this EXACT structural format (Legal paper, proper positioning):
+
+1. COURT HEADING FORMAT (all centered):
+   <p style="text-align: center;">Republic of the Philippines</p>
+   <p style="text-align: center; font-weight: bold;">REGIONAL TRIAL COURT</p>
+   <p style="text-align: center;">Second Judicial Region</p>
+   <p style="text-align: center; font-weight: bold;">Branch ___</p>
+   <p style="text-align: center;">Quezon City</p>
+
+2. CASE CAPTION FORMAT:
+   - Plaintiff name: left side, BOLD, ALL CAPS
+   - "Plaintiff," designation: indented with tabs, ITALIC
+   - "--- versus ---": indented (NOT centered)
+   - Case number & For: right side, BOLD
+   - "x---x" separator at bottom
+   Example:
+   <p style="font-weight: bold;">JUAN DELA CRUZ</p>
+   <p style="text-indent: 144px; font-style: italic;">Plaintiff,</p>
+   <p></p>
+   <p style="text-indent: 144px;">--- versus ---</p>
+   <p style="text-align: right; font-weight: bold;">Civil Case No. ___________</p>
+   <p style="text-align: right; font-weight: bold;">For: COLLECTION OF SUM OF MONEY</p>
+   <p></p>
+   <p style="font-weight: bold;">PEDRO SANTOS</p>
+   <p style="text-indent: 144px; font-style: italic;">Defendant.</p>
+   <p>x-----------------------------------x</p>
+
+3. DOCUMENT TITLE:
+   - CENTERED, BOLD, with letter-spacing
+   - Title in ALL CAPS
+   Example:
+   <p style="text-align: center; font-weight: bold; letter-spacing: 0.3em;">C O M P L A I N T</p>
+   <p style="text-align: center; font-weight: bold; letter-spacing: 0.3em;">M O T I O N</p>
+
+4. BODY PARAGRAPHS:
+   - First-line indent of 36px (0.5 inch)
+   - Justified text alignment
+   - 1.5 line spacing (handled automatically)
+   Example:
+   <p style="text-indent: 36px; text-align: justify;">COMES NOW, Plaintiff, through the undersigned counsel...</p>
+
+5. NUMBERED PARAGRAPHS:
+   - Number at start, followed by content
+   - Justified, first-line indent
+   Example:
+   <p style="text-indent: 36px; text-align: justify;">1. Plaintiff is of legal age...</p>
+
+6. BLOCKQUOTES (for citations):
+   - Indented from both margins
+   - Single line spacing
+   Example:
+   <blockquote>Quoted jurisprudence or statutory provision...</blockquote>
+
+7. PRAYER SECTION:
+   - "PRAYER" centered, bold
+   - "WHEREFORE" in paragraph, bold
+   Example:
+   <p style="text-align: center; font-weight: bold;">P R A Y E R</p>
+   <p style="text-indent: 36px; text-align: justify;"><strong>WHEREFORE</strong>, premises considered...</p>
+
+8. SIGNATURE BLOCKS:
+   - "Respectfully submitted." left with indent
+   - Attorney info right-aligned
+   Example:
+   <p style="text-indent: 36px;">Respectfully submitted.</p>
+   <p style="text-align: right; margin-top: 24px;"><strong>ATTY. [NAME]</strong></p>
+   <p style="text-align: right;">Counsel for Plaintiff</p>
+   <p style="text-align: right;">[Address]</p>`;
 }
 
 /**
@@ -145,6 +441,7 @@ const TEMPLATE_KEY_MAP: Record<string, DocumentTemplateKey> = {
   "affidavit-loss": "affidavit",
   "affidavit-support": "affidavit",
   "affidavit-service": "affidavit",
+  "judicial-affidavit": "affidavit",
   "board-resolution": "boardResolution",
   bylaws: "boardResolution",
   minutes: "boardResolution",
@@ -181,6 +478,9 @@ async function generateDocument(params: {
   const { documentType, details, tone, style, length, jurisdiction, title } = params;
   const typeKey = documentType.toLowerCase().replace(/\s+/g, "-");
 
+  // Extract user prompt for smart jurisdiction detection
+  const userInstructions = details.prompt || "";
+
   // Try DeepSeek / LLM generation first
   try {
     const systemPrompt = buildSystemPrompt({
@@ -189,6 +489,7 @@ async function generateDocument(params: {
       style,
       length,
       jurisdiction,
+      userPrompt: userInstructions,
     });
 
     const userPrompt = buildUserPrompt({

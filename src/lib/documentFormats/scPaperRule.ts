@@ -581,6 +581,7 @@ export const AI_TEMPLATE_CATEGORIES = {
       { id: "reply", name: "Reply", description: "Response to answer or counterclaim" },
       { id: "demurrer", name: "Demurrer to Evidence", description: "Motion for acquittal after prosecution rests" },
       { id: "memorandum", name: "Memorandum", description: "Legal brief summarizing arguments" },
+      { id: "judicial-affidavit", name: "Judicial Affidavit", description: "Direct testimony under A.M. No. 12-8-8-SC" },
     ],
   },
   criminal: {

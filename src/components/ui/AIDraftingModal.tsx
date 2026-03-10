@@ -196,7 +196,7 @@ export default function AIDraftingModal({ isOpen, onClose, onGenerate, initialDo
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder={`Describe the specific details for this ${selectedTemplateData?.name || "document"}...\n\nExample: Plaintiff Juan dela Cruz filed against Defendant Pedro Santos for collection of PHP 500,000. The parties are in Quezon City. Include cause of action for breach of contract.`}
-                  className="input resize-none min-h-30 text-sm w-full"
+                  className="input resize-none min-h-48 text-sm w-full"
                   autoFocus
                 />
               </div>

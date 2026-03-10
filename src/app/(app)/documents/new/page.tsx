@@ -24,6 +24,7 @@ import {
   HardDrive,
 } from "lucide-react";
 import AIDraftingModal, { GenerationParams } from "@/components/ui/AIDraftingModal";
+import TemplateInputModal from "@/components/ui/TemplateInputModal";
 
 // ─── My Files type ────────────────────────────────────────────────────────────
 interface MyFile {
@@ -181,6 +182,7 @@ export default function NewDocumentPage() {
   const [templatePreview, setTemplatePreview] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showTemplateInputModal, setShowTemplateInputModal] = useState(false);
 
   // My Files for template reuse
   const [myFiles, setMyFiles] = useState<MyFile[]>([]);
@@ -297,7 +299,8 @@ export default function NewDocumentPage() {
   const handleUseTemplate = () => {
     if (templateSource === "official") {
       if (!selectedType) { setError("Select a document type first."); return; }
-      handleCreate(templatePreview || undefined);
+      // Open the template input modal for official templates
+      setShowTemplateInputModal(true);
     } else {
       if (!selectedMyFile) { setError("Select one of your files first."); return; }
       let html = "";
@@ -310,6 +313,12 @@ export default function NewDocumentPage() {
       if (!title.trim()) setTitle(selectedMyFile.name.replace(/\.[^.]+$/, ""));
       handleCreate(html);
     }
+  };
+
+  // ── Handle template generation from modal ────────────────────────
+  const handleTemplateGenerate = (_data: Record<string, string>, content: string) => {
+    if (!title.trim()) setTitle(selectedTypeLabel);
+    handleCreate(content);
   };
 
   // ── Use imported My Files content ─────────────────────────────────
@@ -941,6 +950,16 @@ export default function NewDocumentPage() {
         onClose={() => setShowAIDraftModal(false)}
         onGenerate={handleAIDraftGenerate}
         initialDocType={selectedType || undefined}
+      />
+
+      {/* Template Input Modal */}
+      <TemplateInputModal
+        isOpen={showTemplateInputModal}
+        onClose={() => setShowTemplateInputModal(false)}
+        templateKey={selectedType || ""}
+        templateLabel={selectedTypeLabel || ""}
+        categoryColor={currentCategory?.color}
+        onGenerate={handleTemplateGenerate}
       />
 
       {/* Error */}

@@ -488,7 +488,49 @@ CATEGORIES:
 - "grammar": Fix grammatical errors, spelling, punctuation, sentence structure
 - "clarity": Improve legal terminology, word choice, clearer phrasing
 - "jurisprudence": Add Philippine Supreme Court case citations, G.R. numbers, statutes, doctrines
-- "structure": Fix paragraph flow, add missing clauses, improve formatting
+- "structure": Fix formatting to comply with SC Efficient Use of Paper Rule, improve paragraph flow, add missing clauses
+
+=== DOCUMENT FORMAT (Based on Collection Case Template) ===
+STRICTLY ENFORCE these STRUCTURAL formatting requirements (font is user's choice):
+1. PAPER SIZE: Legal (8.5" × 13")
+2. MARGINS: Left 1.5", Top/Right/Bottom 1"
+3. LINE SPACING: 1.5 for body text, single space for block quotations
+4. PARAGRAPH NUMBERING: Use consecutive Arabic numerals (1, 2, 3...) for pleadings
+5. PAGE NUMBERING: Bottom center
+6. INDENTATION: First line indent 0.5" for each paragraph
+7. HEADINGS: Document titles CENTERED, BOLD, with letter-spacing (e.g., "C O M P L A I N T")
+8. SUBHEADINGS: ALL subtitles CENTERED, Bold
+9. CITATIONS: Full citation on first use, short form thereafter
+10. BLOCK QUOTATIONS: Single-spaced, indented from both margins
+11. VERIFICATION: Must be on same page as signature line
+12. SIGNATURE BLOCK: Right-aligned, include counsel details and IBP/PTR/MCLE numbers
+
+=== COURT HEADING FORMAT (All Centered) ===
+- "Republic of the Philippines" - centered (title case, NOT all caps)
+- Court name (REGIONAL TRIAL COURT) - centered, bold
+- Judicial Region - centered
+- Branch number - centered, bold
+- City/Municipality - centered
+
+=== CASE CAPTION FORMAT (Collection Case Style) ===
+- Plaintiff name: LEFT side, BOLD, ALL CAPS
+- "Plaintiff," designation: indented, ITALIC
+- "--- versus ---": indented (NOT centered)
+- Case number & For: RIGHT side, BOLD
+- Defendant name: LEFT side, BOLD, ALL CAPS
+- "Defendant." designation: indented, ITALIC
+- "x---x" separator line at bottom
+
+=== DOCUMENT TITLES ===
+Document titles MUST be CENTERED, BOLD, with LETTER-SPACING:
+- "C O M P L A I N T" - spaced letters
+- "M O T I O N" - spaced letters
+- "A N S W E R" - spaced letters
+
+=== BLOCKQUOTE FORMATTING ===
+- Block quotations: single line spacing, indented from both margins
+
+If the document violates ANY of these rules, include a "structure" improvement segment explaining the fix.
 
 IMPORTANT:
 - Return ONLY valid JSON array, no other text
@@ -496,6 +538,7 @@ IMPORTANT:
 - The "original" field must be an exact quote from the document
 - Provide 5-15 improvement segments covering different areas
 - Focus on the most impactful improvements
+- ALWAYS include at least one "structure" segment for SC Paper Rule compliance
 
 Document to improve:
 
@@ -1077,7 +1120,8 @@ ${stripped}`,
                                   type="checkbox" 
                                   checked={seg.selected} 
                                   onChange={() => toggleSegmentSelection(seg.id)}
-                                  className="mt-0.5 w-3.5 h-3.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="mt-0.5 w-3.5 h-3.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
                                 />
                                 <div className="flex-1 min-w-0">
                                   <div className={cn("text-[10px] font-semibold uppercase tracking-wide flex items-center gap-1 mb-1.5", style.text)}>

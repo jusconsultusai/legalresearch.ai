@@ -154,6 +154,19 @@ export function generateEditorConfig(config: DocumentConfig) {
         plugins: true,
         toolbarNoTabs: false,
         uiTheme: "theme-light",
+        // SC Paper Rule reminder
+        logo: {
+          image: "",
+          imageEmbedded: "",
+          url: "",
+        },
+        customer: {
+          info: "SC Efficient Use of Paper Rule (A.M. No. 11-9-4-SC): Arial 14pt, Legal 8.5×13\", Left 1.5\" / 1\" margins",
+          logo: "",
+          mail: "",
+          name: "JusConsultus AI",
+          www: "",
+        },
       },
     },
     width: "100%",
@@ -211,16 +224,53 @@ export async function downloadDocument(url: string): Promise<Buffer> {
 }
 
 /**
- * Create a new empty document
+ * Create a new empty document with SC Paper Rule formatting
  * Returns the document buffer for a blank document
+ * 
+ * SC Efficient Use of Paper Rule (A.M. No. 11-9-4-SC) settings:
+ * - Font: Arial 14pt
+ * - Paper: Legal (8.5" × 13")
+ * - Margins: Left 1.5", Top/Right/Bottom 1"
+ * - Line spacing: 1.5
  */
 export function createBlankDocument(type: DocumentType): Buffer {
-  // These are minimal valid OOXML documents
+  // Legal document format dimensions in twips (1 inch = 1440 twips):
+  // Legal paper: 8.5" x 13" = 12240 x 18720 twips
+  // Left margin: 1.5" = 2160 twips
+  // Top/Right/Bottom margins: 1" = 1440 twips
+  // Font: User's choice (default system font)
+  // Font size: 14pt = 28 half-points
+  // Line spacing 1.5 = 360 (240 * 1.5)
+  
   const templates: Record<DocumentType, string> = {
     [DocumentType.TEXT]: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <w:body>
-    <w:p><w:r><w:t></w:t></w:r></w:p>
+    <w:p>
+      <w:pPr>
+        <w:spacing w:line="360" w:lineRule="auto"/>
+        <w:ind w:firstLine="720"/>
+        <w:rPr>
+          <w:sz w:val="28"/>
+          <w:szCs w:val="28"/>
+        </w:rPr>
+      </w:pPr>
+      <w:r>
+        <w:rPr>
+          <w:sz w:val="28"/>
+          <w:szCs w:val="28"/>
+        </w:rPr>
+        <w:t></w:t>
+      </w:r>
+    </w:p>
+    <w:sectPr>
+      <w:pgSz w:w="12240" w:h="18720"/>
+      <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="2160" w:header="720" w:footer="720" w:gutter="0"/>
+      <w:pgNumType w:start="1"/>
+      <w:cols w:space="720"/>
+      <w:docGrid w:linePitch="360"/>
+    </w:sectPr>
   </w:body>
 </w:document>`,
     [DocumentType.SPREADSHEET]: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
