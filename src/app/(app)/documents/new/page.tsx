@@ -96,6 +96,11 @@ const DOCUMENT_CATEGORIES = [
       { key: "demurrer", label: "Demurrer to Evidence" },
       { key: "memorandum", label: "Memorandum" },
       { key: "comment", label: "Comment / Opposition" },
+      { key: "judicial-affidavit", label: "Judicial Affidavit" },
+      { key: "affidavit-witness", label: "Affidavit of Witness" },
+      { key: "affidavit-service", label: "Affidavit of Service" },
+      { key: "affidavit-merit", label: "Affidavit of Merit" },
+      { key: "verification", label: "Verification & Non-Forum Shopping" },
     ],
   },
   {
