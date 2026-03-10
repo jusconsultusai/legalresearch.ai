@@ -835,8 +835,8 @@ export default function DocumentAnalysisModal({
           {activeTab === "results" && (
             <div className="space-y-5">
               {isAnalyzing ? (
-                <div className="text-center py-12">
-                  <Loader2 className="w-12 h-12 mx-auto text-primary-500 animate-spin" />
+                <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+                  <Loader2 className="w-12 h-12 text-primary-500 animate-spin" />
                   <p className="mt-4 text-sm text-text-secondary">Analyzing document with AI…</p>
                   <p className="text-xs text-text-tertiary">Extracting text, identifying issues, finding jurisprudence</p>
                   <p className="mt-2 text-xs text-amber-600 font-medium">This may take up to a minute</p>
