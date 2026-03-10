@@ -640,10 +640,19 @@ export const AI_TEMPLATE_CATEGORIES = {
   notarial: {
     label: "Notarial Documents",
     templates: [
-      { id: "affidavit", name: "Affidavit", description: "General sworn statement" },
-      { id: "affidavit-loss", name: "Affidavit of Loss", description: "Report loss of document" },
-      { id: "affidavit-support", name: "Affidavit of Support", description: "Financial support declaration" },
-      { id: "affidavit-service", name: "Affidavit of Service", description: "Proof of document service" },
+      { id: "affidavit", name: "Affidavit (General)", description: "General sworn statement" },
+      { id: "affidavit-loss", name: "Affidavit of Loss", description: "Report loss of document/ID" },
+      { id: "affidavit-desistance", name: "Affidavit of Desistance", description: "Withdraw complaint/charges" },
+      { id: "affidavit-support", name: "Affidavit of Support/Guarantee", description: "Financial support declaration" },
+      { id: "affidavit-consent", name: "Affidavit of Consent", description: "Parental/guardian consent" },
+      { id: "affidavit-cohabitation", name: "Affidavit of Cohabitation", description: "Living together declaration" },
+      { id: "affidavit-discrepancy", name: "Affidavit of Discrepancy", description: "Correct name/date errors" },
+      { id: "affidavit-no-income", name: "Affidavit of No Income", description: "Declaration of no earnings" },
+      { id: "affidavit-undertaking", name: "Affidavit of Undertaking", description: "Promise to perform obligation" },
+      { id: "affidavit-self-adjudication", name: "Affidavit of Self-Adjudication", description: "Sole heir estate claim" },
+      { id: "joint-affidavit", name: "Joint Affidavit", description: "Two disinterested persons" },
+      { id: "spa", name: "Special Power of Attorney", description: "Authorize specific acts" },
+      { id: "gpa", name: "General Power of Attorney", description: "Broad authority delegation" },
     ],
   },
 };
