@@ -110,6 +110,7 @@ export default function DocumentEditorPage() {
   const [aiImproveHtml, setAiImproveHtml] = useState<string | null>(null);
   const [aiImproveSegments, setAiImproveSegments] = useState<ImprovementSegment[]>([]);
   const [originalDocContent, setOriginalDocContent] = useState<string>("");
+  const [appliedSegments, setAppliedSegments] = useState<ImprovementSegment[]>([]);
 
   // Document version — increment to force ONLYOFFICE to reload with new content
   const [documentVersion, setDocumentVersion] = useState(1);
@@ -634,35 +635,110 @@ ${stripped}`,
     ));
   };
 
-  // Apply selected AI Improvements to document
+  // HTML-escape helper for embedding text in track-change markup
+  const escapeHtml = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // Build HTML from originalDocContent with given segments as track changes or clean
+  const buildTrackChangeHtml = (segments: ImprovementSegment[], accepted: Set<number> = new Set()) => {
+    let text = originalDocContent;
+    for (const seg of segments) {
+      if (!seg.original || !seg.improved) continue;
+      if (accepted.has(seg.id)) {
+        text = text.replace(seg.original, seg.improved);
+      } else {
+        text = text.replace(
+          seg.original,
+          `<span style="text-decoration:line-through;background-color:#fecaca;color:#991b1b;">${escapeHtml(seg.original)}</span>` +
+          `<span style="background-color:#bbf7d0;color:#166534;">${escapeHtml(seg.improved)}</span>`
+        );
+      }
+    }
+    return `<p>${text.replace(/\n\n+/g, "</p><p>").replace(/\n/g, "<br/>")}</p>`;
+  };
+
+  // Apply selected AI Improvements with visible track-change markup
   const handleApplyImprovement = async () => {
     if (aiImproveSegments.length > 0) {
-      // Apply selected segments to original content
-      let updatedContent = originalDocContent;
       const selectedSegments = aiImproveSegments.filter(s => s.selected);
-      
-      for (const seg of selectedSegments) {
-        if (seg.original && seg.improved) {
-          updatedContent = updatedContent.replace(seg.original, seg.improved);
-        }
-      }
-      
-      // Convert to HTML
-      const htmlContent = `<p>${updatedContent
-        .replace(/\n\n+/g, "</p><p>")
-        .replace(/\n/g, "<br/>")}</p>`;
-      
-      await pushContentAndReload(htmlContent);
-      showToast(`Applied ${selectedSegments.length} improvement(s) — editor reloading`, "success");
+      const html = buildTrackChangeHtml(selectedSegments);
+      await pushContentAndReload(html);
+      setShowRedlines(true);
+      setAppliedSegments(selectedSegments);
+      showToast(`Applied ${selectedSegments.length} track change(s) — original shown with strikethrough`, "success");
     } else if (aiImproveHtml) {
       await pushContentAndReload(aiImproveHtml);
       showToast("Improvement applied — editor reloading", "success");
+      setAiImproveContent(null);
+      setAiImproveHtml(null);
+      setAiImproveSegments([]);
+      setSidePanel(null);
     }
-    
-    setAiImproveContent(null);
-    setAiImproveHtml(null);
-    setAiImproveSegments([]);
-    setSidePanel(null);
+  };
+
+  // Accept all track changes — clean improved text only
+  const handleAcceptAllChanges = async () => {
+    if (appliedSegments.length > 0) {
+      const html = buildTrackChangeHtml(appliedSegments, new Set(appliedSegments.map(s => s.id)));
+      await pushContentAndReload(html);
+      setAppliedSegments([]);
+      setAiImproveSegments([]);
+      setShowRedlines(false);
+      setSidePanel(null);
+      showToast("All changes accepted", "success");
+    } else {
+      setOriginalContent(content);
+    }
+  };
+
+  // Revert all track changes — restore original document
+  const handleRevertAllChanges = async () => {
+    if (appliedSegments.length > 0) {
+      const html = `<p>${originalDocContent.replace(/\n\n+/g, "</p><p>").replace(/\n/g, "<br/>")}</p>`;
+      await pushContentAndReload(html);
+      setAppliedSegments([]);
+      setAiImproveSegments([]);
+      setShowRedlines(false);
+      setSidePanel(null);
+      showToast("All changes reverted — original restored", "success");
+    } else {
+      try {
+        await fetch("/api/onlyoffice/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ documentId: params.documentId, html: originalContent }),
+        });
+        setContent(originalContent);
+      } catch { /* ignore */ }
+    }
+  };
+
+  // Accept individual segment
+  const handleAcceptSegment = async (segId: number) => {
+    const remaining = appliedSegments.filter(s => s.id !== segId);
+    const accepted = appliedSegments.find(s => s.id === segId);
+    if (!accepted) return;
+    const acceptedIds = new Set([segId]);
+    const html = buildTrackChangeHtml(appliedSegments, acceptedIds);
+    await pushContentAndReload(html);
+    // Update originalDocContent to include the accepted change for future rebuilds
+    if (accepted.original && accepted.improved) {
+      setOriginalDocContent(prev => prev.replace(accepted.original, accepted.improved));
+    }
+    setAppliedSegments(remaining);
+    setAiImproveSegments(prev => prev.filter(s => s.id !== segId));
+    if (remaining.length === 0) { setShowRedlines(false); setSidePanel(null); }
+    showToast("Change accepted", "success");
+  };
+
+  // Revert individual segment — restore its original text
+  const handleRevertSegment = async (segId: number) => {
+    const remaining = appliedSegments.filter(s => s.id !== segId);
+    const html = buildTrackChangeHtml(remaining);
+    await pushContentAndReload(html);
+    setAppliedSegments(remaining);
+    setAiImproveSegments(prev => prev.filter(s => s.id !== segId));
+    if (remaining.length === 0) { setShowRedlines(false); setSidePanel(null); }
+    showToast("Change reverted — original text restored", "success");
   };
 
   // ── AI Review handler ─────────────────────────────────────────────────────
@@ -967,22 +1043,17 @@ ${stripped}`,
         <div className="bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-700/40 px-4 py-2 flex items-center gap-3 animate-fade-in shrink-0">
           <GitCompare className="w-4 h-4 text-red-600 dark:text-red-400" />
           <span className="text-xs font-medium text-red-700 dark:text-red-400">Redline Mode Active</span>
-          <span className="text-xs text-red-600 dark:text-red-500">Changes since last save are tracked</span>
-          <button onClick={() => { setOriginalContent(content); }} className="ml-auto text-xs text-red-600 hover:text-red-800 font-medium flex items-center gap-1">
+          <span className="text-xs text-red-600 dark:text-red-500">
+            {appliedSegments.length > 0
+              ? `${appliedSegments.length} AI improvement(s) shown as track changes`
+              : "Changes since last save are tracked"}
+          </span>
+          <button onClick={handleAcceptAllChanges} className="ml-auto text-xs text-red-600 hover:text-red-800 font-medium flex items-center gap-1">
             <Check className="w-3 h-3" />
             Accept All Changes
           </button>
           <button
-            onClick={async () => {
-              try {
-                await fetch("/api/onlyoffice/content", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ documentId: params.documentId, html: originalContent }),
-                });
-                setContent(originalContent);
-              } catch { /* ignore */ }
-            }}
+            onClick={handleRevertAllChanges}
             className="text-xs text-red-600 hover:text-red-800 font-medium flex items-center gap-1"
           >
             <RotateCcw className="w-3 h-3" />
@@ -1080,6 +1151,66 @@ ${stripped}`,
                     <div className="flex flex-col items-center justify-center py-12 gap-3">
                       <div className="w-8 h-8 border-2 border-amber-200 border-t-amber-600 rounded-full animate-spin" />
                       <p className="text-xs text-text-secondary">AI is improving your document…</p>
+                    </div>
+                  ) : appliedSegments.length > 0 ? (
+                    <div className="space-y-4">
+                      {/* Track Changes Status */}
+                      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-lg p-3">
+                        <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                          <GitCompare className="w-3.5 h-3.5" />
+                          {appliedSegments.length} Track Change{appliedSegments.length !== 1 ? 's' : ''} Active
+                        </p>
+                        <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-1">
+                          Original text is shown with strikethrough in the document. Accept or restore each change below.
+                        </p>
+                      </div>
+
+                      {/* Applied Segments with Accept/Restore */}
+                      <div className="space-y-3 max-h-[55vh] overflow-auto">
+                        {appliedSegments.map((seg) => {
+                          const catStyles: Record<string, { bg: string; border: string; text: string }> = {
+                            grammar: { bg: "bg-green-50 dark:bg-green-900/20", border: "border-green-200 dark:border-green-700/40", text: "text-green-700 dark:text-green-400" },
+                            clarity: { bg: "bg-blue-50 dark:bg-blue-900/20", border: "border-blue-200 dark:border-blue-700/40", text: "text-blue-700 dark:text-blue-400" },
+                            jurisprudence: { bg: "bg-purple-50 dark:bg-purple-900/20", border: "border-purple-200 dark:border-purple-700/40", text: "text-purple-700 dark:text-purple-400" },
+                            structure: { bg: "bg-amber-50 dark:bg-amber-900/20", border: "border-amber-200 dark:border-amber-700/40", text: "text-amber-700 dark:text-amber-400" },
+                          };
+                          const st = catStyles[seg.category] || catStyles.grammar;
+                          return (
+                            <div key={seg.id} className={`rounded-lg border p-3 ${st.bg} ${st.border}`}>
+                              <div className={`text-[10px] font-semibold uppercase tracking-wide mb-1.5 ${st.text}`}>{seg.category}</div>
+                              {seg.original && (
+                                <div className="mb-2">
+                                  <p className="text-[10px] text-text-tertiary mb-0.5">Original:</p>
+                                  <p className="text-[11px] text-text-secondary line-through bg-red-50 dark:bg-red-900/10 rounded px-2 py-1.5 leading-relaxed">{seg.original}</p>
+                                </div>
+                              )}
+                              <div className="mb-2">
+                                <p className="text-[10px] text-text-tertiary mb-0.5">Improved:</p>
+                                <p className="text-[11px] text-text-primary bg-green-50 dark:bg-green-900/10 rounded px-2 py-1.5 leading-relaxed">{seg.improved}</p>
+                              </div>
+                              {seg.explanation && <p className="text-[10px] text-text-tertiary italic mb-2">{seg.explanation}</p>}
+                              <div className="flex gap-2">
+                                <button onClick={() => handleAcceptSegment(seg.id)} className="flex-1 text-[10px] font-medium px-2 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-1">
+                                  <Check className="w-3 h-3" /> Accept
+                                </button>
+                                <button onClick={() => handleRevertSegment(seg.id)} className="flex-1 text-[10px] font-medium px-2 py-1.5 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center justify-center gap-1">
+                                  <RotateCcw className="w-3 h-3" /> Restore Original
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Bulk Actions */}
+                      <div className="flex gap-2 pt-2 border-t border-border">
+                        <button onClick={handleAcceptAllChanges} className="flex-1 px-4 py-2.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-1.5">
+                          <Check className="w-3.5 h-3.5" /> Accept All ({appliedSegments.length})
+                        </button>
+                        <button onClick={handleRevertAllChanges} className="px-4 py-2.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors flex items-center justify-center gap-1.5">
+                          <RotateCcw className="w-3.5 h-3.5" /> Revert All
+                        </button>
+                      </div>
                     </div>
                   ) : aiImproveSegments.length > 0 ? (
                     <div className="space-y-4">

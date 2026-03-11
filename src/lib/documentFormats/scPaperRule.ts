@@ -735,9 +735,8 @@ export function formatLegalHtml(rawText: string, isCourtPleading = false): strin
     if (centeredTitlePatterns.some(p => p.test(trimmed))) {
       const isMainTitle = /^(complaint|answer|motion|memorandum|petition|affidavit|verification|certification|prayer|deed of|contract|agreement|special power|general power|board resolution|secretary)/i.test(trimmed);
       if (isMainTitle) {
-        // Add letter spacing for main document titles
-        const spaced = trimmed.toUpperCase().split("").join(" ");
-        htmlParts.push(`<p style="text-align: center; font-weight: bold; letter-spacing: 0.15em;">${spaced}</p>`);
+        // Use letter-spacing only (no manual char spacing) for clean DOCX conversion
+        htmlParts.push(`<p style="text-align: center; font-weight: bold; letter-spacing: 0.3em;">${trimmed.toUpperCase()}</p>`);
       } else {
         htmlParts.push(`<p style="text-align: center; font-weight: bold;">${trimmed.toUpperCase()}</p>`);
       }
@@ -803,10 +802,12 @@ export function formatLegalHtml(rawText: string, isCourtPleading = false): strin
 }
 
 /**
- * Wraps formatted HTML content with proper SC Paper Rule styles
+ * Wraps formatted HTML content with proper SC Paper Rule styles.
+ * Font-family is set here; font-size and line-spacing are controlled
+ * by the html-to-docx DOCX options in file/route.ts to avoid conflicts.
  */
 export function wrapWithScPaperStyles(htmlContent: string): string {
-  return `<div style="font-family: Arial, sans-serif; font-size: 14pt; line-height: 1.5;">
+  return `<div style="font-family: Arial, sans-serif;">
 ${htmlContent}
 </div>`;
 }

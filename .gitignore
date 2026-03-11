@@ -35,3 +35,4 @@ prisma/dev.db
 prisma/*.db
 
 client_secret_*.json
+temp_docx_extract/
