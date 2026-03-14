@@ -44,6 +44,15 @@ export default function RootLayout({
             });
           })();
         ` }} />
+        {/* Strip browser-extension-injected attributes (e.g. fdprocessedid from
+           1Password / Dashlane) before React hydration to prevent mismatch warnings */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          new MutationObserver(function(ms){
+            for(var i=0;i<ms.length;i++){
+              ms[i].target.removeAttribute('fdprocessedid');
+            }
+          }).observe(document.documentElement,{attributes:true,subtree:true,attributeFilter:['fdprocessedid']});
+        ` }} />
         {/* Suppress MetaMask / Web3 extension auto-connect errors — this app does not use Web3 */}
         <script dangerouslySetInnerHTML={{ __html: `
           window.addEventListener('unhandledrejection', function(e) {
