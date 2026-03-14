@@ -192,9 +192,9 @@ export default function AdminActivatePage() {
           <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl p-8">
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-blue-200 mb-2">
-                  Admin Activation Key
-                </label>
+                <label className="block text-sm font-medium text-blue-200 mb-2 text-center w-full">
+                    Admin Activation Key
+                  </label>
                 <div className="relative">
                   <input
                     type={showKey ? "text" : "password"}
