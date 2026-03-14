@@ -247,15 +247,18 @@ export default function AdminActivatePage() {
     <div className="min-h-screen bg-surface-secondary">
       {/* Top Nav */}
       <header className="bg-surface border-b border-border sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between relative">
           <div className="flex items-center gap-3">
             <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 rounded-xl">
               <Shield className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-base font-bold text-text-primary">Payment Activation Center</h1>
               <p className="text-xs text-text-secondary">JusConsultus AI — Admin Panel</p>
             </div>
+          </div>
+          {/* Centered title */}
+          <div className="absolute left-0 right-0 top-0 bottom-0 flex items-center justify-center pointer-events-none">
+            <h1 className="text-base font-bold text-text-primary text-center">Payment Activation Center</h1>
           </div>
           <div className="flex items-center gap-2">
             <button
