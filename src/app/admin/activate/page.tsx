@@ -5,7 +5,7 @@ import {
   Shield, RefreshCw, LogOut, CheckCircle2, XCircle, Loader2,
   User, Mail, Calendar, Clock, AlertCircle, Search, CreditCard,
   TrendingUp, Users, Crown, ChevronDown, ChevronUp, BadgeCheck,
-  Eye, EyeOff,
+  Eye, EyeOff, BarChart2,
 } from "lucide-react";
 import { PRICING } from "@/lib/pricing";
 
@@ -264,6 +264,13 @@ export default function AdminActivatePage() {
             </h1>
 
             <div className="flex items-center gap-2 justify-end">
+              <a
+                href="/admin/users"
+                className="flex items-center gap-1.5 text-sm text-text-secondary border border-border rounded-lg px-3 py-2 hover:bg-surface-secondary transition-colors"
+              >
+                <BarChart2 className="w-3.5 h-3.5" />
+                Users
+              </a>
               <button
                 onClick={() => fetchUsers(true)}
                 disabled={refreshing}
