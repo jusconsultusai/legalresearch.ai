@@ -253,43 +253,47 @@ export default function AdminUsersPage() {
       <header className="bg-surface border-b border-border sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-6 py-4 relative">
           <div className="grid grid-cols-3 items-center">
-            <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 rounded-xl">
-                <Shield className="w-5 h-5 text-white" />
-              </div>
-              <div>
+            {/* Left: brand + action buttons */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 rounded-xl">
+                  <Shield className="w-5 h-5 text-white" />
+                </div>
                 <p className="text-xs text-text-secondary">JusConsultus AI — Admin Panel</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href="/admin/activate"
+                  className="flex items-center gap-1.5 text-sm text-text-secondary border border-border rounded-lg px-3 py-2 hover:bg-surface-secondary transition-colors"
+                >
+                  <BadgeCheck className="w-3.5 h-3.5" />
+                  Activate
+                </a>
+                <button
+                  onClick={() => fetchUsers(true)}
+                  disabled={refreshing}
+                  className="flex items-center gap-1.5 text-sm text-text-secondary border border-border rounded-lg px-3 py-2 hover:bg-surface-secondary disabled:opacity-50 transition-colors"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
+                  {refreshing ? "Refreshing..." : "Refresh"}
+                </button>
+                <button
+                  onClick={() => { setAuthenticated(false); setAdminKey(""); setUsers([]); setStats(null); }}
+                  className="flex items-center gap-1.5 text-sm text-text-secondary border border-border rounded-lg px-3 py-2 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  Logout
+                </button>
               </div>
             </div>
 
+            {/* Center: title */}
             <h1 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-base font-bold text-text-primary pointer-events-none whitespace-nowrap">
               User Management
             </h1>
 
-            <div className="flex items-center gap-2 justify-end">
-              <a
-                href="/admin/activate"
-                className="flex items-center gap-1.5 text-sm text-text-secondary border border-border rounded-lg px-3 py-2 hover:bg-surface-secondary transition-colors"
-              >
-                <BadgeCheck className="w-3.5 h-3.5" />
-                Activate
-              </a>
-              <button
-                onClick={() => fetchUsers(true)}
-                disabled={refreshing}
-                className="flex items-center gap-1.5 text-sm text-text-secondary border border-border rounded-lg px-3 py-2 hover:bg-surface-secondary disabled:opacity-50 transition-colors"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
-                {refreshing ? "Refreshing..." : "Refresh"}
-              </button>
-              <button
-                onClick={() => { setAuthenticated(false); setAdminKey(""); setUsers([]); setStats(null); }}
-                className="flex items-center gap-1.5 text-sm text-text-secondary border border-border rounded-lg px-3 py-2 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                Logout
-              </button>
-            </div>
+            {/* Right: intentionally empty */}
+            <div />
           </div>
         </div>
       </header>
