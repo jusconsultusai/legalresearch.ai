@@ -248,57 +248,73 @@ export default function AdminUsersPage() {
 
   // ── Dashboard ─────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-surface-secondary">
-      {/* Top Nav */}
-      <header className="bg-surface border-b border-border sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-6 py-4 relative">
-          <div className="grid grid-cols-3 items-center">
-            {/* Left: brand + action buttons */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 rounded-xl">
-                  <Shield className="w-5 h-5 text-white" />
-                </div>
-                <p className="text-xs text-text-secondary">JusConsultus AI — Admin Panel</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <a
-                  href="/admin/activate"
-                  className="flex items-center gap-1.5 text-sm text-text-secondary border border-border rounded-lg px-3 py-2 hover:bg-surface-secondary transition-colors"
-                >
-                  <BadgeCheck className="w-3.5 h-3.5" />
-                  Activate
-                </a>
-                <button
-                  onClick={() => fetchUsers(true)}
-                  disabled={refreshing}
-                  className="flex items-center gap-1.5 text-sm text-text-secondary border border-border rounded-lg px-3 py-2 hover:bg-surface-secondary disabled:opacity-50 transition-colors"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
-                  {refreshing ? "Refreshing..." : "Refresh"}
-                </button>
-                <button
-                  onClick={() => { setAuthenticated(false); setAdminKey(""); setUsers([]); setStats(null); }}
-                  className="flex items-center gap-1.5 text-sm text-text-secondary border border-border rounded-lg px-3 py-2 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  Logout
-                </button>
-              </div>
+    <div className="min-h-screen bg-surface-secondary flex">
+
+      {/* ── Left Sidebar ──────────────────────────────────────────────── */}
+      <aside className="w-56 shrink-0 bg-surface border-r border-border flex flex-col sticky top-0 h-screen">
+        {/* Brand */}
+        <div className="px-5 py-5 border-b border-border">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2 rounded-xl shrink-0">
+              <Shield className="w-4 h-4 text-white" />
             </div>
-
-            {/* Center: title */}
-            <h1 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-base font-bold text-text-primary pointer-events-none whitespace-nowrap">
-              User Management
-            </h1>
-
-            {/* Right: intentionally empty */}
-            <div />
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-text-primary leading-tight">JusConsultus AI</p>
+              <p className="text-[10px] text-text-tertiary leading-tight">Admin Panel</p>
+            </div>
           </div>
         </div>
-      </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+        {/* Title */}
+        <div className="px-5 pt-5 pb-3">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-text-tertiary mb-3">Navigation</p>
+          <div className="flex items-center gap-2 px-3 py-2.5 bg-blue-50 text-blue-700 rounded-xl text-sm font-medium">
+            <Users className="w-4 h-4 shrink-0" />
+            User Management
+          </div>
+        </div>
+
+        {/* Nav links */}
+        <nav className="px-5 space-y-1">
+          <a
+            href="/admin/activate"
+            className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-text-secondary rounded-xl hover:bg-surface-secondary hover:text-text-primary transition-colors"
+          >
+            <BadgeCheck className="w-4 h-4 shrink-0" />
+            Activate Payments
+          </a>
+          <button
+            onClick={() => fetchUsers(true)}
+            disabled={refreshing}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-text-secondary rounded-xl hover:bg-surface-secondary hover:text-text-primary disabled:opacity-50 transition-colors"
+          >
+            <RefreshCw className={`w-4 h-4 shrink-0 ${refreshing ? "animate-spin" : ""}`} />
+            {refreshing ? "Refreshing…" : "Refresh Data"}
+          </button>
+        </nav>
+
+        {/* Logout pinned at bottom */}
+        <div className="mt-auto px-5 py-5 border-t border-border">
+          <button
+            onClick={() => { setAuthenticated(false); setAdminKey(""); setUsers([]); setStats(null); }}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-text-secondary rounded-xl hover:bg-red-50 hover:text-red-600 transition-colors"
+          >
+            <LogOut className="w-4 h-4 shrink-0" />
+            Logout
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Main content ──────────────────────────────────────────────── */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Top bar */}
+        <header className="bg-surface border-b border-border sticky top-0 z-30">
+          <div className="px-6 py-4">
+            <h1 className="text-base font-bold text-text-primary text-center">User Management</h1>
+          </div>
+        </header>
+
+      <div className="px-6 py-8 space-y-6">
 
         {/* Stats */}
         {stats && (
@@ -589,6 +605,7 @@ export default function AdminUsersPage() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
