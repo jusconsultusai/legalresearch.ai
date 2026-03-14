@@ -37,7 +37,7 @@ export default async function AboutPage() {
         {/* Story */}
         <div className="max-w-2xl mx-auto">
           <h2 className="text-2xl font-bold text-text-primary text-center">Our Story</h2>
-          <div style={{ textAlign: "justify" }} className="mt-4 space-y-4 text-text-secondary">
+          <div className="mt-4 space-y-4 text-text-secondary text-justify">
             <p>
               JusConsultus AI was founded by a team of legal professionals and AI enthusiasts who saw firsthand the challenges of legal research in the Philippines. Thousands of Supreme Court decisions, hundreds of laws, and countless executive issuances — navigating this vast body of legal knowledge consumed enormous time and resources.
             </p>
