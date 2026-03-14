@@ -247,7 +247,7 @@ export default function AdminActivatePage() {
     <div className="min-h-screen bg-surface-secondary">
       {/* Top Nav */}
       <header className="bg-surface border-b border-border sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-6 py-4 relative">
           <div className="grid grid-cols-3 items-center">
             <div className="flex items-center gap-3">
               <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 rounded-xl">
@@ -258,9 +258,10 @@ export default function AdminActivatePage() {
               </div>
             </div>
 
-            <div className="flex justify-center">
-              <h1 className="text-base font-bold text-text-primary">Payment Activation Center</h1>
-            </div>
+            <div />
+            <h1 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-base font-bold text-text-primary pointer-events-none">
+              Payment Activation Center
+            </h1>
 
             <div className="flex items-center gap-2 justify-end">
               <button
