@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Shield, RefreshCw, LogOut, CheckCircle2, XCircle, Loader2,
   User, Mail, Calendar, Clock, AlertCircle, Search, CreditCard,
@@ -502,8 +502,8 @@ export default function AdminActivatePage() {
                     const lastPayment = u.payments?.[0];
 
                     return (
-                      <>
-                        <tr key={u.id} className={`hover:bg-blue-50/30 transition-colors ${selectedUserId === u.id ? "bg-blue-50" : ""}`}>
+                      <React.Fragment key={u.id}>
+                        <tr className={`hover:bg-blue-50/30 transition-colors ${selectedUserId === u.id ? "bg-blue-50" : ""}`}>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
                               <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
@@ -626,7 +626,7 @@ export default function AdminActivatePage() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </React.Fragment>
                     );
                   })}
                 </tbody>
