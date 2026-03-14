@@ -85,6 +85,7 @@ export default function BookmarksPage() {
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search bookmarks..."
             className="input pl-10 py-2 text-sm"
+            suppressHydrationWarning
           />
         </div>
         <div className="flex gap-1.5">
@@ -96,16 +97,17 @@ export default function BookmarksPage() {
                 "px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors",
                 filterType === t ? "bg-primary-50 text-primary-700 border border-primary-200" : "hover:bg-surface-secondary text-text-secondary"
               )}
+              suppressHydrationWarning
             >
               {t}
             </button>
           ))}
         </div>
         <div className="flex items-center gap-1 ml-auto">
-          <button onClick={() => setViewMode("list")} className={cn("p-2 rounded-lg", viewMode === "list" ? "bg-surface-tertiary" : "hover:bg-surface-secondary")} title="List view">
+          <button onClick={() => setViewMode("list")} className={cn("p-2 rounded-lg", viewMode === "list" ? "bg-surface-tertiary" : "hover:bg-surface-secondary")} title="List view" suppressHydrationWarning>
             <List className="w-4 h-4" />
           </button>
-          <button onClick={() => setViewMode("grid")} className={cn("p-2 rounded-lg", viewMode === "grid" ? "bg-surface-tertiary" : "hover:bg-surface-secondary")} title="Grid view">
+          <button onClick={() => setViewMode("grid")} className={cn("p-2 rounded-lg", viewMode === "grid" ? "bg-surface-tertiary" : "hover:bg-surface-secondary")} title="Grid view" suppressHydrationWarning>
             <Grid2X2 className="w-4 h-4" />
           </button>
         </div>

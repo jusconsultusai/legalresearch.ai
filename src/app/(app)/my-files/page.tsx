@@ -270,7 +270,7 @@ export default function MyFilesPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-6 space-y-6" id="tour-myfiles">
+    <div className="max-w-7xl mx-auto py-8 px-6 space-y-6" id="tour-myfiles" suppressHydrationWarning>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -282,6 +282,7 @@ export default function MyFilesPage() {
         <button
           onClick={() => setShowUploadModal(true)}
           className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors"
+          suppressHydrationWarning
         >
           <Upload className="w-4 h-4" />
           Upload Files
@@ -329,6 +330,7 @@ export default function MyFilesPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search files..."
             className="input pl-9 pr-4 py-2 text-sm w-full"
+            suppressHydrationWarning
           />
         </div>
         <select
@@ -336,6 +338,7 @@ export default function MyFilesPage() {
           onChange={(e) => setFilterCategory(e.target.value)}
           className="input text-sm py-2 px-3"
           title="Filter by category"
+          suppressHydrationWarning
         >
           {FILE_CATEGORIES.map((c) => (
             <option key={c.value} value={c.value}>
@@ -351,6 +354,7 @@ export default function MyFilesPage() {
               viewMode === "list" ? "bg-primary-50 text-primary-600" : "hover:bg-surface-secondary text-text-secondary"
             )}
             title="List view"
+            suppressHydrationWarning
           >
             <List className="w-4 h-4" />
           </button>
@@ -361,6 +365,7 @@ export default function MyFilesPage() {
               viewMode === "grid" ? "bg-primary-50 text-primary-600" : "hover:bg-surface-secondary text-text-secondary"
             )}
             title="Grid view"
+            suppressHydrationWarning
           >
             <Grid2X2 className="w-4 h-4" />
           </button>
@@ -383,6 +388,7 @@ export default function MyFilesPage() {
             <button
               onClick={() => setShowUploadModal(true)}
               className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors"
+              suppressHydrationWarning
             >
               <Upload className="w-4 h-4" />
               Upload Your First File
