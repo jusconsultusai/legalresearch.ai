@@ -186,7 +186,7 @@ export default function AdminActivatePage() {
               <Shield className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-white">JusConsultus AI</h1>
-            <p className="text-blue-300 text-sm mt-1">Payment Activation Center</p>
+            <p className="text-blue-300 text-sm mt-1 text-center w-full">Payment Activation Center</p>
           </div>
 
           <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl p-8">
