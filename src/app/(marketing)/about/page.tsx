@@ -35,17 +35,19 @@ export default async function AboutPage() {
         </div>
 
         {/* Story */}
-        <div className="prose prose-lg max-w-none">
-          <h2 className="text-2xl font-bold text-text-primary">Our Story</h2>
-          <p className="text-text-secondary leading-relaxed">
-            JusConsultus AI was founded by a team of legal professionals and AI enthusiasts who saw firsthand the challenges of legal research in the Philippines. Thousands of Supreme Court decisions, hundreds of laws, and countless executive issuances — navigating this vast body of legal knowledge consumed enormous time and resources.
-          </p>
-          <p className="text-text-secondary leading-relaxed">
-            We built JusConsultus AI to change that. By combining the latest advances in large language models, retrieval-augmented generation (RAG), and a comprehensive database of Philippine legal materials, we created a platform that can answer complex legal questions in seconds.
-          </p>
-          <p className="text-text-secondary leading-relaxed">
-            Today, JusConsultus AI serves solo practitioners, top law firms, government agencies, and law schools across the Philippines — all united by the goal of making legal research faster, smarter, and more accessible.
-          </p>
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-2xl font-bold text-text-primary text-center">Our Story</h2>
+          <div style={{ textAlign: "justify" }} className="mt-4 space-y-4 text-text-secondary">
+            <p>
+              JusConsultus AI was founded by a team of legal professionals and AI enthusiasts who saw firsthand the challenges of legal research in the Philippines. Thousands of Supreme Court decisions, hundreds of laws, and countless executive issuances — navigating this vast body of legal knowledge consumed enormous time and resources.
+            </p>
+            <p>
+              We built JusConsultus AI to change that. By combining the latest advances in large language models, retrieval-augmented generation (RAG), and a comprehensive database of Philippine legal materials, we created a platform that can answer complex legal questions in seconds.
+            </p>
+            <p>
+              Today, JusConsultus AI serves solo practitioners, top law firms, government agencies, and law schools across the Philippines — all united by the goal of making legal research faster, smarter, and more accessible.
+            </p>
+          </div>
         </div>
 
         {/* Team */}
