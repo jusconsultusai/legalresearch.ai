@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { Card, Badge } from "@/components/ui";
-import { Check, Shield, Clock, HelpCircle, X, Smartphone, Building2, Copy, CheckCircle2, CreditCard } from "lucide-react";
+import { Check, Shield, Clock, HelpCircle, X, Smartphone, Building2, Copy, CheckCircle2, CreditCard, Crown } from "lucide-react";
 import { PRICING } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks";
 
 const PRO_FEATURES = [
   "Unlimited searches",
@@ -85,6 +86,8 @@ interface CheckoutData {
 }
 
 export default function UpgradePage() {
+  const { user } = useAuth();
+  const userPlan = user?.plan || "free";
   const [billing, setBilling] = useState<BillingPeriod>("annual");
   const [selectedPlan, setSelectedPlan] = useState<SelectedPlan>("proAnnual");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
@@ -195,9 +198,14 @@ export default function UpgradePage() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Free Plan */}
-        <Card className="p-6">
+        <Card className={cn("p-6", userPlan === "free" && "border-2 border-amber-400")}>
           <div className="mb-4">
-            <h3 className="font-bold text-lg text-text-primary">Free</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-lg text-text-primary">Free</h3>
+              {userPlan === "free" && (
+                <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 text-[10px]">Current</Badge>
+              )}
+            </div>
             <p className="text-sm text-text-secondary mt-0.5">Get started for free</p>
           </div>
           <div className="mb-6">
@@ -214,15 +222,25 @@ export default function UpgradePage() {
               </div>
             ))}
           </div>
-          <button className="w-full py-2.5 rounded-xl text-sm font-medium border border-border text-text-secondary" disabled>
-            Current Plan
-          </button>
+          {userPlan === "free" ? (
+            <button className="w-full py-2.5 rounded-xl text-sm font-medium border border-border text-text-secondary" disabled>
+              Current Plan
+            </button>
+          ) : (
+            <button className="w-full py-2.5 rounded-xl text-sm font-medium border border-border text-text-secondary opacity-50" disabled>
+              Downgrade not available
+            </button>
+          )}
         </Card>
 
         {/* Professional */}
-        <Card className="p-6 relative border-2 border-primary-600 shadow-lg">
+        <Card className={cn("p-6 relative", userPlan === "pro" ? "border-2 border-green-500 shadow-lg" : "border-2 border-primary-600 shadow-lg")}>
           <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-            <Badge className="bg-primary-600 text-white px-3 py-1 text-xs">Most Popular</Badge>
+            {userPlan === "pro" ? (
+              <Badge className="bg-green-600 text-white px-3 py-1 text-xs flex items-center gap-1"><Crown className="w-3 h-3" /> Current Plan</Badge>
+            ) : (
+              <Badge className="bg-primary-600 text-white px-3 py-1 text-xs">Most Popular</Badge>
+            )}
           </div>
           <div className="mb-4">
             <h3 className="font-bold text-lg text-text-primary">Professional</h3>
@@ -245,18 +263,33 @@ export default function UpgradePage() {
               </div>
             ))}
           </div>
-          <button
-            onClick={() => openModal("pro")}
-            className="w-full py-2.5 rounded-xl text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
-          >
-            Upgrade to Professional
-          </button>
+          {userPlan === "pro" ? (
+            <button className="w-full py-2.5 rounded-xl text-sm font-medium border-2 border-green-500 text-green-700 dark:text-green-300" disabled>
+              ✓ Active
+            </button>
+          ) : userPlan === "team" || userPlan === "enterprise" ? (
+            <button className="w-full py-2.5 rounded-xl text-sm font-medium border border-border text-text-secondary opacity-50" disabled>
+              Included in your plan
+            </button>
+          ) : (
+            <button
+              onClick={() => openModal("pro")}
+              className="w-full py-2.5 rounded-xl text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+            >
+              Upgrade to Professional
+            </button>
+          )}
         </Card>
 
         {/* Team */}
-        <Card className="p-6">
+        <Card className={cn("p-6", userPlan === "team" && "border-2 border-green-500 shadow-lg")}>
           <div className="mb-4">
-            <h3 className="font-bold text-lg text-text-primary">Team</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-lg text-text-primary">Team</h3>
+              {userPlan === "team" && (
+                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-[10px] flex items-center gap-1"><Crown className="w-3 h-3" /> Current</Badge>
+              )}
+            </div>
             <p className="text-sm text-text-secondary mt-0.5">For law firms</p>
           </div>
           <div className="mb-4">
@@ -276,12 +309,22 @@ export default function UpgradePage() {
               </div>
             ))}
           </div>
-          <button
-            onClick={() => openModal("team")}
-            className="w-full py-2.5 rounded-xl text-sm font-medium bg-surface-tertiary text-text-primary hover:bg-surface-secondary transition-colors"
-          >
-            Upgrade to Team
-          </button>
+          {userPlan === "team" ? (
+            <button className="w-full py-2.5 rounded-xl text-sm font-medium border-2 border-green-500 text-green-700 dark:text-green-300" disabled>
+              ✓ Active
+            </button>
+          ) : userPlan === "enterprise" ? (
+            <button className="w-full py-2.5 rounded-xl text-sm font-medium border border-border text-text-secondary opacity-50" disabled>
+              Included in your plan
+            </button>
+          ) : (
+            <button
+              onClick={() => openModal("team")}
+              className="w-full py-2.5 rounded-xl text-sm font-medium bg-surface-tertiary text-text-primary hover:bg-surface-secondary transition-colors"
+            >
+              {userPlan === "pro" ? "Upgrade to Team" : "Upgrade to Team"}
+            </button>
+          )}
         </Card>
 
         {/* Large Firms / Enterprise */}

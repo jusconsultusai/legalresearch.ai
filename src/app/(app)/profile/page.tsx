@@ -1,33 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, Badge } from "@/components/ui";
 import ProgressBar from "@/components/ui/ProgressBar";
 import { useAuth } from "@/hooks";
 import { cn } from "@/lib/utils";
 import {
   User, Mail, Building, Briefcase, Bell, Shield, CreditCard,
-  Eye, EyeOff, Save, Star, Zap, AlertTriangle, X,
+  Eye, EyeOff, Save, Star, Zap, AlertTriangle, X, Crown, Calendar,
 } from "lucide-react";
 
 export default function ProfilePage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("profile");
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(tabParam && ["profile", "security", "notifications", "billing"].includes(tabParam) ? tabParam : "profile");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
 
+  // Sync tab with URL query param
+  useEffect(() => {
+    if (tabParam && ["profile", "security", "notifications", "billing"].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
   // Plan metadata
   const PLAN_INFO: Record<string, { name: string; description: string; searches: number }> = {
-    free:       { name: "Free Plan",   description: "15 AI searches per month · Basic legal database", searches: 15 },
-    pro:        { name: "Pro Plan",    description: "500 AI searches per month · Full legal database", searches: 500 },
-    team:       { name: "Team Plan",   description: "2,000 searches per month · Team collaboration", searches: 2000 },
-    enterprise: { name: "Enterprise",  description: "Unlimited searches · Custom integrations", searches: -1 },
+    free:       { name: "Free Plan",       description: "15 AI searches · Basic legal database",     searches: 15 },
+    pro:        { name: "Professional",    description: "Unlimited AI searches · Full legal database", searches: -1 },
+    team:       { name: "Team Plan",       description: "Unlimited searches · Team collaboration",    searches: -1 },
+    enterprise: { name: "Enterprise",      description: "Unlimited searches · Custom integrations",   searches: -1 },
   };
   const planKey = user?.plan || "free";
   const planInfo = PLAN_INFO[planKey] || PLAN_INFO.free;
   const isPaid = planKey !== "free";
+  const isFree = planKey === "free";
   const [form, setForm] = useState({
     name: user?.name || "",
     email: user?.email || "",
@@ -98,10 +109,12 @@ export default function ProfilePage() {
                     <p className="font-semibold text-text-primary">{user?.name || "User"}</p>
                     <p className="text-sm text-text-secondary">{user?.email}</p>
                     <Badge
-                      variant={isPaid ? "accent" : "outline"}
-                      className={cn("mt-1 text-xs", isPaid && "flex items-center gap-1")}
+                      variant={isPaid ? "accent" : "secondary"}
+                      className={cn("mt-1 text-xs flex items-center gap-1",
+                        isPaid ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300"
+                      )}
                     >
-                      {isPaid && <Star className="w-3 h-3" />}
+                      {isPaid ? <Crown className="w-3 h-3" /> : null}
                       {planInfo.name}
                     </Badge>
                   </div>
@@ -311,14 +324,30 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
+                {/* Subscription Dates (paid users) */}
+                {isPaid && user?.subscriptionStartDate && (
+                  <div className="flex items-center gap-4 mb-5 text-sm text-text-secondary">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>Started: {new Date(user.subscriptionStartDate).toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" })}</span>
+                    </div>
+                    {user?.subscriptionEndDate && (
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>Renews: {new Date(user.subscriptionEndDate).toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" })}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Usage */}
                 <div className="space-y-2 mb-5">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-text-secondary">Searches used this month</span>
+                    <span className="text-sm text-text-secondary">Search Quota</span>
                     <span className="font-semibold text-sm">
                       {planInfo.searches === -1
-                        ? `${Math.max(0, (planInfo.searches === -1 ? 0 : planInfo.searches) - (user?.searchesLeft ?? 0))} / Unlimited`
-                        : `${Math.max(0, planInfo.searches - (user?.searchesLeft ?? planInfo.searches))} / ${planInfo.searches}`
+                        ? "Unlimited"
+                        : `${user?.searchesLeft ?? 0} / ${planInfo.searches} remaining`
                       }
                     </span>
                   </div>
@@ -326,25 +355,35 @@ export default function ProfilePage() {
                     <ProgressBar
                       value={Math.min(100, ((planInfo.searches - (user?.searchesLeft ?? planInfo.searches)) / planInfo.searches) * 100)}
                       aria-label="Search usage"
-                      barClassName={isPaid ? "bg-primary-600" : "bg-primary-600"}
+                      barClassName="bg-primary-600"
                     />
+                  )}
+                  {isPaid && (
+                    <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                      <Zap className="w-3 h-3" /> Unlimited searches included with your plan
+                    </p>
                   )}
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex flex-col gap-2">
+                <div className="flex gap-3">
                   <a
                     href="/upgrade"
-                    className="flex w-full items-center justify-center gap-2 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors"
+                    className={cn(
+                      "flex flex-1 items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                      isFree
+                        ? "bg-primary-600 text-white hover:bg-primary-700"
+                        : "border border-border text-text-primary hover:bg-surface-secondary"
+                    )}
                   >
-                    {isPaid ? "Change Plan" : "Upgrade to Pro"}
+                    {isFree ? "Upgrade to Professional" : "Manage Plan"}
                   </a>
                   {isPaid && (
                     <button
                       onClick={() => setShowCancelModal(true)}
-                      className="flex w-full items-center justify-center gap-2 py-2.5 border border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 rounded-xl text-sm font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 border border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 rounded-xl text-sm font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                     >
-                      Cancel Subscription
+                      Cancel
                     </button>
                   )}
                 </div>

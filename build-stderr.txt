@@ -1,0 +1,317 @@
+Turbopack build encountered 22 warnings:
+./src/app/api/legal-files/global-search/route.ts:5:23
+The file pattern '/ROOT/data/legal-database' matches 117745 files in [project]/
+  3 | import path from "path";
+  4 |
+> 5 | const LEGAL_DB_ROOT = path.join(process.cwd(), "data", "legal-database");
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 |
+  7 | /** Maps category+subcategory to a relative folder path under data/legal-database */
+  8 | const FOLDER_MAP: Record<string, Record<string, string>> = {
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+
+./src/app/api/legal-files/route.ts:5:23
+The file pattern '/ROOT/data/legal-database' matches 117745 files in [project]/
+  3 | import path from "path";
+  4 |
+> 5 | const LEGAL_DB_ROOT = path.join(process.cwd(), "data", "legal-database");
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 |
+  7 | /** Maps category+subcategory to a relative folder path under data/legal-database */
+  8 | const FOLDER_MAP: Record<string, Record<string, string>> = {
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+
+./src/app/api/legal-files/serve/route.ts:5:23
+The file pattern '/ROOT/data/legal-database' matches 117745 files in [project]/
+  3 | import path from "path";
+  4 |
+> 5 | const LEGAL_DB_ROOT = path.join(process.cwd(), "data", "legal-database");
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 |
+  7 | /** Injected CSS to improve the look of served HTML files */
+  8 | const INJECTED_STYLE = `
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+
+./src/app/api/legal-files/summary/route.ts:8:23
+The file pattern '/ROOT/data/legal-database' matches 117745 files in [project]/
+   6 | import pdfParse from "pdf-parse";
+   7 |
+>  8 | const LEGAL_DB_ROOT = path.join(process.cwd(), "data", "legal-database");
+     |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   9 |
+  10 | /** Strip HTML tags and collapse whitespace to get plain text */
+  11 | function htmlToText(html: string): string {
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+
+./src/lib/ai/kag.ts:266:23
+The file pattern '/ROOT/data/legal-database' matches 117745 files in [project]/
+  264 | // ΓöÇΓöÇ Filesystem-Based Legal Knowledge Graph ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  265 |
+> 266 | const LEGAL_DB_ROOT = path.join(process.cwd(), "data", "legal-database");
+      |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  267 |
+  268 | /** Resolve entity type to filesystem folders */
+  269 | function entityToFolders(entity: LegalEntity): string[] {
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import trace:
+  App Route:
+    ./src/lib/ai/kag.ts
+    ./src/lib/ai/unified-search.ts
+    ./src/app/api/ai/deep-search/route.ts
+
+
+./src/lib/ai/rag-filesystem.ts:5:23
+The file pattern '/ROOT/data/legal-database' matches 117745 files in [project]/
+  3 | import type { RAGContext, RAGResult } from "./rag";
+  4 |
+> 5 | const LEGAL_DB_ROOT = path.join(process.cwd(), "data", "legal-database");
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  6 |
+  7 | /** All subcategory folder mappings ΓÇö mirrors the legal-files API FOLDER_MAP */
+  8 | const ALL_FOLDERS: { category: string; subcategory: string; folder: string }[] = [
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import trace:
+  App Route:
+    ./src/lib/ai/rag-filesystem.ts
+    ./src/lib/ai/unified-search.ts
+    ./src/app/api/ai/deep-search/route.ts
+
+
+./src/app/api/legal-files/serve/route.ts:509:22
+The file pattern ('/ROOT/data/legal-database/' <dynamic> | '/ROOT/data/legal-database' <dynamic> | '/ROOT/data/legal-database/' | '/ROOT/data/legal-database') matches 117745 files in [project]/
+  507 |     let pdfBuf: Buffer;
+  508 |     try {
+> 509 |       pdfBuf = await fs.readFile(absPath);
+      |                      ^^^^^^^^^^^^^^^^^^^^
+  510 |     } catch {
+  511 |       return new NextResponse("File not found", { status: 404 });
+  512 |     }
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+
+./src/app/api/legal-files/serve/route.ts:525:21
+The file pattern ('/ROOT/data/legal-database/' <dynamic> | '/ROOT/data/legal-database' <dynamic> | '/ROOT/data/legal-database/' | '/ROOT/data/legal-database') matches 117745 files in [project]/
+  523 |   let content: string;
+  524 |   try {
+> 525 |     content = await fs.readFile(absPath, "utf-8");
+      |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  526 |   } catch {
+  527 |     // Try latin1 (some older legal docs use windows-1252)
+  528 |     try {
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+
+./src/app/api/legal-files/serve/route.ts:529:25
+The file pattern ('/ROOT/data/legal-database/' <dynamic> | '/ROOT/data/legal-database' <dynamic> | '/ROOT/data/legal-database/' | '/ROOT/data/legal-database') matches 117745 files in [project]/
+  527 |     // Try latin1 (some older legal docs use windows-1252)
+  528 |     try {
+> 529 |       const buf = await fs.readFile(absPath);
+      |                         ^^^^^^^^^^^^^^^^^^^^
+  530 |       content = buf.toString("latin1");
+  531 |     } catch {
+  532 |       return new NextResponse("File not found", { status: 404 });
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+
+./src/app/api/legal-files/summary/route.ts:62:25
+The file pattern ('/ROOT/data/legal-database/' <dynamic> | '/ROOT/data/legal-database' <dynamic> | '/ROOT/data/legal-database/' | '/ROOT/data/legal-database') matches 117745 files in [project]/
+  60 |   try {
+  61 |     if (isPdf) {
+> 62 |       const buf = await fs.readFile(absPath);
+     |                         ^^^^^^^^^^^^^^^^^^^^
+  63 |       const pdfData = await pdfParse(buf);
+  64 |       plainText = pdfData.text.replace(/\s{2,}/g, " ").trim().slice(0, 4000);
+  65 |     } else {
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+
+./src/app/api/legal-files/summary/route.ts:68:25
+The file pattern ('/ROOT/data/legal-database/' <dynamic> | '/ROOT/data/legal-database' <dynamic> | '/ROOT/data/legal-database/' | '/ROOT/data/legal-database') matches 117745 files in [project]/
+  66 |       let rawHtml: string;
+  67 |       try {
+> 68 |         rawHtml = await fs.readFile(absPath, "utf-8");
+     |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  69 |       } catch {
+  70 |         const buf = await fs.readFile(absPath);
+  71 |         rawHtml = buf.toString("latin1");
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+
+./src/app/api/legal-files/summary/route.ts:70:27
+The file pattern ('/ROOT/data/legal-database/' <dynamic> | '/ROOT/data/legal-database' <dynamic> | '/ROOT/data/legal-database/' | '/ROOT/data/legal-database') matches 117745 files in [project]/
+  68 |         rawHtml = await fs.readFile(absPath, "utf-8");
+  69 |       } catch {
+> 70 |         const buf = await fs.readFile(absPath);
+     |                           ^^^^^^^^^^^^^^^^^^^^
+  71 |         rawHtml = buf.toString("latin1");
+  72 |       }
+  73 |       plainText = htmlToText(rawHtml).slice(0, 4000);
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+
+./src/app/api/legal-files/serve/route.ts:495:19
+The file pattern ('/ROOT/data/legal-database/' <dynamic> | '/ROOT/data/legal-database' <dynamic> | '/ROOT/data/legal-database/' | '/ROOT/data/legal-database') matches 588725 files in [project]/
+  493 |
+  494 |   // Security: ensure path stays within LEGAL_DB_ROOT
+> 495 |   const absPath = path.resolve(LEGAL_DB_ROOT, relPath);
+      |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  496 |   if (!absPath.startsWith(LEGAL_DB_ROOT)) {
+  497 |     return new NextResponse("Forbidden", { status: 403 });
+  498 |   }
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+
+./src/app/api/legal-files/summary/route.ts:42:19
+The file pattern ('/ROOT/data/legal-database/' <dynamic> | '/ROOT/data/legal-database' <dynamic> | '/ROOT/data/legal-database/' | '/ROOT/data/legal-database') matches 588725 files in [project]/
+  40 |
+  41 |   // Validate path stays within LEGAL_DB_ROOT
+> 42 |   const absPath = path.resolve(LEGAL_DB_ROOT, relPath);
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  43 |   if (!absPath.startsWith(LEGAL_DB_ROOT) || !/\.(html?|pdf)$/i.test(absPath)) {
+  44 |     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  45 |   }
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+
+./src/app/api/legal-files/global-search/route.ts:237:25
+The file pattern ('/ROOT/data/legal-database/' <dynamic> | '/ROOT/data/legal-database' <dynamic>) matches 470980 files in [project]/
+  235 |       processedFolders.add(relFolder);
+  236 |
+> 237 |       const folderAbs = path.join(LEGAL_DB_ROOT, relFolder);
+      |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  238 |       const files = await collectAllFiles(folderAbs, relFolder);
+  239 |
+  240 |       for (const file of files) {
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+
+./src/app/api/legal-files/global-search/route.ts:254:27
+The file pattern ('/ROOT/data/legal-database/' <dynamic> | '/ROOT/data/legal-database' <dynamic>) matches 470980 files in [project]/
+  252 |
+  253 |         if (titleMatch) {
+> 254 |           const fileAbs = path.join(LEGAL_DB_ROOT, file.relativePath);
+      |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  255 |           const metaTitle = await extractMetaTitle(fileAbs);
+  256 |           results.push({
+  257 |             title: metaTitle || title,
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+
+./src/app/api/legal-files/global-search/route.ts:273:27
+The file pattern ('/ROOT/data/legal-database/' <dynamic> | '/ROOT/data/legal-database' <dynamic>) matches 470980 files in [project]/
+  271 |         // Content search (slower, optional)
+  272 |         if (searchContent) {
+> 273 |           const fileAbs = path.join(LEGAL_DB_ROOT, file.relativePath);
+      |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  274 |           const snippet = await searchFileContent(fileAbs, queryLower);
+  275 |           if (snippet) {
+  276 |             const metaTitle = await extractMetaTitle(fileAbs);
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+
+./src/app/api/legal-files/route.ts:263:21
+The file pattern ('/ROOT/data/legal-database/' <dynamic> | '/ROOT/data/legal-database' <dynamic>) matches 470980 files in [project]/
+  261 |   }
+  262 |
+> 263 |   const folderAbs = path.join(LEGAL_DB_ROOT, relFolder);
+      |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  264 |
+  265 |   // Years-only mode: return list of available years
+  266 |   if (yearsOnly) {
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+
+./src/app/api/legal-files/route.ts:352:23
+The file pattern ('/ROOT/data/legal-database/' <dynamic> | '/ROOT/data/legal-database' <dynamic>) matches 470980 files in [project]/
+  350 |   const enriched = await Promise.all(
+  351 |     sliced.map(async (entry) => {
+> 352 |       const fileAbs = path.join(LEGAL_DB_ROOT, entry.relativePath);
+      |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  353 |       const metaTitle = await extractMetaTitle(fileAbs);
+  354 |       return metaTitle ? { ...entry, title: metaTitle } : entry;
+  355 |     })
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+
+./src/lib/ai/kag.ts:371:25
+The file pattern ('/ROOT/data/legal-database/' <dynamic> | '/ROOT/data/legal-database' <dynamic>) matches 470980 files in [project]/
+  369 |   await Promise.all(
+  370 |     folders.map(async (folder) => {
+> 371 |       const folderAbs = path.join(LEGAL_DB_ROOT, folder);
+      |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  372 |       const files = await listHtmlFiles(folderAbs);
+  373 |
+  374 |       // Strict filename match first
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import trace:
+  App Route:
+    ./src/lib/ai/kag.ts
+    ./src/lib/ai/unified-search.ts
+    ./src/app/api/ai/deep-search/route.ts
+
+
+./src/lib/ai/kag.ts:528:25
+The file pattern ('/ROOT/data/legal-database/' <dynamic> | '/ROOT/data/legal-database' <dynamic>) matches 470980 files in [project]/
+  526 |   await Promise.all(
+  527 |     folders.map(async (folder) => {
+> 528 |       const folderAbs = path.join(LEGAL_DB_ROOT, folder);
+      |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  529 |       const files = await listHtmlFiles(folderAbs);
+  530 |
+  531 |       // Pre-filter by filename keyword match
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import trace:
+  App Route:
+    ./src/lib/ai/kag.ts
+    ./src/lib/ai/unified-search.ts
+    ./src/app/api/ai/deep-search/route.ts
+
+
+./src/lib/ai/rag-filesystem.ts:222:25
+The file pattern ('/ROOT/data/legal-database/' <dynamic> | '/ROOT/data/legal-database' <dynamic>) matches 470980 files in [project]/
+  220 |   await Promise.all(
+  221 |     foldersToSearch.map(async ({ category, subcategory, folder }) => {
+> 222 |       const folderAbs = path.join(LEGAL_DB_ROOT, folder);
+      |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  223 |       const files = await listHtmlFiles(folderAbs);
+  224 |
+  225 |       // First pass: quick filter on filename
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import trace:
+  App Route:
+    ./src/lib/ai/rag-filesystem.ts
+    ./src/lib/ai/unified-search.ts
+    ./src/app/api/ai/deep-search/route.ts
+
+

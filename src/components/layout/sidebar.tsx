@@ -21,7 +21,10 @@ import {
   ChevronDown,
   ChevronUp,
   Loader2,
+  Crown,
+  Zap,
 } from "lucide-react";
+import { useAuth } from "@/hooks";
 
 interface SidebarChat {
   id: string;
@@ -43,6 +46,9 @@ export function Sidebar() {
   const { isOpen, toggle, setOpen } = useSidebarStore();
   const { setActiveChatId, triggerRefresh, refreshKey } = useChatManagement();
   const activeChatId = useChatManagement((s) => s.activeChatId);
+  const { user } = useAuth();
+  const isFree = user?.plan === "free";
+  const isPaid = user?.plan !== "free" && !!user?.plan;
 
   const [recentChats, setRecentChats] = useState<SidebarChat[]>([]);
   // Close sidebar by default on mobile screens
@@ -270,11 +276,32 @@ export function Sidebar() {
 
       {/* Bottom Section */}
       {isOpen && (
-        <div className="p-4 border-t border-border shrink-0">
-          <div className="flex items-center gap-2 text-xs text-text-tertiary">
-            <Sparkles className="w-3 h-3" />
-            <span>Powered by JusConsultus AI</span>
-          </div>
+        <div className="p-3 border-t border-border shrink-0 space-y-2">
+          {isFree ? (
+            <Link
+              href="/upgrade"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-300">Free Plan</p>
+                <p className="text-[10px] text-amber-600 dark:text-amber-400">{user?.searchesLeft ?? 0} searches left</p>
+              </div>
+            </Link>
+          ) : isPaid ? (
+            <Link
+              href="/profile?tab=billing"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700/40 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+            >
+              <Crown className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-semibold text-green-700 dark:text-green-300">
+                  {user?.plan === "team" ? "Team Plan" : user?.plan === "enterprise" ? "Enterprise" : "Professional"}
+                </p>
+                <p className="text-[10px] text-green-600 dark:text-green-400">Unlimited searches</p>
+              </div>
+            </Link>
+          ) : null}
         </div>
       )}
     </aside>

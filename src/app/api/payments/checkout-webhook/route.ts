@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
             subscriptionStartDate,
             subscriptionEndDate,
             paymentSetup: true,
-            searchesLeft: planTier === 'pro' || planTier === 'team' ? 999999 : 15,
+            searchesLeft: planTier === 'pro' || planTier === 'team' ? -1 : 15,
           },
         })
 

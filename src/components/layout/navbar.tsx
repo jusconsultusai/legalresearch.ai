@@ -85,9 +85,11 @@ export function MarketingNavbar() {
                 <Link href="/dashboard">
                   <Button variant="ghost" size="sm">Dashboard</Button>
                 </Link>
-                <Link href="/upgrade">
-                  <Button size="sm">Upgrade</Button>
-                </Link>
+                {user?.plan === "free" && (
+                  <Link href="/upgrade">
+                    <Button size="sm">Upgrade</Button>
+                  </Link>
+                )}
               </>
             ) : (
               <>
@@ -124,7 +126,9 @@ export function MarketingNavbar() {
               {user ? (
                 <>
                   <Link href="/dashboard" onClick={() => setMobileOpen(false)}><Button variant="secondary" className="w-full">Dashboard</Button></Link>
-                  <Link href="/upgrade" onClick={() => setMobileOpen(false)}><Button className="w-full">Upgrade</Button></Link>
+                  {user.plan === "free" && (
+                    <Link href="/upgrade" onClick={() => setMobileOpen(false)}><Button className="w-full">Upgrade</Button></Link>
+                  )}
                 </>
               ) : (
                 <>
@@ -146,7 +150,7 @@ export function AppNavbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const isFree = user?.plan === "free";
-  const isPro = user?.plan === "pro" || user?.plan === "team";
+  const isPro = user?.plan === "pro" || user?.plan === "team" || user?.plan === "enterprise";
 
   return (
     <header className="h-14 border-b border-border bg-surface flex items-center px-3 sm:px-4 gap-2 sm:gap-4 shrink-0 z-40">
@@ -170,15 +174,28 @@ export function AppNavbar() {
       {/* Usage Display for Free Users */}
       {isFree && (
         <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40">
+          <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide">Free</span>
           <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
             {user?.searchesLeft || 0} searches left
           </span>
         </div>
       )}
 
-      <Link href="/upgrade" className="hidden sm:block">
-        <Button variant="outline" size="sm">Upgrade</Button>
-      </Link>
+      {/* Pro Badge for Paid Users */}
+      {isPro && (
+        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700/40">
+          <Crown className="w-3 h-3 text-green-600 dark:text-green-400" />
+          <span className="text-xs font-medium text-green-700 dark:text-green-300">
+            {user?.plan === "team" ? "Team" : user?.plan === "enterprise" ? "Enterprise" : "Pro"}
+          </span>
+        </div>
+      )}
+
+      {isFree && (
+        <Link href="/upgrade" className="hidden sm:block">
+          <Button variant="outline" size="sm">Upgrade</Button>
+        </Link>
+      )}
 
       <Link href="/help" className="p-2 rounded-lg hover:bg-surface-tertiary transition-colors" title="Help">
         <HelpCircle className="w-5 h-5 text-text-secondary" />
@@ -207,11 +224,6 @@ export function AppNavbar() {
           title="Account menu"
         >
           <Avatar name={user?.name} size="sm" />
-          {isPro && (
-            <span title="Pro Plan">
-              <BadgeCheck className="w-4 h-4 text-green-500" />
-            </span>
-          )}
           <ChevronDown className="w-4 h-4 text-text-secondary" />
         </button>
 
@@ -239,11 +251,11 @@ export function AppNavbar() {
               <Link href="/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-surface-tertiary" onClick={() => setDropdownOpen(false)}>
                 <User className="w-4 h-4" /> Profile
               </Link>
-              <Link href="/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-surface-tertiary" onClick={() => setDropdownOpen(false)}>
-                <Settings className="w-4 h-4" /> Settings
-              </Link>
-              <Link href="/upgrade" className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-surface-tertiary" onClick={() => setDropdownOpen(false)}>
+              <Link href="/profile?tab=billing" className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-surface-tertiary" onClick={() => setDropdownOpen(false)}>
                 <CreditCard className="w-4 h-4" /> Subscription
+              </Link>
+              <Link href="/profile?tab=security" className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-surface-tertiary" onClick={() => setDropdownOpen(false)}>
+                <Settings className="w-4 h-4" /> Settings
               </Link>
               <div className="border-t border-border my-1" />
               <button onClick={logout} className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 w-full">
