@@ -10,6 +10,7 @@ interface LLMOptions {
   temperature?: number;
   maxTokens?: number;
   stream?: boolean;
+  deepThink?: boolean;
 }
 
 // Get LLM configuration from environment
@@ -41,9 +42,9 @@ export async function generateCompletion(
   messages: ChatMessage[],
   options: LLMOptions = {}
 ): Promise<string> {
-  const { apiKey, baseUrl, defaultModel } = getLLMConfig();
+  const { apiKey, baseUrl, defaultModel, deepThinkModel } = getLLMConfig();
   const {
-    model = defaultModel,
+    model = options.deepThink ? deepThinkModel : defaultModel,
     temperature = 0.3,
     maxTokens = 4096,
   } = options;
@@ -140,9 +141,9 @@ export async function* generateStreamingCompletion(
   messages: ChatMessage[],
   options: LLMOptions = {}
 ): AsyncGenerator<string> {
-  const { apiKey, baseUrl, defaultModel } = getLLMConfig();
+  const { apiKey, baseUrl, defaultModel, deepThinkModel } = getLLMConfig();
   const {
-    model = defaultModel,
+    model = options.deepThink ? deepThinkModel : defaultModel,
     temperature = 0.3,
     maxTokens = 4096,
   } = options;

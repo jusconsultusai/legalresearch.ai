@@ -96,6 +96,7 @@ export async function POST(
       answer = await generateCompletion(messages, {
         temperature: 0.3,
         maxTokens: deepThink ? 8192 : 4096,
+        deepThink,
       });
     }
 

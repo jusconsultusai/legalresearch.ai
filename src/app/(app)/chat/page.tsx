@@ -248,8 +248,12 @@ const ChatInput = memo(function ChatInput({
 }: ChatInputProps) {
   return (
     <div className={cn("rounded-2xl border border-border bg-surface shadow-sm", compact && "rounded-xl")}>
-      <div className="relative p-3 pb-1">
+      <div className="relative p-3 pb-1" suppressHydrationWarning>
         <textarea
+          suppressHydrationWarning
+          data-gramm="false"
+          data-gramm_editor="false"
+          data-enable-grammarly="false"
           ref={compact ? undefined : textareaRef}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}

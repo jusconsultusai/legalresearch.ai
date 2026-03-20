@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
           { role: "system", content: prompt },
           { role: "user", content: message },
         ],
-        { temperature: 0.3, maxTokens: deepThink ? 8192 : 4096 }
+        { temperature: 0.3, maxTokens: deepThink ? 8192 : 4096, deepThink }
       );
     }
 
